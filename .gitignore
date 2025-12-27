@@ -37,10 +37,10 @@ influxdb/plugins/*
 ## grafana data
 grafana/data/*.db
 grafana/data/grafana.db        # NEU: Explizit (SQLite DB)
-grafana/data/plugins/*         # NEU: Installierte Plugins
-grafana/data/png/*             # NEU: Screenshot Cache
-grafana/data/sessions/*        # NEU: User Sessions
-grafana/data/csv/*             # NEU: CSV Exports
+grafana/data/plugins/          # NEU: Installierte Plugins
+grafana/data/png/              # NEU: Screenshot Cache
+grafana/data/sessions/         # NEU: User Sessions
+grafana/data/csv/              # NEU: CSV Exports
 !grafana/data/.gitkeep
 
 
@@ -48,7 +48,7 @@ grafana/data/csv/*             # NEU: CSV Exports
 nodered/data/flows_cred.json
 nodered/data/context/
 nodered/data/node_modules/
-nodered/data/.npm/*
+nodered/data/.npm/
 nodered/data/settings.js.*
 !nodered/data/settings.js
 nodered/data/node_modules/*
