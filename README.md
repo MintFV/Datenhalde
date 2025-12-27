@@ -225,7 +225,7 @@ Deine Services sind jetzt erreichbar:
 | **InfluxDB 3** | ✅ Aktiv | - | `/influxdb/` | [INFLUXDB.md](INFLUXDB.md) |
 | **Grafana** | ✅ Aktiv | - | `/grafana/` | [GRAFANA.md](GRAFANA.md) |
 | **Node-RED** | ✅ Aktiv | - | `/nodered/` | [NODERED.md](NODERED.md) |
-| **Mosquitto** | ⏳ Geplant | 1883 | MQTT | - |
+| **Mosquitto** | ✅ Aktiv | 1883, 9001 | `/mqtt` (WS) | [MOSQUITTO.md](MOSQUITTO.md) |
 
 ### Service Details
 

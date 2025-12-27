@@ -343,32 +343,48 @@ services:
       - mintfv-network
 
   # =============================================================================
-  # Future Services (currently disabled)
+  # IoT & Messaging Services
   # =============================================================================
 
-  # mosquitto:
-  #   image: eclipse-mosquitto:latest
-  #   container_name: mintfv-mosquitto
-  #   restart: unless-stopped
-  #   user: "2003:2100"
-  #   group_add:
-  #     - "2100"
-  #   ports:
-  #     - "1883:1883"
-  #     - "9001:9001"
-  #   volumes:
-  #     - ./mosquitto/config:/mosquitto/config:ro
-  #     - ./mosquitto/data:/mosquitto/data:rw
-  #     - ./mosquitto/logs:/mosquitto/log:rw
-  #   <<: *default-security
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '0.25'
-  #         memory: 64M
-  #   logging: *default-logging
-  #   networks:
-  #     - mintfv-network
+  # Mosquitto MQTT Broker
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mintfv-mosquitto
+    restart: unless-stopped
+    user: "2003:2100"
+    group_add:
+      - "2100"
+
+    ports:
+      - "1883:1883"    # MQTT
+      - "9001:9001"    # WebSocket
+
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - ./mosquitto/data:/mosquitto/data:rw
+      - ./mosquitto/logs:/mosquitto/log:rw
+
+    <<: *default-security
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M
+
+    # Healthcheck deaktiviert wegen Authentifizierung
+    # Service läuft stabil, Port-Check über externe Monitoring-Tools empfohlen
+    # healthcheck:
+    #   test: ["CMD-SHELL", "timeout 3 pidof mosquitto || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
+
+    logging: *default-logging
+
+    networks:
+      - mintfv-network
 
   # Node-RED: Flow-based development tool for IoT and automation
   nodered:

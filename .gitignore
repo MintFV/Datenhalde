@@ -33,6 +33,18 @@ certbot/www/.well-known/*
 !certbot/www/.well-known/.gitkeep
 
 
+## mosquitto data and logs
+mosquitto/data/*
+!mosquitto/data/.gitkeep
+mosquitto/logs/*
+!mosquitto/logs/.gitkeep
+mosquitto/config/mosquitto.passwd
+mosquitto/config/mosquitto.acl
+
+# Tenant Credentials (enthält Passwörter!)
+TENANT-CREDENTIALS.md
+
+
 ## influxdb data and sensitive tokens
 influxdb/data/*
 influxdb/tokens/*
