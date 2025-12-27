@@ -100,7 +100,7 @@ services:
 
     volumes:
       - ./nginx/conf:/etc/nginx/conf.d:ro
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro    # Custom nginx.conf with stream include
+      # - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro    # Custom nginx.conf with stream include
       - ./nginx/stream.conf:/etc/nginx/mqtt.conf:ro  # MQTT TLS stream config
       - ./nginx/html:/usr/share/nginx/html:ro
       - ./certbot/conf:/etc/letsencrypt:ro
