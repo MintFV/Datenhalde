@@ -10,7 +10,7 @@
 **/.env
 **/.env*
 !**/.env.example
-config.yaml       # NEU: Enthält Domain/Email (nur config-example.yaml committen)
+config.yaml
 !config.yaml.example
 
 
