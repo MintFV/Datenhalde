@@ -90,8 +90,12 @@ services:
         condition: service_completed_successfully
 
     ports:
-      - "80:8080"
-      - "443:8443"
+      # # IPv4 explizit angeben mit 0.0.0.0:
+      - "0.0.0.0:80:8080"
+      - "0.0.0.0:443:8443"
+
+
+
 
     volumes:
       - ./nginx/conf:/etc/nginx/conf.d:ro
@@ -356,8 +360,9 @@ services:
       - "2100"
 
     ports:
-      - "1883:1883"    # MQTT
-      - "9001:9001"    # WebSocket
+      # IPv4 explizit angeben mit 0.0.0.0:
+      - "0.0.0.0:1883:1883"    # MQTT
+      - "0.0.0.0:9001:9001"    # WebSocket
 
     volumes:
       - ./mosquitto/config:/mosquitto/config:ro
