@@ -1,0 +1,91 @@
+# ============================================================================
+# MintFV Multi-Tenant ACL Configuration
+# ============================================================================
+
+# ============================================================================
+# HEALTHCHECK (benötigt für Docker Healthcheck) - MUSS ZUERST KOMMEN!
+# ============================================================================
+user healthcheck
+topic read $SYS/#
+
+# ============================================================================
+# MASTER TENANT - Vollzugriff auf alles
+# ============================================================================
+user master-admin
+topic readwrite #
+
+# ============================================================================
+# TENANT A - Firma Alpha GmbH
+# ============================================================================
+
+# Tenant Admin (kann alles in seinem Tenant lesen/schreiben)
+user tenant-a-admin
+topic readwrite tenant/tenant-a/#
+topic read $SYS/#
+
+# Sensoren (können nur eigene Topics schreiben, Commands empfangen)
+user tenant-a-sensor01
+topic write tenant/tenant-a/sensor01/#
+topic read tenant/tenant-a/commands/sensor01/#
+topic read $SYS/broker/version
+
+user tenant-a-sensor02
+topic write tenant/tenant-a/sensor02/#
+topic read tenant/tenant-a/commands/sensor02/#
+topic read $SYS/broker/version
+
+# Node-RED für Tenant (verarbeitet alle Tenant-Daten)
+user tenant-a-nodered
+topic readwrite tenant/tenant-a/#
+topic read $SYS/#
+
+# ============================================================================
+# TENANT B - Stadt Beta
+# ============================================================================
+
+user tenant-b-admin
+topic readwrite tenant/tenant-b/#
+topic read $SYS/#
+
+user tenant-b-sensor01
+topic write tenant/tenant-b/sensor01/#
+topic read tenant/tenant-b/commands/sensor01/#
+topic read $SYS/broker/version
+
+user tenant-b-sensor02
+topic write tenant/tenant-b/sensor02/#
+topic read tenant/tenant-b/commands/sensor02/#
+topic read $SYS/broker/version
+
+user tenant-b-nodered
+topic readwrite tenant/tenant-b/#
+topic read $SYS/#
+
+# ============================================================================
+# TENANT C - Umwelt Gamma e.V.
+# ============================================================================
+
+user tenant-c-admin
+topic readwrite tenant/tenant-c/#
+topic read $SYS/#
+
+user tenant-c-sensor01
+topic write tenant/tenant-c/sensor01/#
+topic read tenant/tenant-c/commands/sensor01/#
+topic read $SYS/broker/version
+
+user tenant-c-sensor02
+topic write tenant/tenant-c/sensor02/#
+topic read tenant/tenant-c/commands/sensor02/#
+topic read $SYS/broker/version
+
+user tenant-c-nodered
+topic readwrite tenant/tenant-c/#
+topic read $SYS/#
+
+# ============================================================================
+# MONITORING USER (optional - read-only für Systemüberwachung)
+# ============================================================================
+user monitoring
+topic read $SYS/#
+topic read tenant/+/+/status

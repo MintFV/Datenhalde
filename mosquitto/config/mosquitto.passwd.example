@@ -1,0 +1,15 @@
+master-admin:$7$101$z+bkxfoqTOY4IL87$wmXN4ZyPJLaI9H8lneKy9z9WOJABSpYoJOD+1+l+SLvovdKmFLNjWqTg25UUnXQmP3gQw+YvyM/ocR7UdDM/nw==
+tenant-a-admin:$7$101$Mq4Cpjo3+NSzANLW$Ex9HendZXU7NTHhxeVxf2WR0LJdlLpcvzGS1pG3CmeDU9cLreLT7qg+n3yno8pfaamvgHzrSkIrDGma9igRPnw==
+tenant-a-sensor01:$7$101$doqn8/Y7XX3ZYXsC$DDIaZy8mHP+JL0ReVxo9H25LHOmftYbWXrYdtyPoUJyXGB6DbZJRMNa++Z5oReZwtquJk/punL2Ew62QwEqgWA==
+tenant-a-sensor02:$7$101$m2zpmRmWNzoGbwOI$eGo47+ob7CUXs2Y3wNZjLT5EZt3GCD6SqVvERVdMKFfWdhTNA5UliXHhUPEWISMajR0o6uyDsYtG71Krlloxgg==
+tenant-a-nodered:$7$101$GLXHw7mUyHTl14eu$NesijYK6AUb6yVK/wxKtFkY+UswWP4GlkQZUmX/0kH3gMkAsTprQGony0xuMTYrm/7m2Dj545Q5J1LxMMTFq4w==
+tenant-b-admin:$7$101$uHVQkB47464yoJ8w$F8tW7FJ4P2V85x9zLmO3gYmjk9AlDXuY2qMRYMCL3zDfJmo1HRujUI+A/ZZ8JOV6SDphWpkL3G8/tPX267dIvA==
+tenant-b-sensor01:$7$101$mIFp8vAw59puMkA6$ge5PsAZVctBewI5tcZWFLyeX6gwWkGwk6R+AgcECWQWFq/lYDUlTYDQahFJZPdO+F8CPcWm1lA1lUhZ4i4ns/A==
+tenant-b-sensor02:$7$101$qA1v4lP7Am/NCFrZ$6NTNEUP4y4MgRFkTqPrQoEO9ZyJFVZXCqxwXdaw3hGrEZBTGGyrsbdpuMBH8CsjuK26ZApMpuMiiteuZ+mfL+Q==
+tenant-b-nodered:$7$101$zmXT0MmEyRCVpoEy$fbhW6TmJSrzlkAzGyYlgOZPnbb3rlXQtbDbXEked5kDMlvRtHXAja9k0eQcYsd8IbMo9pY5hBtO+v6qJl0hQ+g==
+tenant-c-admin:$7$101$3KF8gwAod2kB38LW$QQ7nub9xCdLMCaduXhHQFMHYGrCbIEM+g4prp6tTnf9eDBmmf6AxhLEJu5fK74+DDfJLZd0HcA7O0AzPl1xF5g==
+tenant-c-sensor01:$7$101$PcGfyUyp0M1lwwlF$e8oLt767m5BfC+PwbC+2jYYQ3Vp3ydCtuE3paWcYCcF2R9cFSRokcKMoikijdMHcgXn+6od01cmFxSPN1hONRw==
+tenant-c-sensor02:$7$101$jtsZTxwBMIJ5OwWH$FeRhMld5tqT/wypMBvCy4/DUGyi0eSwg2UeYpZQA8XSHpbXGPpB2ecOKge6vRKMF8qbc85NdHnMrtb0stehf3Q==
+tenant-c-nodered:$7$101$5Y0Bw7cVMkRqHoqU$wsQBNXhgCAe8hkXeop4uI3HkqO5e64lcnS5xNjm8th0+qyQcMyK3y5/1PhXHYuyMGT2fJ+r9RbnEE2TVxhol1Q==
+monitoring:$7$101$3WeYq5zSAc7Y7bPp$Cd0qN+Xu+SllslaCAVNSIDTd8ZR6Z4Rxsl4RGUdpLFBaTBhNGjNfuXiDW8R2VdG92lzC8AyI0GcMIGmScY3eOQ==
+healthcheck:$7$101$wYfdrqvJ8DatWF9K$J3OFuDVSADRLxjoaktBV9aj5Yy3DFOx7AmHL3VOpWQP9tnIYpYoojqYtG7lnmKRlp1P5oX90bop6nJ/Eu8jRrA==
