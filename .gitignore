@@ -11,8 +11,14 @@
 **/.env*
 !**/.env.example
 config.yaml
-!config.yaml.example
+!config-example.yaml
 
+## nginx files
+nginx/logs/*
+!nginx/logs/.gitkeep
+nginx/conf/default.conf
+nginx/conf/ssl.conf
+nginx/conf/*.disabled
 
 ## certbot files
 certbot/conf/.initialized
@@ -20,7 +26,7 @@ certbot/conf/archive/*
 !certbot/conf/archive/README.md
 certbot/conf/live/*
 certbot/conf/renewal/*
-certbot/conf/accounts
+certbot/conf/accounts/*
 certbot/logs/*
 !certbot/logs/.gitkeep
 certbot/www/.well-known/*
@@ -50,11 +56,9 @@ nodered/data/context/
 nodered/data/node_modules/
 nodered/data/.npm/
 nodered/data/settings.js.*
-!nodered/data/settings.js
-nodered/data/node_modules/*
 nodered/data/.config.*.json*
 nodered/data/.sessions.json
-nodered/data/lib/
+!nodered/data/settings.js
 !nodered/data/flows.json
 !nodered/data/flows_*.json
 !nodered/data/flows_*.json.backup
@@ -91,3 +95,8 @@ desktop.ini                    # NEU: Windows
 tmp/*                          # NEU: Temp Directory
 *.tmp                          # NEU: Temp Files
 *.log                          # NEU: Log Files (generell)
+
+## Documentation backups (keep docs themselves!)
+*.md.backup
+*.md.bak
+*.md.[0-9]*
