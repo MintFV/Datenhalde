@@ -20,7 +20,7 @@ certbot/conf/archive/*
 !certbot/conf/archive/README.md
 certbot/conf/live/*
 certbot/conf/renewal/*
-certbot/conf/accounts/*
+certbot/conf/accounts
 certbot/logs/*
 !certbot/logs/.gitkeep
 certbot/www/.well-known/*
@@ -45,8 +45,12 @@ grafana/data/csv/*             # NEU: CSV Exports
 
 
 ## nodered data and npm cache
+nodered/data/flows_cred.json
+nodered/data/context/
+nodered/data/node_modules/
 nodered/data/.npm/*
-nodered/data/settings.js
+nodered/data/settings.js.*
+!nodered/data/settings.js
 nodered/data/node_modules/*
 nodered/data/.config.*.json*
 nodered/data/.sessions.json
@@ -54,8 +58,9 @@ nodered/data/lib/
 !nodered/data/flows.json
 !nodered/data/flows_*.json
 !nodered/data/flows_*.json.backup
-
-
+!nodered/data/lib/flows/
+!nodered/data/package.json
+!nodered/data/package-lock.json
 
 
 ################################################################################
