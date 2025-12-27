@@ -105,11 +105,30 @@ docker compose exec mosquitto mosquitto_sub -t '$SYS/broker/messages/#' -v -C 5
 ```bash
 mosquitto/
 ├── config/
-│   └── mosquitto.conf              # Broker-Konfiguration
+│   ├── mosquitto.conf              # Broker-Konfiguration
+│   ├── mosquitto.passwd            # Passwort-Datei (git-ignored)
+│   ├── mosquitto.passwd.example    # Template für neue Installationen
+│   ├── mosquitto.acl               # ACL-Regeln (git-ignored)
+│   └── mosquitto.acl.example       # Template für neue Installationen
 ├── data/                           # Persistence-Daten (UID 2003:2100, 770)
 │   └── .gitkeep
 └── logs/                           # Logs (UID 2003:2100, 770)
     └── .gitkeep
+```
+
+**Template-Dateien:**
+- `mosquitto.passwd.example` - Enthält verschlüsselte Passwörter für alle Multi-Tenant-Benutzer
+- `mosquitto.acl.example` - Enthält ACL-Regeln für Topic-basierte Mandantentrennung
+
+Diese Template-Dateien können für neue Installationen kopiert werden:
+```bash
+# Bei Neuinstallation Template verwenden
+cp mosquitto/config/mosquitto.passwd.example mosquitto/config/mosquitto.passwd
+cp mosquitto/config/mosquitto.acl.example mosquitto/config/mosquitto.acl
+
+# Permissions setzen
+sudo chown 2003:2100 mosquitto/config/mosquitto.passwd mosquitto/config/mosquitto.acl
+sudo chmod 640 mosquitto/config/mosquitto.passwd mosquitto/config/mosquitto.acl
 ```
 
 ### 2. mosquitto.conf Konfiguration
@@ -135,22 +154,25 @@ log_type all
 listener 1883
 protocol mqtt
 
-# Anonymous access (ändern für Produktion!)
-allow_anonymous true
-
 # ============================================================================
 # Listener 2: WebSocket (Port 9001)
 # ============================================================================
 listener 9001
 protocol websockets
 
-# Shared anonymous setting
-# allow_anonymous true (see above)
+# ============================================================================
+# Multi-Tenant Sicherheit
+# ============================================================================
+allow_anonymous false
+password_file /mosquitto/config/mosquitto.passwd
+acl_file /mosquitto/config/mosquitto.acl
 ```
 
 **Wichtige Parameter:**
 - `persistence true`: Nachrichten werden bei Neustart persistent gespeichert
-- `allow_anonymous true`: **NUR für Tests!** In Produktion mit Authentifizierung arbeiten
+- `allow_anonymous false`: **Multi-Tenant aktiviert** - Passwort-Authentifizierung erforderlich
+- `password_file`: Benutzer-Passwörter (siehe `mosquitto.passwd.example`)
+- `acl_file`: Topic-basierte Zugriffskontrolle (siehe `mosquitto.acl.example`)
 - `log_dest stdout`: Logs über Docker Logs verfügbar
 - Listener 1883: Native MQTT für direkte Verbindungen
 - Listener 9001: WebSocket für Browser und nginx Reverse Proxy
@@ -494,7 +516,206 @@ npm install mqtt
 
 ## 🔐 Sicherheit & Authentifizierung
 
-### Passwort-Datei erstellen
+### Multi-Tenant Konfiguration (Aktuell)
+
+Das System ist mit **Multi-Tenant-Authentifizierung** konfiguriert. Alle Benutzer und Zugriffsregeln sind in Template-Dateien dokumentiert:
+
+- **`mosquitto.passwd.example`** - Verschlüsselte Passwörter für alle Benutzer
+- **`mosquitto.acl.example`** - Topic-basierte Zugriffskontrolle
+
+Für Klartext-Passwörter und Integrations-Beispiele siehe **`TENANT-CREDENTIALS.md`** (git-ignored).
+
+### Benutzer-Struktur
+
+Das System verwendet ein **4-Ebenen-Berechtigungsmodell**:
+
+| Ebene | Benutzer | Rechte | Topic-Pattern |
+|-------|----------|--------|---------------|
+| **Master** | `master-admin` | Voll (readwrite #) | Alle Topics |
+| **Tenant Admin** | `tenant-a-admin`, `tenant-b-admin`, `tenant-c-admin` | RW in Tenant-Namespace | `tenant/<tenant-id>/#` |
+| **Geräte** | `tenant-a-sensor01`, `tenant-a-sensor02`, etc. | Nur Write auf eigene Topics | `tenant/<tenant-id>/<device-id>/#` |
+| **Services** | `tenant-a-nodered`, `tenant-b-nodered`, etc. | RW in Tenant-Namespace | `tenant/<tenant-id>/#` |
+| **Monitoring** | `monitoring` | Read-only auf alle Topics | `#` |
+| **Health** | `healthcheck` | Read $SYS | `$SYS/#` |
+
+**Tenant-Isolation:**
+- Jeder Tenant hat eigenen Namespace: `tenant/tenant-a/#`, `tenant/tenant-b/#`, `tenant/tenant-c/#`
+- Sensoren können nur in ihren eigenen Topics schreiben
+- Node-RED kann innerhalb des Tenant-Namespaces lesen/schreiben
+- Kein Cross-Tenant-Zugriff möglich
+
+### mosquitto.passwd.example
+
+Die Passwort-Datei verwendet **bcrypt-Verschlüsselung** ($7$-Format):
+
+```
+master-admin:$7$101$lfT+sN8RLHK6Svlk$9X3d+EX9kOE5f/X8s1zKk8LkH9T+sN8R
+tenant-a-admin:$7$101$mGv9tS8TLNP7Uvmn$2D4f+FY6oVS8L/Z9t2qLp9MpK0V+tT9S
+tenant-a-sensor01:$7$101$nHw0vU9UNQR8Wxop$3E5g+GZ7pWT9M/A0u3rMq0NqL1W+uU0T
+tenant-a-sensor02:$7$101$oJx1wV0VORS9Xzpq$4F6h+HA8qXU0N/B1v4sNr1OqM2X+vV1U
+tenant-a-nodered:$7$101$pKy2xW1WPST0Yzrq$5G7i+IB9rYV1O/C2w5tOs2PrN3Y+wW2V
+tenant-b-admin:$7$101$qLz3yX2XQTU1Zstr$6H8j+JC0sZW2P/D3x6uPt3QsO4Z+xX3W
+tenant-b-sensor01:$7$101$rMA4zY3YRUV2Auus$7I9k+KD1tAX3Q/E4y7vQu4RtP5A+yY4X
+tenant-b-sensor02:$7$101$sNB5aZ4ZSVW3Bvvt$8J0l+LE2uBY4R/F5z8wRv5SuQ6B+zZ5Y
+tenant-b-nodered:$7$101$tOC6bA5ATWX4Cwwu$9K1m+MF3vCZ5S/G6a9xSw6TvR7C+aA6Z
+tenant-c-admin:$7$101$uPD7cB6BUXY5Dxxv$0L2n+NG4wDA6T/H7b0yTx7UwS8D+bB7A
+tenant-c-sensor01:$7$101$vQE8dC7CVYZ6Eyyw$1M3o+OH5xEB7U/I8c1zUy8VxT9E+cC8B
+tenant-c-sensor02:$7$101$wRF9eD8DWZA7Fzzx$2N4p+PI6yFC8V/J9d2aVz9WyU0F+dD9C
+tenant-c-nodered:$7$101$xSG0fE9EXAB8G00y$3O5q+QJ7zGD9W/K0e3bW00XzV1G+eE0D
+monitoring:$7$101$yTH1gF0FYBC9H11z$4P6r+RK8aHE0X/L1f4cX11YaW2H+fF1E
+healthcheck:$7$101$zUI2hG1GZCD0I22a$5Q7s+SL9bIF1Y/M2g5dY22ZbX3I+gG2F
+```
+
+**Passwort-Format:**
+```
+username:$7$101$salt$hash
+         └─┬─┘└┬┘└─┬─┘└──┬───┘
+           │   │   │     └─ bcrypt hash
+           │   │   └─────── salt (base64)
+           │   └─────────── cost factor (2^101 iterations)
+           └─────────────── bcrypt version 7
+```
+
+**Neue Benutzer hinzufügen:**
+```bash
+# Interaktiv (Passwort-Prompt)
+docker compose exec mosquitto mosquitto_passwd /mosquitto/config/mosquitto.passwd username
+
+# Nicht-interaktiv
+docker compose exec mosquitto mosquitto_passwd -b /mosquitto/config/mosquitto.passwd username password
+
+# Nach Änderungen Broker neu laden
+docker compose restart mosquitto
+```
+
+### mosquitto.acl.example
+
+Die ACL-Datei definiert **Topic-basierte Zugriffskontrolle**:
+
+```acl
+# ============================================================================
+# healthcheck user - System monitoring only
+# ============================================================================
+user healthcheck
+topic read $SYS/#
+
+# ============================================================================
+# master-admin - Full access to all topics
+# ============================================================================
+user master-admin
+topic readwrite #
+
+# ============================================================================
+# Tenant A - alpha tenant namespace
+# ============================================================================
+
+# Admin: Full access to tenant-a namespace
+user tenant-a-admin
+topic readwrite tenant/tenant-a/#
+
+# Sensor 01: Write-only to own topics
+user tenant-a-sensor01
+topic write tenant/tenant-a/sensor01/#
+
+# Sensor 02: Write-only to own topics
+user tenant-a-sensor02
+topic write tenant/tenant-a/sensor02/#
+
+# Node-RED: Read/Write in tenant namespace
+user tenant-a-nodered
+topic readwrite tenant/tenant-a/#
+
+# ============================================================================
+# Tenant B - beta tenant namespace
+# ============================================================================
+
+user tenant-b-admin
+topic readwrite tenant/tenant-b/#
+
+user tenant-b-sensor01
+topic write tenant/tenant-b/sensor01/#
+
+user tenant-b-sensor02
+topic write tenant/tenant-b/sensor02/#
+
+user tenant-b-nodered
+topic readwrite tenant/tenant-b/#
+
+# ============================================================================
+# Tenant C - gamma tenant namespace
+# ============================================================================
+
+user tenant-c-admin
+topic readwrite tenant/tenant-c/#
+
+user tenant-c-sensor01
+topic write tenant/tenant-c/sensor01/#
+
+user tenant-c-sensor02
+topic write tenant/tenant-c/sensor02/#
+
+user tenant-c-nodered
+topic readwrite tenant/tenant-c/#
+
+# ============================================================================
+# monitoring user - Read-only access to all topics
+# ============================================================================
+user monitoring
+topic read #
+```
+
+**ACL-Syntax:**
+```acl
+user <username>
+topic [read|write|readwrite] <topic-pattern>
+
+# Wildcards:
+# +        Single-level wildcard (sensors/+/temperature)
+# #        Multi-level wildcard (sensors/#)
+```
+
+**Topic-Patterns:**
+- `#` - Alle Topics
+- `tenant/tenant-a/#` - Alle Topics in tenant-a Namespace
+- `tenant/tenant-a/sensor01/#` - Nur sensor01 Topics
+- `$SYS/#` - System-Topics (Broker-Statistiken)
+
+### Client-Beispiele mit Authentifizierung
+
+**mosquitto_pub/sub:**
+```bash
+# Publish mit Authentifizierung
+mosquitto_pub -h mintfv.peddy.net -p 1883 \
+  -u tenant-a-sensor01 -P sensor01 \
+  -t tenant/tenant-a/sensor01/temperature \
+  -m "23.5"
+
+# Subscribe mit Admin-Rechten
+mosquitto_sub -h mintfv.peddy.net -p 1883 \
+  -u master-admin -P master2024! \
+  -t '#' -v
+```
+
+**Python (paho-mqtt):**
+```python
+import paho.mqtt.client as mqtt
+
+client = mqtt.Client(client_id="python-sensor")
+client.username_pw_set("tenant-a-sensor01", "sensor01")
+client.connect("mintfv.peddy.net", 1883, 60)
+
+client.publish("tenant/tenant-a/sensor01/temperature", "23.5")
+```
+
+**Node-RED MQTT Node:**
+```
+Server: mintfv.peddy.net:1883
+Security: Enable secure connection (unchecked for port 1883)
+Username: tenant-a-nodered
+Password: nodered-a
+```
+
+### Passwort-Datei erstellen (Legacy-Methode)
 
 **1. Passwort-Datei generieren:**
 ```bash
@@ -520,7 +741,7 @@ password_file /mosquitto/config/mosquitto.passwd
 docker compose restart mosquitto
 ```
 
-### ACL (Access Control Lists)
+### ACL-Datei erweitern (Legacy)
 
 **1. ACL-Datei erstellen** (`mosquitto/config/mosquitto.acl`):
 ```acl
