@@ -1,345 +1,565 @@
-# MintFV: Datenserver
+# MintFV Datenserver
 
-Im Rahmen des Umweltbox Projektes <https://github.com/MintFV/Umweltbox> sollen Daten zentral eingesammelt und visualisiert werden.
-Dies soll auf einem Linuxserver mithilfe Docker passieren, der folgende Dockercontainer / Services hochfährt:
+> **IoT-Datenplattform** für das [Umweltbox Projekt](https://github.com/MintFV/Umweltbox) - Sammelt, verarbeitet und visualisiert Sensordaten von IoT-Geräten.
 
-1. **nginx** - Webserver / Frontend -- Torwächter / regelt Authentifizierung / WAF für Arme
-2. **mosquitto** - MQTT-Server -- Sammelt Daten von den Tasmota oder anderen Geräten ein
-3. **nodered** - Verarbeitet die Daten von mosquitto
-4. **influxdb** - Zeitreihendatenbank -- speichert die ganzen Daten
-5. **grafana** - Visualisierung -- erzeugt die Tabellen und andere Visualisierungen
+[![Docker](https://img.shields.io/badge/Docker-required-blue.svg)](https://www.docker.com/)
+[![HTTPS](https://img.shields.io/badge/HTTPS-Let's%20Encrypt-green.svg)](https://letsencrypt.org/)
+[![Security](https://img.shields.io/badge/Security-Hardened-success.svg)](DOCKER.md)
 
-📖 **Vollständige Dokumentation**: Siehe [DOCS-INDEX.md](DOCS-INDEX.md) für eine strukturierte Übersicht aller Dokumentationen.
+---
 
-## Architektur
+## 📋 Inhaltsverzeichnis
+
+- [Was ist MintFV?](#-was-ist-mintfv)
+- [Features](#-features)
+- [Architektur](#-architektur)
+- [Quick Start](#-quick-start)
+- [Services](#-services)
+- [Konfiguration](#-konfiguration)
+- [Dokumentation](#-dokumentation)
+- [Wartung](#-wartung)
+- [Troubleshooting](#-troubleshooting)
+
+---
+
+## 🎯 Was ist MintFV?
+
+MintFV ist eine **containerisierte IoT-Datenplattform** die folgende Komponenten integriert:
+
+- **Datenerfassung**: MQTT Broker (Mosquitto) für IoT-Geräte
+- **Datenverarbeitung**: Node-RED für Flow-basierte Logik
+- **Datenspeicherung**: InfluxDB 3 für Time-Series Daten
+- **Visualisierung**: Grafana für Dashboards
+- **Sicherheit**: nginx mit Let's Encrypt HTTPS
+
+**Ziel**: Einfaches, sicheres Setup für Umwelt-Monitoring mit Tasmota/ESP-basierten Sensoren.
+
+---
+
+## ✨ Features
+
+### 🔒 Production-Ready Security
+- ✅ **HTTPS** mit automatischen Let's Encrypt Zertifikaten
+- ✅ **Non-Root Container** mit dedizierten UIDs (2001-2006)
+- ✅ **Read-Only Filesystems** wo möglich
+- ✅ **Resource Limits** (CPU/RAM) für alle Services
+- ✅ **Security Headers** (HSTS, CSP, X-Frame-Options)
+
+### 🚀 Easy Deployment
+- ✅ **One-Command Setup**: `./mintfv.sh init`
+- ✅ **Automatic SSL Renewal** alle 12h
+- ✅ **Health Checks** für alle Services
+- ✅ **Log Rotation** automatisch
+
+### 📊 Complete Stack
+- ✅ **MQTT**: Mosquitto Broker (geplant)
+- ✅ **Processing**: Node-RED v4.1.2
+- ✅ **Database**: InfluxDB 3.8 Core
+- ✅ **Visualization**: Grafana Latest
+- ✅ **Proxy**: nginx mit Rate-Limiting
+
+---
+
+## 🏗️ Architektur
 
 ```mermaid
-graph LR
-    A[Tasmota/IoT-Geräte] -->|MQTT| B[Mosquitto<br/>MQTT-Server]
-    B -->|MQTT Topics| C[Node-RED<br/>Datenverarbeitung]
-    C -->|Processed Data| D[InfluxDB<br/>Zeitreihendatenbank]
-    D -->|Query Data| E[Grafana<br/>Visualisierung]
-    F[Benutzer] -->|HTTP/HTTPS| G[nginx<br/>Webserver]
-    G -->|Proxy| E
+graph TB
+    subgraph Internet
+        A[IoT-Geräte<br/>Tasmota/ESP] 
+        B[Benutzer<br/>Browser]
+    end
     
-    style B fill:#90EE90
-    style C fill:#87CEEB
-    style D fill:#FFB6C1
-    style E fill:#DDA0DD
-    style G fill:#F0E68C
+    subgraph "MintFV Server"
+        C[nginx<br/>:443 HTTPS]
+        D[Certbot<br/>SSL Auto-Renewal]
+        E[Mosquitto<br/>MQTT Broker]
+        F[Node-RED<br/>Data Processing]
+        G[InfluxDB 3<br/>Time-Series DB]
+        H[Grafana<br/>Dashboards]
+    end
+    
+    A -->|MQTT| E
+    B -->|HTTPS| C
+    C -->|Reverse Proxy| H
+    C -->|Reverse Proxy| F
+    E -->|Subscribe| F
+    F -->|Write Data| G
+    G -->|Query Data| H
+    D -.->|Renew Certs| C
+    
+    style C fill:#f9f,stroke:#333,stroke-width:3px
+    style G fill:#bbf,stroke:#333,stroke-width:2px
+    style H fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
-**Datenfluss:**
-1. IoT-Geräte (Tasmota, etc.) senden Sensordaten via MQTT an den Mosquitto-Broker
-2. Node-RED abonniert relevante MQTT-Topics und verarbeitet die eingehenden Daten
-3. Die verarbeiteten Daten werden in InfluxDB als Zeitreihen gespeichert
-4. Grafana liest die Daten aus InfluxDB und erstellt Visualisierungen
-5. Benutzer greifen über nginx auf Grafana und andere Web-Frontends zu
+### Datenfluss
+
+1. **IoT → MQTT**: Sensoren senden Daten via MQTT
+2. **MQTT → Node-RED**: Verarbeitung und Filterung
+3. **Node-RED → InfluxDB**: Persistierung als Time-Series
+4. **Grafana ← InfluxDB**: Visualisierung in Dashboards
+5. **Benutzer → nginx → Services**: HTTPS Zugriff auf alle UIs
+
+---
 
 ## 🚀 Quick Start
 
 ### Voraussetzungen
 
-- Linux-Server mit Docker und Docker Compose installiert
-- Domain-Name, der auf die Server-IP zeigt (z.B. `mintfv.peddy.net`)
-- Ports 80 und 443 müssen von außen erreichbar sein
-- Email-Adresse für Let's Encrypt Benachrichtigungen
-
-### Ersteinrichtung
-
-**1. Konfiguration erstellen**
+- **Linux Server** mit Docker & Docker Compose
+- **Domain** die auf deinen Server zeigt (DNS konfiguriert)
+- **Ports offen**: 80 (HTTP), 443 (HTTPS)
+- **Email-Adresse** für Let's Encrypt Benachrichtigungen
 
 ```bash
-# Config-Datei aus Beispiel kopieren
-cp config-example.yaml config.yaml
+# Docker prüfen
+docker --version
+docker compose version
 
-# Anpassen mit deinen Daten
-nano config.yaml
+# DNS prüfen
+nslookup your-domain.com
 ```
 
-Trage ein:
-- `domain`: Deine Domain (z.B. `mintfv.peddy.net`)
-- `email`: Deine Email-Adresse
-- `letsencrypt.staging`: `true` (für erste Tests mit Staging-Zertifikaten!)
+### Setup-Ablauf
 
-**2. System initialisieren**
+```mermaid
+graph LR
+    A[config.yaml<br/>erstellen] --> B[./mintfv.sh<br/>init]
+    B --> C[Staging<br/>testen]
+    C --> D{Funktioniert?}
+    D -->|Ja| E[migrate-to-prod]
+    D -->|Nein| F[Logs prüfen]
+    F --> C
+    E --> G[✅ Production<br/>läuft]
+    
+    style A fill:#e1f5ff
+    style E fill:#d4edda
+    style G fill:#28a745,color:#fff
+```
+
+### 1️⃣ Repository klonen
 
 ```bash
-# Vollständige Erst-Initialisierung
+git clone https://github.com/MintFV/Datenhalde.git mintfv
+cd mintfv
+```
+
+### 2️⃣ Konfiguration erstellen
+
+```bash
+# Template kopieren
+cp config-example.yaml config.yaml
+
+# Anpassen
+vi config.yaml
+```
+
+**Wichtig:** Trage deine **Domain** und **Email** ein:
+
+```yaml
+domain: mintfv.example.com    # Deine Domain
+email: admin@example.com      # Deine Email
+
+letsencrypt:
+  staging: true               # ⚠️ Für erste Tests auf 'true' lassen!
+```
+
+> 💡 **Tipp**: Starte immer mit `staging: true` um Let's Encrypt Rate-Limits zu vermeiden!
+
+### 3️⃣ System initialisieren
+
+```bash
+# Erst-Setup (einmalig)
 ./mintfv.sh init
 ```
 
 Dies erstellt:
 - Verzeichnisstruktur
-- Dummy SSL-Zertifikate
-- Startet nginx und certbot
+- Self-Signed Dummy-Zertifikate
+- nginx Container
+- Certbot Container
 
-**3. Services starten**
-
-```bash
-./mintfv.sh start
-```
-
-**4. Status prüfen**
+### 4️⃣ Staging-Zertifikate testen
 
 ```bash
-# Status aller Services
+# Status prüfen
 ./mintfv.sh status
 
-# Logs anschauen
-./mintfv.sh logs nginx
-./mintfv.sh logs certbot
-
-# Webseite testen (HTTP)
-curl http://your-domain.com
+# HTTP testen
+curl -I http://your-domain.com
 ```
 
-**5. Migration zu Production SSL**
+### 5️⃣ Production aktivieren
 
-Wenn alles funktioniert, hole echte Let's Encrypt Zertifikate:
+Wenn Staging funktioniert:
 
 ```bash
-# Wechsel zu Production-Zertifikaten
+# Zu echten Let's Encrypt Zertifikaten wechseln
 ./mintfv.sh migrate-to-prod
 ```
 
-Dieser Befehl:
-- Stoppt alle Services
-- Löscht Staging-Zertifikate
-- Holt echte Production-Zertifikate von Let's Encrypt
-- Aktiviert SSL-Konfiguration (HTTPS)
-- Startet Services neu
-
-**6. HTTPS testen**
+### 6️⃣ HTTPS verifizieren
 
 ```bash
-# Testen mit curl
+# HTTPS testen
 curl -I https://your-domain.com
 
-# Zertifikat prüfen
-echo | openssl s_client -showcerts -servername your-domain.com -connect your-domain.com:443 2>/dev/null | openssl x509 -inform pem -noout -text
+# Browser: https://your-domain.com
 ```
 
-### Vollständiger Workflow
+### ✅ Fertig!
 
-```bash
-# 1. Setup
-cp config-example.yaml config.yaml
-nano config.yaml  # Domain + Email eintragen, staging: true
+Deine Services sind jetzt erreichbar:
+- **InfluxDB API**: `https://your-domain.com/influxdb/`
+- **Grafana**: `https://your-domain.com/grafana/` (Login: `admin`/`admin`)
+- **Node-RED**: `https://your-domain.com/nodered/`
 
-# 2. Initialisierung
-./mintfv.sh init
+---
 
-# 3. Starten
-./mintfv.sh start
+## 🛠️ Services
 
-# 4. Testen (Staging)
-curl http://your-domain.com
-./mintfv.sh status
+| Service | Status | Port | Zugriff | Dokumentation |
+|---------|--------|------|---------|---------------|
+| **nginx** | ✅ Aktiv | 80, 443 | - | [SSL-SETUP.md](SSL-SETUP.md) |
+| **certbot** | ✅ Aktiv | - | Auto-Renewal | [SSL-SETUP.md](SSL-SETUP.md) |
+| **InfluxDB 3** | ✅ Aktiv | - | `/influxdb/` | [INFLUXDB.md](INFLUXDB.md) |
+| **Grafana** | ✅ Aktiv | - | `/grafana/` | [GRAFANA.md](GRAFANA.md) |
+| **Node-RED** | ✅ Aktiv | - | `/nodered/` | [NODERED.md](NODERED.md) |
+| **Mosquitto** | ⏳ Geplant | 1883 | MQTT | - |
 
-# 5. Production aktivieren
-./mintfv.sh migrate-to-prod
+### Service Details
 
-# 6. HTTPS verifizieren
-curl -I https://your-domain.com
-```
-# Von Staging zu Production wechseln
-./mintfv.sh migrate-to-prod
-```
+#### InfluxDB 3 Core
+- **Version**: 3.8.0
+- **APIs**: v1 (InfluxQL), v2 (Compatibility), v3 (Native)
+- ⚠️ **Keine Web-UI**: Nutze Grafana oder CLI
+- **Token**: Siehe [INFLUXDB.md](INFLUXDB.md#admin-token-management)
 
-### Verfügbare Befehle
+#### Grafana
+- **Login**: `admin` / `admin` (beim ersten Login ändern!)
+- **Data Sources**: InfluxDB vorkonfiguriert
+- **Dashboards**: Import via UI
 
-```bash
-./mintfv.sh init              # Ersteinrichtung
-./mintfv.sh start             # Services starten
-./mintfv.sh stop              # Services stoppen
-./mintfv.sh restart           # Services neu starten
-./mintfv.sh status            # Status anzeigen
-./mintfv.sh logs [service]    # Logs anzeigen
-./mintfv.sh request-cert      # SSL-Zertifikat anfordern
-./mintfv.sh enable-ssl        # HTTPS aktivieren
-./mintfv.sh disable-ssl       # HTTPS deaktivieren
-./mintfv.sh migrate-to-prod   # Zu Production migrieren
-./mintfv.sh cleanup           # Alles löschen (Achtung!)
-```
+#### Node-RED
+- ⚠️ **Nicht Multi-Tenant**: Ein Workspace für alle User
+- **Setup**: Auth-Konfiguration in [NODERED.md](NODERED.md#quick-start-guide)
+- **InfluxDB Integration**: Node installieren (siehe Doku)
 
-## Konfiguration
+---
 
-### config.yaml
+## ⚙️ Konfiguration
 
-Zentrale Konfigurationsdatei für alle Services. Siehe [config-example.yaml](config-example.yaml) für alle Optionen.
+### Zentrale Konfigurationsdatei
 
-**Wichtigste Einstellungen:**
+[`config.yaml`](config-example.yaml) steuert alle Services:
 
 ```yaml
-domain: mintfv.peddy.net
+# Domain & Email (ANPASSEN!)
+domain: mintfv.example.com
 email: admin@example.com
 
+# SSL Modus (Start: staging=true, später: false)
 letsencrypt:
-  staging: true              # Immer mit true starten!
+  staging: true
   renewal_interval: 12h
 
+# Services aktivieren/deaktivieren
 services:
   nginx:
     enabled: true
-    user_id: 2001
-    group_id: 2100
+    memory_limit: 128M
+  
+  influxdb:
+    enabled: true
+    memory_limit: 512M    # Bei vielen Daten erhöhen
 ```
+
+💡 **Alle Optionen**: Siehe [`config-example.yaml`](config-example.yaml) für detaillierte Kommentare.
 
 ### Staging vs. Production
 
-**Let's Encrypt Rate Limits:**
-- Staging: Unbegrenzte Test-Zertifikate (nicht vertrauenswürdig)
-- Production: 5 Zertifikate pro Woche (vertrauenswürdig)
+```mermaid
+graph LR
+    A[Staging<br/>staging: true] -->|Test OK| B[migrate-to-prod]
+    B --> C[Production<br/>staging: false]
+    A -->|Fehler| D[Logs prüfen]
+    D --> A
+    
+    style A fill:#fff3cd
+    style C fill:#d4edda
+```
 
-**Workflow:**
-1. Start immer mit `staging: true`
-2. Teste alles gründlich
-3. Wenn alles läuft: `./mintfv.sh migrate-to-prod`
+**Staging**:
+- ✅ Unbegrenzte Zertifikats-Requests
+- ❌ Browser zeigt Warnung (nicht vertrauenswürdig)
+- 🎯 Zum Testen
 
-## Verzeichnisstruktur
+**Production**:
+- ✅ Vertrauenswürdige Zertifikate
+- ❌ Rate Limit: 5 Zerts/Woche
+- 🎯 Für Live-Betrieb
+
+### Verfügbare Kommandos
+
+```bash
+./mintfv.sh init              # Erst-Setup (einmalig)
+./mintfv.sh start             # Services starten
+./mintfv.sh stop              # Services stoppen
+./mintfv.sh restart           # Neustart
+./mintfv.sh status            # Status + Health
+./mintfv.sh logs [service]    # Logs anzeigen
+./mintfv.sh migrate-to-prod   # Staging → Production
+./mintfv.sh cleanup           # Alles löschen (⚠️ Vorsicht!)
+```
+
+---
+
+## 📚 Dokumentation
+
+### 🚦 Getting Started
+
+| Dokument | Wann nutzen? |
+|----------|--------------|
+| **[README.md](README.md)** | Du bist hier! Schnelleinstieg |
+| **[SSL-SETUP.md](SSL-SETUP.md)** | SSL/HTTPS Details, Troubleshooting |
+| **[DOCKER.md](DOCKER.md)** | UID/GID Konzept, Security-Regeln |
+
+### 🔧 Service-Dokumentation
+
+| Service | Dokumentation | Inhalt |
+|---------|---------------|--------|
+| **InfluxDB** | [INFLUXDB.md](INFLUXDB.md) | Token-Setup, API-Usage, Queries |
+| **Grafana** | [GRAFANA.md](GRAFANA.md) | Data Sources, Dashboards |
+| **Node-RED** | [NODERED.md](NODERED.md) | Auth-Setup, InfluxDB-Integration |
+
+### 🔐 Operations
+
+| Dokument | Wann nutzen? |
+|----------|--------------|
+| **[BACKUP.md](BACKUP.md)** | Backup-Strategie, Restore |
+| **[DOCKER.md](DOCKER.md)** | Permission-Probleme, neue Services |
+
+### 📖 Quick Reference
+
+<details>
+<summary><b>SSL-Zertifikate verwalten</b></summary>
+
+```bash
+# Status prüfen
+docker compose exec certbot certbot certificates
+
+# Manuell erneuern
+docker compose exec certbot certbot renew --force-renewal
+
+# Logs
+./mintfv.sh logs certbot
+```
+
+📖 Details: [SSL-SETUP.md](SSL-SETUP.md)
+</details>
+
+<details>
+<summary><b>InfluxDB Daten abfragen</b></summary>
+
+```bash
+# Token holen
+export TOKEN=$(sudo cat ./influxdb/tokens/admin.token | jq -r '.token')
+
+# Query ausführen
+docker compose exec -T -e INFLUXDB3_AUTH_TOKEN="$TOKEN" influxdb \
+  influxdb3 query --database mydb "SELECT * FROM measurement LIMIT 10"
+```
+
+📖 Details: [INFLUXDB.md](INFLUXDB.md#quick-reference)
+</details>
+
+<details>
+<summary><b>Node-RED absichern</b></summary>
+
+```bash
+# Passwort-Hash generieren
+docker compose exec nodered node-red admin hash-pw
+
+# settings.js editieren
+vi ./nodered/data/settings.js
+
+# Container neu starten
+docker compose restart nodered
+```
+
+📖 Details: [NODERED.md](NODERED.md#quick-start-guide)
+</details>
+
+<details>
+<summary><b>Backup erstellen</b></summary>
+
+```bash
+# Alle kritischen Daten
+sudo rsync -avz --delete \
+  ./influxdb/data/ /backup/mintfv/influxdb/
+sudo rsync -avz --delete \
+  ./grafana/data/ /backup/mintfv/grafana/
+```
+
+📖 Details: [BACKUP.md](BACKUP.md)
+</details>
+
+### 🔗 Externe Ressourcen
+
+- **Docker Compose**: https://docs.docker.com/compose/
+- **Let's Encrypt**: https://letsencrypt.org/docs/
+- **InfluxDB 3**: https://docs.influxdata.com/influxdb3/
+- **Grafana**: https://grafana.com/docs/
+- **Node-RED**: https://nodered.org/docs/
+
+---
+
+## 🔄 Wartung
+
+### Automatische Prozesse
+
+| Was | Intervall | Konfiguration |
+|-----|-----------|---------------|
+| **SSL-Renewal** | 12h | `config.yaml: renewal_interval` |
+| **Log-Rotation** | Bei 10MB | `docker-compose.yaml: logging` |
+| **Health-Checks** | 30s | `docker-compose.yaml: healthcheck` |
+
+### Regelmäßige Aufgaben
+
+#### Wöchentlich
+```bash
+# Status prüfen
+./mintfv.sh status
+
+# Logs auf Fehler prüfen
+docker compose logs --tail=100 | grep -i error
+```
+
+#### Monatlich
+```bash
+# Backup erstellen (siehe BACKUP.md)
+sudo rsync -avz ./influxdb/data/ /backup/mintfv/influxdb/
+
+# SSL-Zertifikate prüfen
+docker compose exec certbot certbot certificates
+```
+
+#### Bei Updates
+```bash
+# Git pullen
+git pull
+
+# Images aktualisieren
+docker compose pull
+
+# Neu starten
+./mintfv.sh restart
+```
+
+### Verzeichnisstruktur
 
 ```
 mintfv/
-├── config.yaml              # Deine Konfiguration
-├── config-example.yaml      # Konfigurations-Template
-├── docker-compose.yaml      # Docker Services
-├── mintfv.sh               # Management-Script
+├── 📄 config.yaml              # Deine Konfiguration (GIT-IGNORED)
+├── 📄 config-example.yaml      # Template (IN GIT)
+├── 📄 docker-compose.yaml      # Service-Definitionen
+├── 🔧 mintfv.sh               # Management-Script
 │
-├── nginx/
-│   ├── conf/               # Nginx-Konfiguration
-│   │   ├── default.conf    # HTTP-only (aktiv bei Start)
-│   │   └── ssl.conf        # HTTPS (nach enable-ssl)
-│   ├── html/               # Webseiten-Inhalte
-│   └── logs/               # Nginx-Logs [BACKUP]
+├── 📁 nginx/
+│   ├── conf/                  # Nginx-Konfig
+│   ├── html/                  # Statische Dateien
+│   └── logs/                  # ⚠️ BACKUP!
 │
-├── certbot/
-│   ├── conf/               # SSL-Zertifikate [BACKUP]
-│   ├── www/                # ACME-Challenge Dateien
-│   └── logs/               # Certbot-Logs [BACKUP]
+├── 📁 certbot/
+│   ├── conf/                  # SSL-Zertifikate ⚠️ BACKUP!
+│   ├── www/                   # ACME-Challenge
+│   └── logs/
 │
-└── [future: mosquitto, nodered, influxdb, grafana]
+├── 📁 influxdb/
+│   ├── data/                  # Time-Series Daten ⚠️ BACKUP!
+│   └── tokens/                # Admin-Token ⚠️ BACKUP!
+│
+├── 📁 grafana/
+│   └── data/                  # Dashboards/Config ⚠️ BACKUP!
+│
+└── 📁 nodered/
+    └── data/                  # Flows ⚠️ BACKUP!
 ```
 
-**[BACKUP]** = Diese Verzeichnisse sollten regelmäßig gesichert werden (siehe [BACKUP.md](BACKUP.md))
+⚠️ **BACKUP!** = Kritische Daten, siehe [BACKUP.md](BACKUP.md)
 
-## Security Features
+---
 
-Alle Services laufen mit maximaler Sicherheit:
-
-- ✅ **Non-root User**: User IDs ab 2001, keine root-Container
-- ✅ **Shared Group (GID 2100)**: Sichere File-Sharing zwischen Containern
-- ✅ **Read-only Filesystem**: nginx läuft mit read-only root
-- ✅ **Capability Dropping**: Alle Capabilities gedroppt, nur notwendige hinzugefügt
-- ✅ **No New Privileges**: Verhindert Privilege-Escalation
-- ✅ **Resource Limits**: CPU und Memory Limits für alle Container
-- ✅ **Automatic Log Rotation**: Max 10MB pro Datei, 3 Dateien behalten
-- ✅ **Security Headers**: HSTS, X-Frame-Options, CSP, etc.
-
-Details: [DOCKER.md](DOCKER.md)
-
-## Troubleshooting
+## 🔍 Troubleshooting
 
 ### Container startet nicht
 
 ```bash
 # Logs prüfen
-./mintfv.sh logs nginx
-./mintfv.sh logs certbot
+./mintfv.sh logs <service>
 
-# Status prüfen
-./mintfv.sh status
+# Health-Status
+docker compose ps
+
+# Neu starten
+./mintfv.sh restart
 ```
 
 ### SSL-Zertifikat kann nicht abgerufen werden
 
-**Prüfe:**
-1. DNS funktioniert: `nslookup your-domain.com`
-2. Port 80 ist offen: `curl http://your-domain.com/.well-known/acme-challenge/test`
-3. nginx ist healthy: `./mintfv.sh status`
-4. ACME-Challenge funktioniert: Prüfe nginx-Logs
+**Checkliste:**
+1. ✅ DNS korrekt? → `nslookup your-domain.com`
+2. ✅ Port 80 offen? → `curl http://your-domain.com`
+3. ✅ nginx healthy? → `docker compose ps nginx`
+4. ✅ ACME-Challenge funktioniert? → Nginx-Logs prüfen
 
-**Häufige Fehler:**
-- Domain zeigt nicht auf Server → DNS prüfen
-- Firewall blockt Port 80 → Firewall-Regeln prüfen
-- nginx nicht healthy → Container-Logs prüfen
+📖 Detailliertes Troubleshooting: [SSL-SETUP.md](SSL-SETUP.md#troubleshooting)
 
-### Migration zu Production fehlgeschlagen
+### Service nicht erreichbar
 
 ```bash
-# Zurück zu Staging
-nano config.yaml  # staging: true setzen
-./mintfv.sh cleanup
-./mintfv.sh init
+# nginx Reverse Proxy prüfen
+docker compose exec nginx nginx -t
+
+# Rate Limits prüfen
+./mintfv.sh logs nginx | grep "limiting requests"
+
+# Health-Check
+curl -I https://your-domain.com/influxdb/health
 ```
 
-### Kompletter Neustart
+### Permission Denied
 
 ```bash
-# Alles löschen und neu starten
-./mintfv.sh cleanup
-./mintfv.sh init
+# UID/GID prüfen
+ls -la ./influxdb/data/
+
+# Korrigieren (Beispiel InfluxDB: UID 2005, GID 2100)
+sudo chown -R 2005:2100 ./influxdb/data/
+sudo chmod -R 750 ./influxdb/data/
 ```
 
-## Automatisierung
+📖 UID/GID Konzept: [DOCKER.md](DOCKER.md)
 
-### Automatic Certificate Renewal
+### Häufige Fehler
 
-Certbot erneuert Zertifikate automatisch:
-- Prüfung alle 12 Stunden (konfigurierbar in config.yaml)
-- Erneuerung 30 Tage vor Ablauf
-- Keine manuelle Aktion nötig
+| Fehler | Ursache | Lösung |
+|--------|---------|--------|
+| `rate limit exceeded` | Zu viele Let's Encrypt Requests | Staging nutzen, 1 Woche warten |
+| `Connection refused` | Port nicht erreichbar | Firewall prüfen |
+| `Permission denied` | Falsche UID/GID | Siehe [DOCKER.md](DOCKER.md) |
+| `Lost connection` (Node-RED) | WebSocket Problem | nginx Config prüfen |
 
-### Automatic Log Rotation
+---
 
-Docker rotiert Logs automatisch:
-- Max 10MB pro Log-Datei
-- Max 3 Dateien behalten
-- Komprimierung aktiviert
+## 🤝 Support & Entwicklung
 
-## Services
+- **GitHub**: [MintFV/Datenhalde](https://github.com/MintFV/Datenhalde)
+- **Issues**: Bug-Reports über GitHub Issues
+- **Pull Requests**: Willkommen!
 
-### Aktive Services
 
-- **nginx** (UID 2001) - Webserver mit HTTPS und Let's Encrypt ✅
-- **certbot** (UID 2002) - SSL-Zertifikats-Management ✅
-- **grafana** (UID 2006) - Datenvisualisierung ✅
-  - Zugriff: `https://mintfv.peddy.net/grafana/`
-  - Standard-Login: `admin` / `admin` (bitte ändern!)
-- **influxdb** (UID 2005) - Zeitreihendatenbank (InfluxDB 3.8 Core) ✅
-  - API-Zugriff: `https://mintfv.peddy.net/influxdb/` (v1/v2/v3 APIs)
-  - ⚠️ **Keine Web-UI**: InfluxDB 3 Core hat keine eingebaute Benutzeroberfläche
-  - Admin-Token: siehe [INFLUXDB.md](INFLUXDB.md)
-  - Setup & Verwendung: siehe [INFLUXDB.md](INFLUXDB.md)
-- **nodered** (UID 2004) - Data Processing & Automation ✅
-  - Zugriff: `https://mintfv.peddy.net/nodered/`
-  - ⚠️ **Nicht Multi-Tenant**: Alle Benutzer teilen sich einen Workspace
-  - Initial Setup & Passwort: siehe [NODERED.md](NODERED.md)
-  - InfluxDB Integration: siehe [NODERED.md](NODERED.md)
+---
 
-### Zukünftige Services
-
-Folgende Services sind vorbereitet, aber noch nicht aktiviert:
-
-- **mosquitto** (UID 2003) - MQTT Broker
-
-Aktivierung erfolgt in zukünftigen Updates.
-
-## Weiterführende Dokumentation
-
-- [DOCKER.md](DOCKER.md) - Docker-Konventionen und GID-2100-Konzept
-- [SSL-SETUP.md](SSL-SETUP.md) - Detaillierte SSL-Einrichtung
-- [INFLUXDB.md](INFLUXDB.md) - InfluxDB 3 Core Setup und Verwendung
-- [NODERED.md](NODERED.md) - Node-RED Setup, Passwort-Konfiguration und Multi-Tenancy Limitierungen
-- [BACKUP.md](BACKUP.md) - Backup-Strategie mit rsync
-- [config-example.yaml](config-example.yaml) - Alle Konfigurationsoptionen
-
-## Support & Entwicklung
-
-- GitHub: <https://github.com/MintFV/Umweltbox>
-- Issues: Bitte GitHub Issues verwenden
-
-## Lizenz
-
-[Lizenz hier einfügen]
-
+**Letzte Aktualisierung**: 27. Dezember 2025  
+**Version**: 1.0
