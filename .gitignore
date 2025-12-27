@@ -10,6 +10,9 @@
 **/.env
 **/.env*
 !**/.env.example
+config.yaml       # NEU: Enthält Domain/Email (nur config-example.yaml committen)
+!config.yaml.example
+
 
 ## certbot files
 certbot/conf/.initialized
@@ -17,17 +20,69 @@ certbot/conf/archive/*
 !certbot/conf/archive/README.md
 certbot/conf/live/*
 certbot/conf/renewal/*
+certbot/conf/accounts/*
+certbot/logs/*
+!certbot/logs/.gitkeep
+certbot/www/.well-known/*
+!certbot/www/.well-known/.gitkeep
 
 
 ## influxdb data and sensitive tokens
 influxdb/data/*
 influxdb/tokens/*
+influxdb/plugins/*
+!influxdb/plugins/.gitkeep
+
 
 ## grafana data
 grafana/data/*.db
+grafana/data/grafana.db        # NEU: Explizit (SQLite DB)
+grafana/data/plugins/*         # NEU: Installierte Plugins
+grafana/data/png/*             # NEU: Screenshot Cache
+grafana/data/sessions/*        # NEU: User Sessions
+grafana/data/csv/*             # NEU: CSV Exports
+!grafana/data/.gitkeep
+
 
 ## nodered data and npm cache
 nodered/data/.npm/*
 nodered/data/settings.js
+nodered/data/node_modules/*
+nodered/data/.config.*.json*
+nodered/data/.sessions.json
+nodered/data/lib/
+!nodered/data/flows.json
 !nodered/data/flows_*.json
 !nodered/data/flows_*.json.backup
+
+
+
+
+################################################################################
+## backup files
+*.tar.gz                       # NEU: Backup Archives
+*.backup                       # NEU: Backup Dateien
+*.bak                          # NEU: Backup Dateien
+*-backup-*.tar.gz              # NEU: Timestamped Backups
+
+## OS files
+.DS_Store                      # NEU: macOS
+Thumbs.db                      # NEU: Windows
+desktop.ini                    # NEU: Windows
+.directory                     # NEU: KDE
+
+## IDE files
+.vscode/*                      # NEU: VS Code (außer settings)
+!.vscode/settings.json
+.idea/*                        # NEU: IntelliJ
+*.swp                          # NEU: Vim
+*.swo                          # NEU: Vim
+*~                             # NEU: Emacs
+
+## Docker
+.env.generated                 # NEU: Falls generiert aus config.yaml
+
+## Temporary files
+tmp/*                          # NEU: Temp Directory
+*.tmp                          # NEU: Temp Files
+*.log                          # NEU: Log Files (generell)
