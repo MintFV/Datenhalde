@@ -93,12 +93,15 @@ services:
       # # IPv4 explizit angeben mit 0.0.0.0:
       - "0.0.0.0:80:8080"
       - "0.0.0.0:443:8443"
+      - "0.0.0.0:8883:8883"   # MQTT over TLS
 
 
 
 
     volumes:
       - ./nginx/conf:/etc/nginx/conf.d:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro    # Custom nginx.conf with stream include
+      - ./nginx/stream.conf:/etc/nginx/mqtt.conf:ro  # MQTT TLS stream config
       - ./nginx/html:/usr/share/nginx/html:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
