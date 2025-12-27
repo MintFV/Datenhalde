@@ -362,7 +362,8 @@ services:
     ports:
       # IPv4 explizit angeben mit 0.0.0.0:
       - "0.0.0.0:1883:1883"    # MQTT
-      - "0.0.0.0:9001:9001"    # WebSocket
+    expose:
+      - "9001"    # WebSocket nur intern, via nginx
 
     volumes:
       - ./mosquitto/config:/mosquitto/config:ro
