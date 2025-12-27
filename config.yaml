@@ -1,0 +1,59 @@
+# MintFV Configuration File
+# For documentation see config-example.yaml
+
+domain: mintfv.peddy.net
+email: peddy@gmx.de
+
+letsencrypt:
+  staging: false
+  renewal_interval: 12h
+
+services:
+  nginx:
+    enabled: true
+    user_id: 2001
+    group_id: 2100
+    memory_limit: 128M
+    cpu_limit: 0.5
+
+  certbot:
+    enabled: true
+    user_id: 2002
+    group_id: 2100
+    memory_limit: 64M
+    cpu_limit: 0.25
+
+  mosquitto:
+    enabled: false
+    user_id: 2003
+    group_id: 2100
+    memory_limit: 64M
+    cpu_limit: 0.25
+
+  nodered:
+    enabled: false
+    user_id: 2004
+    group_id: 2100
+    memory_limit: 256M
+    cpu_limit: 0.5
+
+  influxdb:
+    enabled: true
+    user_id: 2005
+    group_id: 2100
+    memory_limit: 512M
+    cpu_limit: 1.0
+
+  grafana:
+    enabled: true
+    user_id: 2006
+    group_id: 2100
+    memory_limit: 256M
+    cpu_limit: 0.5
+
+logging:
+  max_size: 10m
+  max_files: 3
+  compress: true
+
+timezone: Europe/Berlin
