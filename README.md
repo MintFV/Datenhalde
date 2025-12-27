@@ -9,6 +9,8 @@ Dies soll auf einem Linuxserver mithilfe Docker passieren, der folgende Dockerco
 4. **influxdb** - Zeitreihendatenbank -- speichert die ganzen Daten
 5. **grafana** - Visualisierung -- erzeugt die Tabellen und andere Visualisierungen
 
+📖 **Vollständige Dokumentation**: Siehe [DOCS-INDEX.md](DOCS-INDEX.md) für eine strukturierte Übersicht aller Dokumentationen.
+
 ## Architektur
 
 ```mermaid

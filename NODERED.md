@@ -6,6 +6,103 @@ Node-RED ist ein flow-basiertes Development Tool für visuelle Programmierung, b
 
 **Wichtig: Node-RED ist NICHT multi-tenant fähig!** Es gibt nur einen globalen Admin-Zugang. Alle Benutzer mit Login-Zugang haben vollen Zugriff auf alle Flows und Konfigurationen.
 
+---
+
+## ⚡ Quick Start Guide
+
+### ✅ Installations-Checkliste
+
+- [x] Container läuft: `mintfv-nodered` (v4.1.2)
+- [x] HTTPS Zugriff: https://mintfv.peddy.net/nodered/
+- [x] Reverse Proxy funktioniert
+- [ ] Authentifizierung aktiviert (Standard: OFFEN!)
+- [ ] credentialSecret gesetzt
+- [ ] InfluxDB Integration getestet
+
+### 🔒 Quick Setup: Authentifizierung
+
+**Aktuell läuft Node-RED OHNE Login-Schutz!** Schnell absichern:
+
+```bash
+# 1. Passwort-Hash generieren
+docker compose exec nodered node-red admin hash-pw
+# Gib dein Passwort ein → Kopiere Hash
+
+# 2. Container stoppen
+docker compose stop nodered
+
+# 3. settings.js editieren (Zeile ~100-150)
+nano ./nodered/data/settings.js
+```
+
+Aktiviere `adminAuth`:
+```javascript
+adminAuth: {
+    type: "credentials",
+    users: [{
+        username: "admin",
+        password: "$2y$08$DEIN_GENERIERTER_HASH",
+        permissions: "*"
+    }]
+},
+```
+
+```bash
+# 4. Container starten
+docker compose start nodered
+
+# 5. Login testen
+# https://mintfv.peddy.net/nodered/
+# Username: admin, Password: [dein Passwort]
+```
+
+### 🔐 Quick Setup: Credentials verschlüsseln
+
+```bash
+# 1. Secret generieren
+openssl rand -hex 32
+
+# 2. In settings.js eintragen (Zeile ~44)
+credentialSecret: "56caxx171685xxx5a39badad0f36cbf2e62725df80ce5430368273c02891f087",
+
+# 3. Container neu starten
+docker compose restart nodered
+```
+
+⚠️ **Wichtig**: Nach dem ersten Setzen NICHT mehr ändern!
+
+### 📊 Quick Setup: InfluxDB Integration
+
+```bash
+# 1. Im Node-RED UI: Menu → Manage palette → Install
+# Suche: node-red-contrib-influxdb
+
+# 2. Admin Token holen
+export ADMIN_TOKEN=$(sudo cat ./influxdb/tokens/admin.token | jq -r '.token')
+echo $ADMIN_TOKEN
+
+# 3. InfluxDB Node konfigurieren
+# Version: 2.0
+# URL: http://influxdb:8181
+# Token: [Dein Admin Token]
+# Bucket: mintfv
+```
+
+### ✅ Schnelle Verifikation
+
+```bash
+# Container Status
+docker compose ps nodered
+
+# HTTPS Test
+curl -fsS https://mintfv.peddy.net/nodered/ | grep "Node-RED"
+
+# Logs
+docker compose logs --tail=50 nodered
+```
+
+---
+
 ## Service Details
 
 - **Docker Image**: `nodered/node-red:latest`
@@ -473,6 +570,203 @@ credentialSecret: "your-secret-key-min-32-chars-recommended",
 openssl rand -hex 32
 ```
 
+---
+
+## 🔐 Advanced: Environment Variable Security
+
+Für Production-Umgebungen empfiehlt sich das Auslagern von Credentials in Environment-Variablen.
+
+### Übersicht
+
+| Datei | Beschreibung | Git? |
+|-------|--------------|------|
+| `settings.js` | Bereinigte Konfiguration mit env-vars | ✅ JA |
+| `.env.example` | Template für Secrets | ✅ JA |
+| `.env` | Echte Secrets | ❌ NEIN |
+
+### Installation
+
+#### 1. Backup erstellen
+
+```bash
+cd ~/mintfv
+cp nodered/data/settings.js nodered/data/settings.js.backup-$(date +%Y%m%d-%H%M%S)
+```
+
+#### 2. settings.js für env-vars anpassen
+
+Ersetze hart-codierte Werte durch Environment-Variablen:
+
+```javascript
+// VORHER:
+adminAuth: {
+    type: "credentials",
+    users: [{
+        username: "admin",
+        password: "$2b$08$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJ",
+        permissions: "*"
+    }]
+},
+credentialSecret: "56ca4d1716853e5a39badad0f36cbff2e62725df80ce5430368273c02891f087",
+
+// NACHHER:
+adminAuth: {
+    type: "credentials",
+    users: [{
+        username: process.env.NODE_RED_ADMIN_USERNAME || "admin",
+        password: process.env.NODE_RED_ADMIN_PASSWORD_HASH,
+        permissions: "*"
+    }]
+},
+credentialSecret: process.env.NODE_RED_CREDENTIAL_SECRET,
+```
+
+#### 3. .env-Datei erstellen
+
+```bash
+# .env.example als Vorlage kopieren (wenn vorhanden)
+cp .env.example .env
+
+# Oder neu erstellen
+cat > .env << 'EOF'
+# Node-RED Credentials
+NODE_RED_ADMIN_USERNAME=admin
+NODE_RED_ADMIN_PASSWORD_HASH=$2b$08$YOUR_HASH_HERE
+NODE_RED_CREDENTIAL_SECRET=YOUR_SECRET_HERE
+EOF
+
+# WICHTIG: Echte Werte eintragen!
+nano .env
+```
+
+#### 4. docker-compose.yaml anpassen
+
+```yaml
+services:
+  nodered:
+    # ... bestehende Config ...
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Berlin
+```
+
+#### 5. .gitignore prüfen
+
+```bash
+# .env muss in .gitignore stehen!
+grep -q "^\.env$" .gitignore || echo ".env" >> .gitignore
+```
+
+#### 6. Node-RED neustarten
+
+```bash
+# Container mit neuer env-Konfiguration starten
+docker compose up -d --force-recreate nodered
+
+# Logs prüfen
+docker compose logs -f nodered
+
+# Sollte zeigen: "Settings file: /data/settings.js"
+# KEINE Fehler über fehlende credentialSecret!
+```
+
+#### 7. Login testen
+
+```bash
+# Browser öffnen
+https://mintfv.peddy.net/nodered/
+
+# Login mit Werten aus .env:
+# Username: NODE_RED_ADMIN_USERNAME
+# Password: [Original-Passwort, nicht der Hash]
+```
+
+### Neue Secrets generieren
+
+#### Neues Admin-Passwort
+
+```bash
+# 1. Hash generieren
+docker compose exec nodered node-red admin hash-pw
+
+# 2. Passwort eingeben
+# 3. Hash kopieren
+
+# 4. In .env eintragen
+nano .env
+# NODE_RED_ADMIN_PASSWORD_HASH=<neuer-hash>
+
+# 5. Restart
+docker compose restart nodered
+```
+
+#### Neuer Credential Secret
+
+```bash
+# 1. Key generieren
+openssl rand -hex 32
+
+# 2. In .env eintragen
+nano .env
+# NODE_RED_CREDENTIAL_SECRET=<neuer-key>
+
+# ACHTUNG: Bestehende Flow-Credentials gehen verloren!
+# Nur bei Neuinstallation verwenden!
+```
+
+### Troubleshooting env-vars
+
+#### Problem: "credentialSecret is required"
+
+```bash
+# .env wird nicht geladen - prüfe docker-compose.yaml
+grep -A 5 "nodered:" docker-compose.yaml | grep "env_file"
+
+# Container neu erstellen (nicht nur restart!)
+docker compose up -d --force-recreate nodered
+```
+
+#### Problem: Environment-Variablen leer
+
+```bash
+# Im Container prüfen
+docker compose exec nodered env | grep NODE_RED
+
+# Sollte die Werte aus .env zeigen
+```
+
+#### Problem: Login funktioniert nicht
+
+```bash
+# Passwort-Hash im Container prüfen
+docker compose exec nodered sh -c 'echo $NODE_RED_ADMIN_PASSWORD_HASH'
+
+# Sollte den Hash zeigen, nicht leer sein
+```
+
+### Security Best Practices für env-vars
+
+1. ✅ `.env` in `.gitignore` halten
+2. ✅ `.env.example` ins Git committen (ohne echte Werte)
+3. ✅ `credentialSecret` NIEMALS ändern nach dem ersten Start
+4. ✅ Admin-Passwort regelmäßig ändern
+5. ✅ Backups der `.env` außerhalb des Repos speichern (verschlüsselt!)
+
+### Was committen?
+
+```bash
+# ✅ JA - Bereinigte Konfiguration
+git add nodered/data/settings.js
+git add .env.example
+git add .gitignore
+
+# ❌ NEIN - Wird durch .gitignore ausgeschlossen
+# .env (echte Secrets)
+```
+
+---
+
 ## Monitoring
 
 ### Health Status prüfen
@@ -504,6 +798,101 @@ In `docker-compose.yaml`:
 ```yaml
 deploy:
   resources:
+    limits:
+      cpus: '1.0'      # Erhöhen bei vielen Flows
+      memory: 512M     # Erhöhen bei großen Flows
+```
+
+### Node.js Heap Size
+
+In `docker-compose.yaml`:
+
+```yaml
+environment:
+  - NODE_OPTIONS=--max-old-space-size=512
+```
+
+---
+
+## Backup & Restore
+
+**Wichtig:** Node-RED Flows und Konfigurationen sollten regelmäßig gesichert werden!
+
+### Was muss gesichert werden?
+
+```
+nodered/data/
+├── flows.json         # Alle Flows [KRITISCH]
+├── flows_cred.json    # Verschlüsselte Credentials [KRITISCH]
+├── settings.js        # Konfiguration [WICHTIG]
+├── package.json       # Installierte Nodes
+└── lib/flows/         # Flow-Library (optional)
+```
+
+### Backup erstellen
+
+```bash
+# Mit mintfv Backup-Script (empfohlen)
+./backup.sh create
+
+# Oder manuell
+sudo tar -czf nodered-backup-$(date +%Y%m%d).tar.gz \
+  -C ./nodered/data \
+  flows.json \
+  flows_cred.json \
+  settings.js \
+  package.json
+
+# Oder mit rsync
+sudo rsync -avz --delete \
+  ./nodered/data/ \
+  /backup/mintfv/nodered/data/
+```
+
+### Restore
+
+```bash
+# Container stoppen
+docker compose stop nodered
+
+# Backup wiederherstellen
+sudo tar -xzf nodered-backup-20251227.tar.gz -C ./nodered/data/
+
+# Oder mit rsync
+sudo rsync -avz --delete \
+  /backup/mintfv/nodered/data/ \
+  ./nodered/data/
+
+# Permissions korrigieren
+sudo chown -R 2004:2100 ./nodered/data
+sudo chmod -R 750 ./nodered/data
+
+# Container starten
+docker compose start nodered
+```
+
+**Detaillierte Backup-Strategie:** Siehe [BACKUP.md](BACKUP.md)
+
+---
+
+## Siehe auch
+
+- **[INFLUXDB.md](INFLUXDB.md)** - InfluxDB Integration für Daten-Speicherung
+- **[GRAFANA.md](GRAFANA.md)** - Grafana für Dashboards nutzen
+- **[BACKUP.md](BACKUP.md)** - Vollständige Backup-Strategie
+- **[DOCKER.md](DOCKER.md)** - UID/GID Permissions verstehen
+- **[README.md](README.md)** - Projekt-Übersicht und Quick Start
+
+### Externe Dokumentation
+
+- **Node-RED Docs**: https://nodered.org/docs/
+- **Security Guide**: https://nodered.org/docs/user-guide/runtime/securing-node-red
+- **Flow Library**: https://flows.nodered.org/
+- **InfluxDB Node**: https://flows.nodered.org/node/node-red-contrib-influxdb
+
+---
+
+**Letzte Aktualisierung**: 27. Dezember 2025
     limits:
       cpus: '1.0'      # Erhöhen bei vielen Flows
       memory: 512M     # Erhöhen bei großen Flows

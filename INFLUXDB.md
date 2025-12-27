@@ -6,6 +6,104 @@ InfluxDB 3 Core ist die neueste Generation der InfluxDB Time-Series Datenbank mi
 
 **Version**: 3.8.0 (3-core)
 
+---
+
+## ⚡ Quick Reference
+
+### Token Management
+
+```bash
+# Token auslesen
+export ADMIN_TOKEN=$(sudo cat ./influxdb/tokens/admin.token | jq -r '.token')
+echo $ADMIN_TOKEN
+```
+
+### Häufige Befehle
+
+#### Datenbank-Operationen
+
+```bash
+# Datenbanken auflisten
+docker compose exec -T -e INFLUXDB3_AUTH_TOKEN="$ADMIN_TOKEN" influxdb \
+  influxdb3 show databases
+
+# Datenbank erstellen
+docker compose exec -T -e INFLUXDB3_AUTH_TOKEN="$ADMIN_TOKEN" influxdb \
+  influxdb3 create database DBNAME
+
+# Datenbank mit Retention erstellen
+docker compose exec -T -e INFLUXDB3_AUTH_TOKEN="$ADMIN_TOKEN" influxdb \
+  influxdb3 create database DBNAME --retention-period "30d"
+```
+
+#### Daten schreiben
+
+```bash
+# Einzelner Datenpunkt
+docker compose exec -T -e INFLUXDB3_AUTH_TOKEN="$ADMIN_TOKEN" influxdb \
+  influxdb3 write --database DBNAME \
+  "measurement,tag1=value1 field1=123.45"
+
+# Via HTTP API (v1)
+curl -i "https://mintfv.peddy.net/influxdb/write?db=DBNAME&precision=s" \
+  --header "Authorization: Bearer $ADMIN_TOKEN" \
+  --data-binary 'measurement,location=office temperature=23.5'
+```
+
+#### Daten abfragen
+
+```bash
+# SQL Query
+docker compose exec -T -e INFLUXDB3_AUTH_TOKEN="$ADMIN_TOKEN" influxdb \
+  influxdb3 query --database DBNAME \
+  "SELECT * FROM measurement ORDER BY time DESC LIMIT 10"
+
+# InfluxQL via HTTP (v1)
+curl --get "https://mintfv.peddy.net/influxdb/query" \
+  --header "Authorization: Token $ADMIN_TOKEN" \
+  --data-urlencode "db=DBNAME" \
+  --data-urlencode "q=SELECT * FROM measurement LIMIT 10"
+```
+
+#### Status & Monitoring
+
+```bash
+# Container Status
+docker compose ps influxdb
+
+# Health Check
+curl -i https://mintfv.peddy.net/influxdb/health
+
+# Logs
+docker compose logs influxdb --tail=50
+
+# System Info
+docker compose exec -T -e INFLUXDB3_AUTH_TOKEN="$ADMIN_TOKEN" influxdb \
+  influxdb3 show system summary
+```
+
+#### Troubleshooting Quick Fixes
+
+```bash
+# Container neu starten
+docker compose restart influxdb
+
+# Vollständiger Neustart
+docker compose stop influxdb
+docker compose rm -f influxdb
+docker compose up -d influxdb
+
+# Token-Datei prüfen
+sudo cat ./influxdb/tokens/admin.token | jq .
+
+# Permissions korrigieren
+sudo chown -R 2005:2100 ./influxdb/data ./influxdb/tokens
+sudo chmod 750 ./influxdb/data
+sudo chmod 600 ./influxdb/tokens/admin.token
+```
+
+---
+
 ## Zugriff
 
 ### Web UI
@@ -875,6 +973,91 @@ Für lange Zeiträume aggregierte Daten speichern:
 ```flux
 // Task erstellen: Stündliche Aggregation
 option task = {name: "downsample-hourly", every: 1h}
+
+from(bucket: "raw-data")
+  |> range(start: -1h)
+  |> aggregateWindow(every: 1m, fn: mean)
+  |> to(bucket: "downsampled")
+```
+
+---
+
+## Backup & Restore
+
+**Wichtig:** InfluxDB-Daten sollten regelmäßig gesichert werden!
+
+### Was muss gesichert werden?
+
+```
+influxdb/
+├── data/              # Alle Datenbanken, Time-Series Daten [KRITISCH]
+│   ├── influxd.bolt  # Metadata DB
+│   └── engine/       # Parquet Files (eigentliche Daten)
+└── tokens/            # Admin Token [KRITISCH]
+    └── admin.token
+```
+
+### Backup erstellen
+
+```bash
+# Mit mintfv Backup-Script (empfohlen)
+./backup.sh create
+
+# Oder manuell mit rsync
+sudo rsync -avz --delete \
+  ./influxdb/data/ \
+  /backup/mintfv/influxdb/data/
+
+sudo rsync -avz --delete \
+  ./influxdb/tokens/ \
+  /backup/mintfv/influxdb/tokens/
+```
+
+### Restore
+
+```bash
+# Container stoppen
+docker compose stop influxdb
+
+# Backup wiederherstellen
+sudo rsync -avz --delete \
+  /backup/mintfv/influxdb/data/ \
+  ./influxdb/data/
+
+sudo rsync -avz --delete \
+  /backup/mintfv/influxdb/tokens/ \
+  ./influxdb/tokens/
+
+# Permissions korrigieren
+sudo chown -R 2005:2100 ./influxdb/data ./influxdb/tokens
+sudo chmod -R 750 ./influxdb/data
+sudo chmod 600 ./influxdb/tokens/admin.token
+
+# Container starten
+docker compose start influxdb
+```
+
+**Detaillierte Backup-Strategie:** Siehe [BACKUP.md](BACKUP.md)
+
+---
+
+## Siehe auch
+
+- **[GRAFANA.md](GRAFANA.md)** - InfluxDB Daten in Grafana visualisieren
+- **[NODERED.md](NODERED.md)** - Daten mit Node-RED schreiben/lesen
+- **[BACKUP.md](BACKUP.md)** - Vollständige Backup-Strategie
+- **[DOCKER.md](DOCKER.md)** - UID/GID Permissions verstehen
+- **[README.md](README.md)** - Projekt-Übersicht und Quick Start
+
+### Externe Dokumentation
+
+- **InfluxDB 3 Core Docs**: https://docs.influxdata.com/influxdb3/
+- **API Reference**: https://docs.influxdata.com/influxdb/v2/api/
+- **Community Forum**: https://community.influxdata.com/
+
+---
+
+**Letzte Aktualisierung**: 27. Dezember 2025
 
 from(bucket: "sensors")
   |> range(start: -2h)

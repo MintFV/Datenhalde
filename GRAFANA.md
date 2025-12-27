@@ -1,5 +1,16 @@
 # Grafana Setup und Konfiguration
 
+## Überblick
+
+Grafana ist eine Open-Source Visualisierungs- und Monitoring-Platform für Time-Series Daten. In diesem Setup läuft Grafana hinter nginx mit SSL und ist über `/grafana/` erreichbar.
+
+**Quick Links:**
+- 📖 [InfluxDB Integration](INFLUXDB.md) - Datenquelle einrichten
+- 📖 [Backup-Strategie](BACKUP.md) - Dashboards sichern
+- 📖 [Node-RED Integration](NODERED.md) - Daten von Node-RED visualisieren
+
+---
+
 ## Zugriff
 
 Grafana ist über nginx Reverse Proxy erreichbar:
@@ -198,21 +209,65 @@ docker compose restart grafana
 - `grafana-piechart-panel` - Pie Chart
 - `grafana-worldmap-panel` - World Map
 
-## Backup
+## Backup & Restore
 
-Wichtige Dateien für Backup:
+**Wichtig:** Grafana Dashboards und Datenquellen-Konfigurationen sollten regelmäßig gesichert werden!
+
+### Was muss gesichert werden?
+
+```
+grafana/data/
+├── grafana.db         # SQLite DB (Dashboards, Users, Settings) [KRITISCH]
+├── plugins/           # Installierte Plugins
+└── sessions/          # User-Sessions (optional)
+```
+
+### Backup erstellen
 
 ```bash
-# Backup erstellen
+# Mit mintfv Backup-Script (empfohlen)
 ./backup.sh create
 
-# Oder manuell
-rsync -av --delete \
+# Oder manuell mit rsync
+sudo rsync -avz --delete \
   ./grafana/data/ \
   /backup/mintfv/grafana/data/
 ```
 
-Details: [BACKUP.md](BACKUP.md)
+### Restore
+
+```bash
+# Container stoppen
+docker compose stop grafana
+
+# Backup wiederherstellen
+sudo rsync -avz --delete \
+  /backup/mintfv/grafana/data/ \
+  ./grafana/data/
+
+# Permissions korrigieren
+sudo chown -R 2006:2100 ./grafana/data
+sudo chmod -R 750 ./grafana/data
+
+# Container starten
+docker compose start grafana
+```
+
+**Detaillierte Backup-Strategie:** Siehe [BACKUP.md](BACKUP.md)
+
+---
+
+## Siehe auch
+
+- **[INFLUXDB.md](INFLUXDB.md)** - InfluxDB als Datenquelle einrichten
+- **[NODERED.md](NODERED.md)** - Daten mit Node-RED vorverarbeiten
+- **[BACKUP.md](BACKUP.md)** - Vollständige Backup-Strategie
+- **[DOCKER.md](DOCKER.md)** - UID/GID Permissions verstehen
+- **[README.md](README.md)** - Projekt-Übersicht und Quick Start
+
+---
+
+**Letzte Aktualisierung**: 27. Dezember 2025
 
 ## Performance Tuning
 
