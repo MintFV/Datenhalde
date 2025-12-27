@@ -378,6 +378,13 @@ services:
     user: "2004:2100"
     group_add:
       - "2100"
+    env_file:
+      - .env
+    # Oder explizit:
+    # environment:
+    #   - NODE_RED_ADMIN_USER=${NODE_RED_ADMIN_USER}
+    #   - NODE_RED_ADMIN_PASSWORD_HASH=${NODE_RED_ADMIN_PASSWORD_HASH}
+    #   - NODE_RED_CREDENTIAL_SECRET=${NODE_RED_CREDENTIAL_SECRET}
 
     depends_on:
       influxdb:
