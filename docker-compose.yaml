@@ -88,20 +88,22 @@ services:
     depends_on:
       certbot-init:
         condition: service_completed_successfully
+      mosquitto:
+        condition: service_started
+      # grafana:
+      #   condition: service_started
+      # influxdb:
+      #   condition: service_healthy
 
     ports:
       # # IPv4 explizit angeben mit 0.0.0.0:
-      - "0.0.0.0:80:8080"
-      - "0.0.0.0:443:8443"
-      - "0.0.0.0:8883:8883"   # MQTT over TLS
-
-
-
-
+      - "0.0.0.0:80:8080"      # HTTP (redirect to HTTPS)
+      - "0.0.0.0:443:8443"     # HTTPS
+      - "0.0.0.0:8883:8883"    # MQTTS (via Stream Module)
     volumes:
-      - ./nginx/conf:/etc/nginx/conf.d:ro
-      # - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro    # Custom nginx.conf with stream include
+      # - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/stream.conf:/etc/nginx/mqtt.conf:ro  # MQTT TLS stream config
+      - ./nginx/conf:/etc/nginx/conf.d:ro
       - ./nginx/html:/usr/share/nginx/html:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
@@ -165,6 +167,7 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt:rw
       - ./certbot/www:/var/www/certbot:rw
+      - ./certbot/logs:/var/log/letsencrypt:rw
 
     environment:
       - TZ=${TZ:-Europe/Berlin}
@@ -202,6 +205,13 @@ services:
       - DAC_OVERRIDE
       - SETGID
       - SETUID
+
+    healthcheck:
+      test: ["CMD-SHELL", "certbot --version >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
     deploy:
       resources:
@@ -252,7 +262,7 @@ services:
       - ./grafana/data:/var/lib/grafana
 
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS --max-time 2 http://localhost:3000/grafana/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS4 --max-time 2 http://localhost:3000/grafana/api/health || exit 1"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -317,7 +327,7 @@ services:
       - ./influxdb/tokens:/var/lib/influxdb3/tokens:ro
 
     healthcheck:
-      test: ["CMD-SHELL", "curl -f --max-time 2 http://localhost:8181/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS4 --max-time 2 http://localhost:8181/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -381,14 +391,12 @@ services:
           cpus: '0.25'
           memory: 64M
 
-    # Healthcheck deaktiviert wegen Authentifizierung
-    # Service läuft stabil, Port-Check über externe Monitoring-Tools empfohlen
-    # healthcheck:
-    #   test: ["CMD-SHELL", "timeout 3 pidof mosquitto || exit 1"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 10s
+    healthcheck:
+      test: ["CMD-SHELL", "pidof mosquitto >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
     logging: *default-logging
 
@@ -414,8 +422,6 @@ services:
     depends_on:
       influxdb:
         condition: service_healthy
-      grafana:
-        condition: service_healthy
 
     environment:
       - TZ=${TZ:-Europe/Berlin}
@@ -428,7 +434,7 @@ services:
     <<: *default-security
 
     healthcheck:
-      test: ["CMD-SHELL", "curl -sS --max-time 5 http://localhost:1880/nodered/ > /dev/null"]
+      test: ["CMD-SHELL", "curl -fsS4 --max-time 5 http://localhost:1880/nodered/ > /dev/null"]
       interval: 30s
       timeout: 10s
       retries: 3
