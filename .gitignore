@@ -104,7 +104,7 @@ desktop.ini                    # NEU: Windows
 .env.generated                 # NEU: Falls generiert aus config.yaml
 
 ## Temporary files
-tmp/*                          # NEU: Temp Directory
+tmp/
 *.tmp                          # NEU: Temp Files
 *.log                          # NEU: Log Files (generell)
 
