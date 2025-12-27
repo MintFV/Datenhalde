@@ -1,5 +1,35 @@
 # ============================================================================
-# MintFV Multi-Tenant ACL Configuration
+# MintFV Multi-Tenant ACL Configuration - EXAMPLE
+# ============================================================================
+#
+# WICHTIGE HINWEISE:
+#
+# 1. ACL-VALIDIERUNG NUR ÜBER BROKER-LOGS!
+#    - Client-Return-Codes (QoS 0) zeigen IMMER SUCCESS
+#    - Auch wenn Broker die Nachricht per ACL blockiert!
+#    - Validierung: docker compose logs -f mosquitto | grep "Denied"
+#
+# 2. MOSQUITTO HAT DEFAULT-DENY
+#    - Alles was nicht explizit erlaubt ist, wird blockiert
+#    - NIEMALS "topic deny #" verwenden! (blockiert nachfolgende allow-Regeln)
+#
+# 3. SYNTAX-REGELN
+#    - Wildcards: # (multi-level), + (single-level)
+#    - Reihenfolge: "user" Zeile MUSS vor "topic" Zeilen kommen
+#    - Keine führenden Leerzeichen/Tabs vor "topic"
+#    - pattern vs topic: Verwende "topic" (sicherer, siehe CVE-2017-7650)
+#
+# 4. TESTING
+#    - Automatisiert: ./test-acl.sh --verbose
+#    - Manuell: Siehe MOSQUITTO.md - "ACL Testing & Validation"
+#    - Troubleshooting: Siehe TROUBLESHOOTING-ACL.md
+#
+# 5. VERWENDUNG
+#    cp mosquitto.acl.example mosquitto.acl
+#    chmod 640 mosquitto.acl
+#    chgrp 2100 mosquitto.acl
+#    docker compose restart mosquitto
+#
 # ============================================================================
 
 # ============================================================================
@@ -87,5 +117,56 @@ topic read $SYS/#
 # MONITORING USER (optional - read-only für Systemüberwachung)
 # ============================================================================
 user monitoring
-topic read $SYS/#
-topic read tenant/+/+/status
+topic read #  # Kann alles lesen (für Monitoring-Dashboards)
+
+# ============================================================================
+# HINWEISE & BEST PRACTICES
+# ============================================================================
+#
+# ❌ HÄUFIGE FEHLER:
+#
+# 1. "topic deny #" verwenden:
+#    user sensor01
+#    topic deny #           # ← FALSCH! Blockiert ALLES!
+#    topic write sensors/#  # ← Hat keine Wirkung mehr
+#
+#    Richtig:
+#    user sensor01
+#    topic write sensors/#  # Alles andere automatisch denied!
+#
+# 2. Falsche Wildcards:
+#    topic write sensors/*  # ← FALSCH! * gibt es nicht in MQTT
+#    topic write sensors/#  # ← RICHTIG!
+#
+# 3. Permissions vergessen:
+#    chmod 600 mosquitto.acl  # ← Zu restriktiv
+#    chmod 640 mosquitto.acl  # ← RICHTIG! (Group 2100 muss lesen können)
+#
+# 4. Topic-Namespace Kollisionen:
+#    user tenant-a-sensor01
+#    topic write sensors/01/#  # ← KONFLIKT mit Tenant B!
+#
+#    Richtig:
+#    topic write tenant/tenant-a/sensor01/#  # ← Namespace-Isolation
+#
+# ============================================================================
+# TESTING
+# ============================================================================
+#
+# Nach jeder Änderung TESTEN:
+#
+#   ./test-acl.sh --verbose
+#
+# Oder manuell:
+#
+#   # Terminal 1: Logs
+#   docker compose logs -f mosquitto | grep -E "(Received|Denied)"
+#
+#   # Terminal 2: Test
+#   mosquitto_pub -u tenant-a-sensor01 -P sensor01 \
+#     -t "tenant/tenant-b/hack" -m "test"
+#
+#   # Terminal 1 sollte zeigen:
+#   # Denied PUBLISH from tenant-a-sensor01  ✓ ACL funktioniert!
+#
+# ============================================================================

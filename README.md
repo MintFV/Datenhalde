@@ -391,6 +391,32 @@ docker compose restart nodered
 </details>
 
 <details>
+<summary><b>MQTT ACL testen</b></summary>
+
+```bash
+# Alle Multi-Tenant ACL-Regeln testen
+./test-acl.sh
+
+# Nur bestimmten Tenant testen
+./test-acl.sh --tenant tenant-a
+
+# Mit Debug-Output (zeigt Broker-Logs)
+./test-acl.sh --verbose
+
+# Manueller Test mit Live-Logs
+# Terminal 1:
+docker compose logs -f mosquitto | grep -E "(Received|Denied)"
+
+# Terminal 2:
+mosquitto_pub -h mintfv.peddy.net -p 1883 \
+  -u tenant-a-sensor01 -P sensor01 \
+  -t "tenant/tenant-a/sensor01/test" -m "hello"
+```
+
+📖 Details: [MOSQUITTO.md - ACL Testing](MOSQUITTO.md#-acl-testing--validation) | [TROUBLESHOOTING-ACL.md](TROUBLESHOOTING-ACL.md)
+</details>
+
+<details>
 <summary><b>Backup erstellen</b></summary>
 
 ```bash

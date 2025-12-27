@@ -803,6 +803,215 @@ ports:
 
 ---
 
+## 🧪 ACL Testing & Validation
+
+### ⚠️ KRITISCHES VERSTÄNDNIS: QoS 0 "Fire and Forget"
+
+**WICHTIG:** MQTT-Clients mit **QoS 0** zeigen IMMER "SUCCESS" - auch wenn der Broker die Nachricht per ACL blockiert!
+
+#### Warum Client-Return-Codes NICHT aussagekräftig sind
+
+```bash
+# ❌ FALSCHE Erwartung
+mosquitto_pub -h mintfv.peddy.net -p 1883 \
+  -u tenant-a-sensor01 -P sensor01 \
+  -t "tenant/tenant-b/data" -m "HACK"
+
+# Client zeigt: SUCCESS ✓
+# → ACHTUNG: Das bedeutet NICHT, dass die Nachricht akzeptiert wurde!
+```
+
+**Grund (MQTT-Spezifikation):**
+- **QoS 0** = "Fire and Forget" - keine Bestätigung vom Broker
+- Der Client sendet die Nachricht und wartet NICHT auf Antwort
+- Laut MQTT-Spec ist das korrektes Verhalten
+- **Quelle**: HiveMQ - "QoS 0: The recipient does not acknowledge receiving the message"
+
+#### ✅ RICHTIGE Validierung: Broker-Logs prüfen
+
+**Die EINZIGE zuverlässige Methode:**
+
+```bash
+# Terminal 1: Logs in Echtzeit ansehen
+docker compose logs -f mosquitto
+
+# Terminal 2: Verbotenen Publish testen
+mosquitto_pub -h mintfv.peddy.net -p 1883 \
+  -u tenant-a-sensor01 -P sensor01 \
+  -t "tenant/tenant-b/data" -m "test"
+
+# Terminal 1 zeigt:
+# 1735328123: Denied PUBLISH from tenant-a-sensor01 (192.168.1.100, 1, 'tenant/tenant-b/data')
+# → ✓ ACL funktioniert korrekt!
+```
+
+### 🔍 Test-Szenarien
+
+#### Test 1: Erlaubter Publish (Positive Test)
+
+```bash
+# Terminal 1: Logs
+docker compose logs -f mosquitto | grep -E "(Received|Denied)"
+
+# Terminal 2: Erlaubter Topic
+mosquitto_pub -h mintfv.peddy.net -p 1883 \
+  -u tenant-a-sensor01 -P sensor01 \
+  -t "tenant/tenant-a/sensor01/temperature" \
+  -m "23.5"
+
+# Erwarteter Log:
+# Received PUBLISH from tenant-a-sensor01 (1, 0, 'tenant/tenant-a/sensor01/temperature')
+```
+
+#### Test 2: Verbotener Publish (Negative Test)
+
+```bash
+# Verbotener Topic (anderer Tenant)
+mosquitto_pub -h mintfv.peddy.net -p 1883 \
+  -u tenant-a-sensor01 -P sensor01 \
+  -t "tenant/tenant-b/sensor01/temperature" \
+  -m "23.5"
+
+# Erwarteter Log:
+# Denied PUBLISH from tenant-a-sensor01 (..., 'tenant/tenant-b/sensor01/temperature')
+```
+
+#### Test 3: Cross-Tenant Isolation
+
+```bash
+# Tenant A versucht in Tenant B zu schreiben
+mosquitto_pub -h mintfv.peddy.net -p 1883 \
+  -u tenant-a-admin -P alpha2024! \
+  -t "tenant/tenant-b/admin/commands" \
+  -m "test"
+
+# Erwarteter Log:
+# Denied PUBLISH from tenant-a-admin
+```
+
+#### Test 4: SUBSCRIBE Verhalten
+
+**⚠️ WICHTIG:** `mosquitto_sub` zeigt KEINEN Fehler bei verbotenen Topics!
+
+```bash
+# Terminal 1: Subscribe auf verbotenen Topic
+mosquitto_sub -h mintfv.peddy.net -p 1883 \
+  -u tenant-a-sensor01 -P sensor01 \
+  -t "tenant/tenant-b/#" -v
+
+# Client zeigt: (wartet auf Nachrichten - keine Fehlermeldung!)
+# Broker-Log zeigt: KEIN "Denied SUBSCRIBE"
+
+# ABER: Der Client empfängt trotzdem KEINE Nachrichten!
+# ACL funktioniert korrekt - nur die Fehlermeldung fehlt.
+```
+
+**Validierung:**
+```bash
+# Terminal 1: Subscribe
+mosquitto_sub -u tenant-a-sensor01 -P sensor01 -t "tenant/tenant-b/#" -v
+
+# Terminal 2: Publish in verbotenen Topic
+mosquitto_pub -u tenant-b-admin -P beta2024! \
+  -t "tenant/tenant-b/test" -m "sollte nicht ankommen"
+
+# Terminal 1: Zeigt NICHTS (ACL blockiert korrekt)
+```
+
+### 🧰 Automatisiertes Test-Skript
+
+Siehe [test-acl.sh](test-acl.sh) für vollständige ACL-Validierung:
+
+```bash
+# Alle ACL-Regeln testen
+./test-acl.sh
+
+# Nur bestimmten Tenant testen
+./test-acl.sh --tenant tenant-a
+
+# Mit Debug-Output
+./test-acl.sh --verbose
+```
+
+Das Skript validiert:
+- ✅ Erlaubte Publishes funktionieren
+- ✅ Verbotene Publishes werden blockiert
+- ✅ Cross-Tenant-Isolation aktiv
+- ✅ Admin-Rechte korrekt
+- ✅ Sensor Write-Only Regeln
+
+### 🚨 Häufige Fehler & Missverständnisse
+
+#### ❌ Fehler 1: "topic deny #" verwenden
+
+```acl
+# ❌ FALSCH - blockiert ALLES inkl. nachfolgender allow-Regeln!
+user tenant-a-sensor01
+topic deny #
+topic write tenant/tenant-a/sensor01/#  # Hat keine Wirkung!
+```
+
+**Grund:** Mosquitto hat bereits **default-deny** für nicht-explizit erlaubte Topics.
+
+```acl
+# ✅ RICHTIG - nur allow definieren
+user tenant-a-sensor01
+topic write tenant/tenant-a/sensor01/#
+# Alles andere ist automatisch denied!
+```
+
+#### ❌ Fehler 2: Client-Return-Codes vertrauen
+
+```bash
+# ❌ FALSCH
+if mosquitto_pub -u user -P pass -t topic -m msg; then
+    echo "Nachricht wurde akzeptiert"  # NEIN! Nur gesendet!
+fi
+
+# ✅ RICHTIG
+mosquitto_pub -u user -P pass -t topic -m msg
+docker compose logs --tail=5 mosquitto | grep -q "Denied PUBLISH" && echo "BLOCKIERT"
+```
+
+#### ❌ Fehler 3: QoS 0 für kritische Nachrichten
+
+```bash
+# ❌ Risiko - keine Fehlerbehandlung möglich
+mosquitto_pub -q 0 -t important/data -m "critical"
+
+# ✅ Besser - QoS 1 gibt Fehler bei ACL-Deny zurück
+mosquitto_pub -q 1 -t important/data -m "critical"
+# Würde mit Exit-Code 1 fehlschlagen bei ACL-Deny
+```
+
+### 🔧 Debug-Logging aktivieren
+
+Für detaillierte ACL-Logs in `mosquitto.conf`:
+
+```conf
+# Alle Log-Typen aktivieren (nur für Debugging!)
+log_type all
+log_type error
+log_type warning
+log_type notice
+log_type information
+log_type subscribe
+log_type unsubscribe
+
+# In Produktion nur Errors:
+# log_type error
+# log_type warning
+```
+
+Neu laden:
+```bash
+docker compose restart mosquitto
+```
+
+### 📊 Monitoring & Debugging
+
+---
+
 ## 📊 Monitoring & Debugging
 
 ### $SYS Topics
