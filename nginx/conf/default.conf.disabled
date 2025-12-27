@@ -1,0 +1,43 @@
+# Default nginx configuration for MintFV
+# HTTP only with ACME challenge support
+
+server {
+    listen 8080 default_server;
+    listen [::]:8080 default_server;
+
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html index.htm;
+
+    # ACME challenge location for Let's Encrypt (must be before dot-file deny)
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        try_files $uri =404;
+    }
+
+    # Main location
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+    # Hide nginx version
+    server_tokens off;
+
+    # Deny access to hidden files (except .well-known)
+    location ~ /\.(?!well-known) {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    # Access and error logs to STDOUT/STDERR
+    access_log /dev/stdout;
+    error_log /dev/stderr warn;
+}

@@ -1,0 +1,26 @@
+
+
+# config files, sensitive data
+**/.env
+**/.env*
+!**/.env.example
+
+## certbot files
+certbot/conf/.initialized
+certbot/conf/archive/*
+!certbot/conf/archive/README.md
+certbot/conf/live/*
+certbot/conf/renewal/*
+
+
+## influxdb data and sensitive tokens
+influxdb/data/*
+influxdb/tokens/*
+
+## grafana data
+grafana/data/*.db
+
+## nodered data and npm cache
+# nodered/data/flows_*.json
+nodered/data/.npm/*
+nodered/data/settings.js
