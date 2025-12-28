@@ -168,6 +168,7 @@ services:
       - ./certbot/conf:/etc/letsencrypt:rw
       - ./certbot/www:/var/www/certbot:rw
       - ./certbot/logs:/var/log/letsencrypt:rw
+      - ./certbot/lib:/var/lib/letsencrypt:rw
 
     environment:
       - TZ=${TZ:-Europe/Berlin}
