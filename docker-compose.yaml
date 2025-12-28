@@ -370,12 +370,12 @@ services:
     group_add:
       - "2100"
 
-    ports:
-      # IPv4 explizit angeben mit 0.0.0.0:
-      - "0.0.0.0:1883:1883"    # MQTT
+    # ports:
+    #   # IPv4 explizit angeben mit 0.0.0.0:
+    #   - "0.0.0.0:1883:1883"    # MQTT
     expose:
       - "9001"    # WebSocket nur intern, via nginx
-
+      - "1883"    # MQTT nur intern, via nginx
     volumes:
       - ./mosquitto/config:/mosquitto/config:ro
       - ./mosquitto/data:/mosquitto/data:rw
