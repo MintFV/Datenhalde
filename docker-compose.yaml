@@ -138,7 +138,7 @@ services:
       - NGINX_PORT=8080
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "--max-time", "5", "http://localhost:8080/"]
+      test: ["CMD", "curl", "-fsS4", "--max-time", "5", "http://localhost:8080/"]
       interval: 30s
       timeout: 10s
       retries: 3
