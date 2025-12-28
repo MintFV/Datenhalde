@@ -24,12 +24,12 @@ nginx/conf/*.disabled
 certbot/conf/.initialized
 certbot/conf/archive/*
 !certbot/conf/archive/README.md
-certbot/conf/live/*
-certbot/conf/renewal/*
-certbot/conf/accounts/*
+certbot/conf/live/
+certbot/conf/renewal/
+certbot/conf/accounts/
 certbot/logs/*
 !certbot/logs/.gitkeep
-certbot/www/.well-known/*
+certbot/www/.well-known/
 !certbot/www/.well-known/.gitkeep
 
 
@@ -46,9 +46,9 @@ TENANT-CREDENTIALS.md
 
 
 ## influxdb data and sensitive tokens
-influxdb/data/*
-influxdb/tokens/*
-influxdb/plugins/*
+influxdb/data/
+influxdb/tokens/
+influxdb/plugins/
 !influxdb/plugins/.gitkeep
 
 
