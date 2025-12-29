@@ -102,4 +102,3 @@ rm -rf ./certbot/conf/* ./certbot/logs/* ./nginx/logs/*
 1. Don't create scripts on host - use container entrypoints/commands
 2. Don't assume default permissions work - always set explicit user:group
 3. Don't use --privileged unless absolutely necessary
-4. Always test with staging certificates first

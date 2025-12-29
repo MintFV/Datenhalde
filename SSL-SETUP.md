@@ -5,47 +5,38 @@ This document describes the SSL/HTTPS setup using Let's Encrypt certificates, ru
 ## Overview
 
 SSL certificates are managed by:
-- **certbot-init**: One-time initialization container (creates dummy certificates)
-- **certbot**: Long-running container for automatic certificate renewal
+- **certbot-init**: One-time initialization container (creates dummy certificates for initial setup)
+- **certbot**: Long-running container for automatic certificate renewal every 12 hours
 - **nginx**: Webserver serving ACME challenges and HTTPS content
 
 All operations run in containers - no host-level scripts required.
 
 ## Quick Start
 
-### 1. Initial Setup (Staging)
+### 1. Configuration
 
 ```bash
-# Configure domain and email in config.yaml (staging: true)
-cp config-example.yaml config.yaml
-vi config.yaml
+# Configure domain and email in .env
+cp env.example .env
+vi .env
 
-# Initialize system with staging certificates
-./mintfv.sh init
+# Set your domain and email:
+DOMAIN=your-domain.com
+EMAIL=your-email@example.com
+```
+
+### 2. Start Services
+
+```bash
+# Initialize system with dummy certificates and start services
 ./mintfv.sh start
 ```
 
 This:
-- Creates dummy SSL certificates
+- Creates dummy SSL certificates for initial setup
 - Starts nginx in HTTP mode with ACME challenge support
-- Starts certbot renewal service (staging mode)
-
-### 2. Migration to Production
-
-Once everything works with staging:
-
-```bash
-# Switch to production certificates (trusted by browsers)
-./mintfv.sh migrate-to-prod
-```
-
-This command automatically:
-- Updates config.yaml to `staging: false`
-- Stops all services
-- Removes staging certificates
-- Requests production certificates from Let's Encrypt
-- Activates SSL configuration (HTTPS)
-- Restarts all services
+- Starts certbot renewal service for automatic certificate management
+- Requests production certificates from Let's Encrypt automatically
 
 ### 3. Verify HTTPS
 
@@ -57,34 +48,6 @@ curl -I https://your-domain.com
 echo | openssl s_client -showcerts -servername your-domain.com \
   -connect your-domain.com:443 2>/dev/null | openssl x509 -noout -text
 ```
-
-## Staging vs Production
-
-### Let's Encrypt Staging
-
-**Advantages:**
-- Unlimited certificate requests
-- No rate limits (50/week limit in production)
-- Safe for testing
-
-**Disadvantages:**
-- Certificates not trusted by browsers
-- Shows security warnings ("Not Secure")
-
-### Let's Encrypt Production
-
-**Advantages:**
-- Certificates trusted by all browsers
-- No security warnings
-
-**Disadvantages:**
-- Rate limit: 5 certificates per week per domain
-- Failed attempts count towards limit
-
-**Recommended Workflow:**
-1. Always start with staging
-2. Test everything thoroughly
-3. Only migrate to production when confident
 
 ## Certificate Lifecycle
 
@@ -215,7 +178,12 @@ This is a warning, not an error. Certbot cannot chown files but will still work.
 
 You've hit Let's Encrypt production limits:
 - Wait 1 week before trying again
-- Or use staging mode for testing
+- Delete the old certificate and restart:
+  ```bash
+  rm -rf certbot/conf/live/your-domain/
+  rm -rf certbot/conf/archive/your-domain-*/
+  ./mintfv.sh restart
+  ```
 
 ### Certificate Not Loading
 
@@ -244,13 +212,16 @@ curl http://your-domain.com/.well-known/acme-challenge/../../test.txt
 # If not, check nginx configuration and logs
 ```
 
-### Staging to Production Migration Fails
+### Request New Certificate
 
+If you need to request a new certificate:
 ```bash
-# Revert to staging
-vi config.yaml  # Set staging: true
-./mintfv.sh cleanup
-./mintfv.sh init
+# Remove old certificate
+rm -rf certbot/conf/live/your-domain/
+rm -rf certbot/conf/archive/your-domain-*/
+
+# Restart services - certbot will automatically request new certificate
+./mintfv.sh restart
 ```
 
 ## Security Considerations

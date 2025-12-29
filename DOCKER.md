@@ -241,7 +241,6 @@ Load from config.yaml via environment variables:
 environment:
   - DOMAIN=${DOMAIN:-mintfv.peddy.net}
   - EMAIL=${EMAIL:-admin@example.com}
-  - STAGING=${STAGING:-1}
   - TZ=${TZ:-Europe/Berlin}
 ```
 
