@@ -8,10 +8,8 @@
 
 ## config files, sensitive data
 **/.env
-**/.env*
-!**/.env.example
-config.yaml
-!config-example.yaml
+**/.env.local
+!env.example
 
 ## nginx files
 nginx/logs/*
@@ -40,9 +38,6 @@ mosquitto/logs/*
 !mosquitto/logs/.gitkeep
 mosquitto/config/mosquitto.passwd
 mosquitto/config/mosquitto.acl
-
-# Tenant Credentials (enthält Passwörter!)
-TENANT-CREDENTIALS.md
 
 
 ## influxdb data and sensitive tokens

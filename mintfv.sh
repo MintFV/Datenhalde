@@ -7,7 +7,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-CONFIG_FILE="config.yaml"
+CONFIG_FILE=".env"
 COMPOSE_FILE="docker-compose.yaml"
 ENV_FILE=".env"
 
@@ -43,32 +43,26 @@ check_requirements() {
 
     if [ ! -f "$CONFIG_FILE" ]; then
         log_error "Configuration file $CONFIG_FILE not found."
-        log_info "Please copy config-example.yaml to config.yaml and adjust the values."
+        log_info "Please copy env.example to .env and adjust the values."
         exit 1
     fi
 }
 
 load_config() {
-    if command -v yq &> /dev/null; then
-        # Use yq if available for proper YAML parsing
-        export DOMAIN=$(yq eval '.domain' "$CONFIG_FILE")
-        export EMAIL=$(yq eval '.email' "$CONFIG_FILE")
-        export STAGING=$(yq eval '.letsencrypt.staging' "$CONFIG_FILE")
-        export RENEWAL_INTERVAL=$(yq eval '.letsencrypt.renewal_interval' "$CONFIG_FILE")
-        export TZ=$(yq eval '.timezone' "$CONFIG_FILE")
+    # Load from .env file
+    if [ -f "$CONFIG_FILE" ]; then
+        # Export all variables from .env
+        set -a
+        source "$CONFIG_FILE"
+        set +a
     else
-        # Fallback: simple grep-based parsing
-        log_warn "yq not installed, using simple config parsing (install yq for better support)"
-        export DOMAIN=$(grep '^domain:' "$CONFIG_FILE" | awk '{print $2}')
-        export EMAIL=$(grep '^email:' "$CONFIG_FILE" | awk '{print $2}')
-        export STAGING=$(grep 'staging:' "$CONFIG_FILE" | awk '{print $2}')
-        export RENEWAL_INTERVAL=$(grep 'renewal_interval:' "$CONFIG_FILE" | awk '{print $2}')
-        export TZ=$(grep '^timezone:' "$CONFIG_FILE" | awk '{print $2}')
+        log_error ".env file not found"
+        exit 1
     fi
 
     # Validate required variables
     if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
-        log_error "Domain and email must be set in $CONFIG_FILE"
+        log_error "DOMAIN and EMAIL must be set in $CONFIG_FILE"
         exit 1
     fi
 
@@ -244,13 +238,9 @@ migrate_to_production() {
         return 0
     fi
 
-    # Update config.yaml
-    log_info "Updating config.yaml to production mode..."
-    if command -v yq &> /dev/null; then
-        yq eval '.letsencrypt.staging = false' -i "$CONFIG_FILE"
-    else
-        sed -i 's/staging: true/staging: false/g' "$CONFIG_FILE"
-    fi
+    # Update .env to production mode
+    log_info "Updating .env to production mode..."
+    sed -i 's/^STAGING=1/STAGING=0/g' \"$CONFIG_FILE\"
 
     # Reload config
     load_config
@@ -259,7 +249,7 @@ migrate_to_production() {
     stop_services
 
     # Clean up staging certificates
-    log_info "Removing staging certificates..."
+    log_info \"Removing staging certificates...\"
     rm -rf certbot/conf/live/* certbot/conf/archive/* certbot/conf/renewal/*
 
     # Reinitialize
