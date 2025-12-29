@@ -98,7 +98,6 @@ services:
       #   condition: service_healthy
 
     ports:
-      # # IPv4 explizit angeben mit 0.0.0.0:
       - "0.0.0.0:80:8080"      # HTTP (redirect to HTTPS)
       - "0.0.0.0:443:8443"     # HTTPS
       - "0.0.0.0:8883:8883"    # MQTTS (via Stream Module)
@@ -370,9 +369,6 @@ services:
     group_add:
       - "2100"
 
-    # ports:
-    #   # IPv4 explizit angeben mit 0.0.0.0:
-    #   - "0.0.0.0:1883:1883"    # MQTT
     expose:
       - "9001"    # WebSocket nur intern, via nginx
       - "1883"    # MQTT nur intern, via nginx
