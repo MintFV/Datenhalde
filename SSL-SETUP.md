@@ -18,7 +18,7 @@ All operations run in containers - no host-level scripts required.
 ```bash
 # Configure domain and email in config.yaml (staging: true)
 cp config-example.yaml config.yaml
-nano config.yaml
+vi config.yaml
 
 # Initialize system with staging certificates
 ./mintfv.sh init
@@ -248,7 +248,7 @@ curl http://your-domain.com/.well-known/acme-challenge/../../test.txt
 
 ```bash
 # Revert to staging
-nano config.yaml  # Set staging: true
+vi config.yaml  # Set staging: true
 ./mintfv.sh cleanup
 ./mintfv.sh init
 ```

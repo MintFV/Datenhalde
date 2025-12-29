@@ -145,7 +145,7 @@ docker compose logs -f nginx | grep "TCP"
 
 ### 1. Config bearbeiten
 ```bash
-nano nginx/conf.d/02-ssl.conf
+vi nginx/conf.d/02-ssl.conf
 ```
 
 ### 2. Syntax prüfen

@@ -18,7 +18,7 @@ IoT-Datenplattform mit MQTT, Node-RED, InfluxDB & Grafana.
 ```bash
 git clone https://github.com/your-org/mintfv.git && cd mintfv
 cp env.example .env
-nano .env  # DOMAIN + EMAIL anpassen
+vi .env  # DOMAIN + EMAIL anpassen
 docker compose up -d
 ```
 

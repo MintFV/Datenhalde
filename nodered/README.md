@@ -33,7 +33,7 @@ docker compose exec nodered npx node-red admin hash-pw
 
 ### 2. In .env eintragen
 ```bash
-nano .env
+vi .env
 ```
 
 Füge hinzu:
@@ -44,7 +44,7 @@ NODE_RED_ADMIN_PASSWORD_HASH='$2y$08$...'  # Dein generierter Hash
 
 ### 3. Settings aktivieren
 ```bash
-nano ./nodered/data/settings.js
+vi ./nodered/data/settings.js
 ```
 
 Aktiviere (ca. Zeile 100):
