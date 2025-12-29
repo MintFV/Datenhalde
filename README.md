@@ -150,7 +150,6 @@ mosquitto_sub -h [DOMAIN] -p 1883 -u monitoring -P monitor2024! -t '$SYS/#' -C 1
 
 ### Let's Encrypt SSL
 - **Automatische Erneuerung** alle 12h
-- **Staging Mode** für Tests (siehe `.env`)
 - **HTTPS-Only** (HTTP → HTTPS Redirect)
 
 ### Non-Root Container
@@ -198,7 +197,7 @@ Kopiere `env.example` zu `.env` und passe an:
 ```bash
 DOMAIN=mintfv.peddy.net
 EMAIL=admin@example.com
-STAGING=1  # 1=Test, 0=Production (⚠️ Start mit 1!)
+RENEWAL_INTERVAL=12h
 TZ=Europe/Berlin
 ```
 

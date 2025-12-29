@@ -70,10 +70,10 @@ docker compose exec certbot certbot renew
 ### Zertifikat-Pfade
 ```
 /etc/letsencrypt/live/mintfv.peddy.net/
-├── fullchain.pem  → ../archive/mintfv.peddy.net-0001/fullchain1.pem
-├── privkey.pem    → ../archive/mintfv.peddy.net-0001/privkey1.pem
-├── cert.pem       → ../archive/mintfv.peddy.net-0001/cert1.pem
-└── chain.pem      → ../archive/mintfv.peddy.net-0001/chain1.pem
+├── fullchain.pem  → ../archive/mintfv.peddy.net/fullchain1.pem
+├── privkey.pem    → ../archive/mintfv.peddy.net/privkey1.pem
+├── cert.pem       → ../archive/mintfv.peddy.net/cert1.pem
+└── chain.pem      → ../archive/mintfv.peddy.net/chain1.pem
 ```
 
 ---

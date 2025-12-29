@@ -69,7 +69,6 @@ load_config() {
     log_info "Configuration loaded:"
     log_info "  Domain: $DOMAIN"
     log_info "  Email: $EMAIL"
-    log_info "  Staging: $STAGING"
     log_info "  Timezone: $TZ"
 }
 
@@ -89,12 +88,7 @@ init_directories() {
 init_ssl() {
     log_info "Initializing SSL certificates..."
 
-    if [ "$STAGING" = "true" ]; then
-        log_warn "Using Let's Encrypt STAGING environment"
-        log_warn "Certificates will not be trusted by browsers!"
-    else
-        log_info "Using Let's Encrypt PRODUCTION environment"
-    fi
+    log_info "Using Let's Encrypt PRODUCTION environment"
 
     # Start certbot-init to create dummy certificates
     docker compose up -d certbot-init
@@ -115,12 +109,6 @@ init_ssl() {
 request_real_certificate() {
     log_info "Requesting real SSL certificate from Let's Encrypt..."
 
-    local staging_flag=""
-    if [ "$STAGING" = "true" ]; then
-        staging_flag="--staging"
-        log_warn "Using STAGING environment"
-    fi
-
     # Request certificate using webroot method
     docker compose run --rm certbot certonly \
         --webroot \
@@ -128,7 +116,6 @@ request_real_certificate() {
         --email "$EMAIL" \
         --agree-tos \
         --no-eff-email \
-        $staging_flag \
         -d "$DOMAIN" || {
         log_error "Certificate request failed"
         log_info "Check if:"
@@ -207,12 +194,7 @@ show_status() {
     log_info "Health Checks:"
     docker compose ps --format "table {{.Name}}\t{{.Status}}"
     echo ""
-
-    if [ "$STAGING" = "true" ]; then
-        log_warn "Currently using Let's Encrypt STAGING environment"
-    else
-        log_info "Currently using Let's Encrypt PRODUCTION environment"
-    fi
+    log_info "Currently using Let's Encrypt PRODUCTION environment"
 }
 
 show_logs() {
@@ -224,58 +206,6 @@ show_logs() {
     fi
 }
 
-migrate_to_production() {
-    log_warn "=== Migration to PRODUCTION ==="
-    log_warn "This will:"
-    log_warn "  1. Delete all existing staging certificates"
-    log_warn "  2. Request new production certificates"
-    log_warn "  3. Restart all services"
-    echo ""
-    read -p "Continue? (yes/no): " -r
-
-    if [ "$REPLY" != "yes" ]; then
-        log_info "Migration cancelled"
-        return 0
-    fi
-
-    # Update .env to production mode
-    log_info "Updating .env to production mode..."
-    sed -i 's/^STAGING=1/STAGING=0/g' \"$CONFIG_FILE\"
-
-    # Reload config
-    load_config
-
-    # Stop services
-    stop_services
-
-    # Clean up staging certificates
-    log_info \"Removing staging certificates...\"
-    rm -rf certbot/conf/live/* certbot/conf/archive/* certbot/conf/renewal/*
-
-    # Reinitialize
-    init_directories
-    init_ssl
-    start_services
-
-    # Wait for nginx to be healthy
-    log_info "Waiting for nginx to be ready..."
-    sleep 15
-
-    # Request production certificate
-    request_real_certificate || {
-        log_error "Failed to get production certificate"
-        log_info "Reverting to staging mode..."
-        sed -i 's/staging: false/staging: true/g' "$CONFIG_FILE"
-        return 1
-    }
-
-    # Enable SSL
-    enable_ssl
-    restart_services
-
-    log_info "✓ Successfully migrated to PRODUCTION"
-    log_info "Your site should now be accessible via HTTPS at https://$DOMAIN"
-}
 
 cleanup() {
     log_warn "=== Cleanup ==="
@@ -314,7 +244,6 @@ Commands:
     request-cert        Request real SSL certificate from Let's Encrypt
     enable-ssl          Enable HTTPS (switches nginx to SSL config)
     disable-ssl         Disable HTTPS (switches nginx to HTTP-only config)
-    migrate-to-prod     Migrate from staging to production certificates
 
     cleanup             Remove all containers and data (destructive!)
 
@@ -323,7 +252,6 @@ Examples:
     $0 start            # Start all services
     $0 status           # Check service status
     $0 logs nginx       # Show nginx logs
-    $0 migrate-to-prod  # Switch to production certificates
 
 Configuration:
     Edit config.yaml to change domain, email, and other settings
@@ -350,7 +278,6 @@ main() {
             log_info "  1. Verify nginx is accessible: http://$DOMAIN"
             log_info "  2. Request real certificate: $0 request-cert"
             log_info "  3. Enable HTTPS: $0 enable-ssl"
-            log_info "  4. When ready: $0 migrate-to-prod"
             ;;
 
         start)
@@ -391,12 +318,6 @@ main() {
         disable-ssl)
             disable_ssl
             restart_services
-            ;;
-
-        migrate-to-prod)
-            check_requirements
-            load_config
-            migrate_to_production
             ;;
 
         cleanup)

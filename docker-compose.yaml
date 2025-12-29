@@ -30,7 +30,6 @@ services:
     environment:
       - DOMAIN=${DOMAIN:-mintfv.peddy.net}
       - EMAIL=${EMAIL:-admin@example.com}
-      - STAGING=${STAGING:-1}
       - TZ=${TZ:-Europe/Berlin}
 
     entrypoint: /bin/sh
@@ -38,7 +37,6 @@ services:
       -c '
       echo "=== Certbot Init Container ===" &&
       echo "Domain: $${DOMAIN}" &&
-      echo "Staging: $${STAGING}" &&
 
       if [ ! -f "/etc/letsencrypt/live/$${DOMAIN}/fullchain.pem" ]; then
         echo "Creating dummy certificate for $${DOMAIN}..." &&
@@ -172,20 +170,11 @@ services:
       - ./certbot/lib:/var/lib/letsencrypt:rw
     environment:
       - TZ=${TZ:-Europe/Berlin}
-      - STAGING=${STAGING:-1}
       - RENEWAL_INTERVAL=${RENEWAL_INTERVAL:-12h}
     entrypoint: /bin/sh
     command:
       - -c
       - |
-        STAGING_FLAG=""
-        if [ "$${STAGING}" = "1" ]; then
-          STAGING_FLAG="--staging"
-          echo "[$(date)] Certbot: Using Let's Encrypt STAGING environment"
-        else
-          echo "[$(date)] Certbot: Using Let's Encrypt PRODUCTION environment"
-        fi
-
         trap exit TERM
         while :; do
           echo "[$(date)] Running certificate renewal check..."
@@ -193,7 +182,6 @@ services:
             --webroot \
             --webroot-path=/var/www/certbot \
             --quiet \
-            $${STAGING_FLAG} \
             --deploy-hook "echo Certificate renewed at $(date)" || true
           echo "[$(date)] Next renewal check in $${RENEWAL_INTERVAL}"
           sleep $${RENEWAL_INTERVAL} & wait $${!}
