@@ -39,7 +39,7 @@ Project state as of: **December 27, 2025**
 
 ### Active Domain
 - Domain: mintfv.peddy.net
-- Email: peddy@gmx.de
+- Email: user@example.com
 - Currently using: **Production mode with real Let's Encrypt certificates**
 - HTTPS: ✅ Active and working
 
