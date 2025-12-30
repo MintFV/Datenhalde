@@ -178,7 +178,7 @@ Details: [nginx/README.md](nginx/README.md)
 
 ### Setup & Administration
 - [DOCKER.md](DOCKER.md) - Container-Architektur & Security
-- [SSL-SETUP.md](SSL-SETUP.md) - Let's Encrypt Details
+- [certbot/SSL-SETUP.md](certbot/SSL-SETUP.md) - Let's Encrypt Details
 - [BACKUP.md](BACKUP.md) - Backup-Strategie
 
 ### Services
@@ -231,7 +231,7 @@ docker compose exec certbot certbot certificates
 docker compose exec nginx nginx -t
 
 # SSL-Setup Dokumentation
-cat SSL-SETUP.md
+cat certbot/SSL-SETUP.md
 ```
 
 ### MQTT Probleme

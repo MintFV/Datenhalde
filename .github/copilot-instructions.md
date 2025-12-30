@@ -98,7 +98,7 @@ rm -rf ./certbot/conf/* ./certbot/logs/* ./nginx/logs/*
 ## Documentation Structure
 - README.md - Quick start and main documentation
 - DOCKER.md - Docker conventions and UID/GID rules
-- SSL-SETUP.md - SSL/HTTPS setup process
+- certbot/SSL-SETUP.md - SSL/HTTPS setup process
 - BACKUP.md - Backup strategy and locations
 - config.yaml - Main configuration (see config-example.yaml)
 

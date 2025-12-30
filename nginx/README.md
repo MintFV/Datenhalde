@@ -240,6 +240,6 @@ docker compose logs nginx | grep TCP | awk '{print $2, $5, $6}'
 
 - **Config:** `nginx/nginx.conf`, `nginx/conf.d/`, `nginx/stream.d/`
 - **Logs:** `docker compose logs nginx`
-- **SSL:** Siehe [../SSL-SETUP.md](../SSL-SETUP.md)
+- **SSL:** Siehe [../certbot/SSL-SETUP.md](../certbot/SSL-SETUP.md)
 - **Docs:** [nginx Documentation](https://nginx.org/en/docs/)
 - **MQTT Stream:** [mosquitto/README.md](../mosquitto/README.md)
