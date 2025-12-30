@@ -23,7 +23,7 @@
 
 ### Docker Best Practices
 - Always use `docker compose` (not `docker-compose`)
-- User IDs start at 2001 (see DOCKER.md)
+- User IDs start at 2001, shared GID 2100 (see README.md Security section)
 - Always implement healthchecks and depends_on where possible
 - Use tmpfs for writable directories in read-only containers
 - **Healthchecks**: Always use `curl -fsS` (never `wget`)
@@ -34,6 +34,9 @@
 
 ### Git Best Practices
 - **ALWAYS use `git mv` instead of `mv`** - This preserves file history in Git
+- **Commit messages**: One-liner that abstractly describes what happened, no detailed explanations
+  - ✅ Good: "docs: Integrate DOCKER.md into README.md"
+  - ❌ Bad: "docs: Integrate DOCKER.md into README.md and remove file\n\n- Add Docker Security Best Practices section..."
 - This is critical for tracking documentation and code evolution
 
 ## Current Project State
@@ -96,8 +99,7 @@ rm -rf ./certbot/conf/* ./certbot/logs/* ./nginx/logs/*
 ```
 
 ## Documentation Structure
-- README.md - Quick start and main documentation
-- DOCKER.md - Docker conventions and UID/GID rules
+- README.md - Quick start, main documentation, and Docker security best practices
 - certbot/SSL-SETUP.md - SSL/HTTPS setup process
 - BACKUP.md - Backup strategy and locations
 - config.yaml - Main configuration (see config-example.yaml)

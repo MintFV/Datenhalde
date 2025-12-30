@@ -163,7 +163,31 @@ influxdb:   2005:2100
 grafana:    2006:2100
 ```
 
-Shared GID `2100` (ssl-certs) für SSL-Zugriff.
+**Shared GID 2100** (`ssl-certs`): Ermöglicht sicheren Dateizugriff zwischen Services
+
+- nginx (2001) liest SSL-Zertifikate von certbot (2002)
+- Keine 777-Permissions nötig
+- Datei-Permissions: 750 (Dirs), 640 (Files)
+
+### Docker Security Best Practices
+
+**❌ NEVER:**
+
+- `chmod 777` oder `chown` mit world-writable permissions
+- Container als root laufen lassen
+- `--privileged` Flag verwenden
+
+**✅ DO:**
+
+- `docker compose exec` für Commands in Containern
+- Explizite user:group (z.B. `2001:2100`)
+- Read-only root filesystem + tmpfs für writable dirs
+- Capability dropping (`cap_drop: ALL`)
+- Resource limits (CPU, Memory, PIDs)
+- Health checks für alle Services
+- Automatic log rotation (10M max, 3 files)
+
+Siehe Service-README-Dateien für detaillierte Konfiguration.
 
 ### Rate Limiting
 - InfluxDB: 30 req/s
@@ -177,11 +201,12 @@ Details: [nginx/README.md](nginx/README.md)
 ## 📖 Dokumentation
 
 ### Setup & Administration
-- [DOCKER.md](DOCKER.md) - Container-Architektur & Security
+
 - [certbot/SSL-SETUP.md](certbot/SSL-SETUP.md) - Let's Encrypt Details
 - [BACKUP.md](BACKUP.md) - Backup-Strategie
 
 ### Services
+
 - [mosquitto/README.md](mosquitto/README.md) - MQTT Broker & Multi-Tenant ACLs
 - [nodered/README.md](nodered/README.md) - Flows & Integration
 - [influxdb/README.md](influxdb/README.md) - Datenbank & Queries
