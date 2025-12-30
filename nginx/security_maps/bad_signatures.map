@@ -1,0 +1,12 @@
+# ===================================================
+# bad_signatures.map - Block specific method/URI combinations
+# Last updated: 2025-12-30 – maintainer: <your-name>
+# ===================================================
+
+# Block OPTIONS method on root path, often used for reconnaissance
+# Review if you have legitimate CORS preflight requests to /.
+"OPTIONS /" 1;
+
+# Block PUT/DELETE on root path (should not be allowed for static assets)
+"PUT /" 1;
+"DELETE /" 1;

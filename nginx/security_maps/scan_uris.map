@@ -45,20 +45,31 @@
 "~*/jolokia"                     1;           # JMX bridge
 "~*/metrics"                     1;           # Generic metrics
 
+# API documentation & development endpoints
+# Block auto-generated API docs often exposed in dev/staging
+"~*/swagger-ui\.html"            1;           # Swagger UI interface
+"~*/swagger\.json"               1;           # Swagger API definition
+"~*/api-docs"                    1;           # Generic API documentation
+"~*/v2/api-docs"                 1;           # Swagger/OpenAPI v2 docs
+"~*/graphql"                     1;           # GraphQL API endpoint
+
 # Directory-listing sort probes
 "~*\?C=[NMS];O=[AD]"             1;
 
-# # alte Einträge
-# "~*(/config|/configuration\.php)" 1;
-# "~*(/\$\{jndi:ldap)" 1;
+# --- Next.js specific paths ---
+# These are internal Next.js paths and should not be directly accessible
+"~*/_next(?:/|$)"                1; # Catches /_next, /_next/static, /_next/data, etc.
+"~*/_react(?:/|$)"               1; # Sometimes used in similar contexts
+"~*/_next-live(?:/|$)"           1; # Next.js Live development
+"~*/_next-website(?:/|$)"        1; # Next.js related development paths
 
+# --- SDK / Embedded Device Scans ---
+"~*/SDK/webLanguage"                                    1;
+"~*/goform/goform_get_cmd_process"                      1;
+"~*/goform/formJsonAjaxReq"                             1;
 
-
-#########################################################
-
-# --- Common API & Doc Paths ---
-"~*/swagger-ui.html"              1;
-"~*/api-docs"                     1;
-"~*/v2/api-docs"                  1;
-"~*/swagger.json"                 1;
-"~*/graphql"                      1;
+# --- Generic Login/Admin Paths (review carefully for false positives) ---
+# Only enable if these paths are NOT legitimate for your services.
+# Given your setup with /grafana/, /nodered/, /influxdb/, these root paths are likely not legitimate.
+"~*/login"                                              1; # Generic login page scan
+"~*/admin"                                              1; # Generic admin page scan
