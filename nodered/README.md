@@ -2,9 +2,32 @@
 
 Flow-basierte Programmierung für IoT Automation & Datenverarbeitung.
 
-**URL:** https://mintfv.peddy.net/nodered/  
+**Version:** Latest (nodered/node-red)  
 **Container:** mintfv-nodered (UID 2004:2100)  
+**URL:** https://mintfv.peddy.net/nodered/  
 **Port:** 1880 (intern)
+
+---
+
+## 🏗️ Architektur
+
+### Datenfluss
+```
+MQTT → Node-RED → InfluxDB
+  ├─ Subscribe: tenant/+/+/+
+  ├─ Processing: Flows
+  └─ Write: Line Protocol
+```
+
+### Konfiguration
+```
+nodered/
+└── data/
+    ├── settings.js         # Admin Auth, Context Storage
+    ├── flows.json          # Flow-Definitionen (git-ignored)
+    ├── package.json        # Installierte Nodes
+    └── context/            # Persistente Variablen
+```
 
 ---
 

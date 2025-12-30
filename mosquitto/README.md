@@ -1,10 +1,8 @@
-# Mosquitto MQTT Broker - Architektur-Übersicht
+# Mosquitto MQTT Broker
 
 **Version:** Eclipse Mosquitto 2.x (Latest)  
 **Container:** mintfv-mosquitto (UID 2003:2100)  
 **Ports:** 1883 (MQTT), 9001 (WebSocket), 8883 (MQTT TLS via nginx)
-
-> 📖 **Vollständige Dokumentation:** [mosquitto/README.md](mosquitto/README.md)
 
 ---
 
@@ -44,6 +42,30 @@ mosquitto/
 - Monitoring: Read-Only $SYS topics
 
 **Demo-Credentials:** Siehe [mosquitto/README.md](mosquitto/README.md#-multi-tenant-credentials-demo)
+
+### Passwörter verwalten
+
+```bash
+# Neuen User anlegen oder Passwort ändern (interaktiv)
+docker compose exec mosquitto mosquitto_passwd /mosquitto/config/mosquitto.passwd username
+
+# Passwort direkt setzen (nicht-interaktiv)
+docker compose exec mosquitto mosquitto_passwd -b /mosquitto/config/mosquitto.passwd username password
+
+# User löschen
+docker compose exec mosquitto mosquitto_passwd -D /mosquitto/config/mosquitto.passwd username
+
+# Container neu laden (Passwörter anwenden)
+docker compose restart mosquitto
+```
+
+**Beispiel:**
+
+```bash
+# master-admin Passwort ändern
+docker compose exec mosquitto mosquitto_passwd /mosquitto/config/mosquitto.passwd master-admin
+# Passwort eingeben: master2024!
+```
 
 ---
 

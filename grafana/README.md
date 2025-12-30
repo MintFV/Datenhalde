@@ -2,10 +2,32 @@
 
 Visualization & Monitoring Platform für InfluxDB-Daten.
 
-**URL:** https://mintfv.peddy.net/grafana/  
+**Version:** Latest (grafana/grafana)  
 **Container:** mintfv-grafana (UID 2006:2100)  
+**URL:** https://mintfv.peddy.net/grafana/  
 **Port:** 3000 (intern)  
 **Demo-Login:** admin / admin
+
+---
+
+## 🏗️ Architektur
+
+### Datenfluss
+```
+InfluxDB → Grafana → Dashboard
+  ├─ Data Source: http://influxdb:8181
+  ├─ Query: SQL oder InfluxQL
+  └─ Visualization: Time Series, Stat, Gauge, etc.
+```
+
+### Konfiguration
+```
+grafana/
+└── data/
+    ├── grafana.db         # SQLite (Dashboards, Users, Settings)
+    ├── plugins/           # Installierte Plugins
+    └── csv/, pdf/, png/   # Exports
+```
 
 ---
 

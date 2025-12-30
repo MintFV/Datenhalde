@@ -4,8 +4,32 @@ Time-Series Datenbank für Sensor-Daten, Metriken & Logs.
 
 **Version:** 3.8.0 (influxdb:3-core)  
 **Container:** mintfv-influxdb (UID 2005:2100)  
+**URL:** https://mintfv.peddy.net/influxdb/ (API only)  
 **Port:** 8181 (intern)  
 **APIs:** v1 (InfluxQL), v2 (Compatibility), v3 (SQL)
+
+---
+
+## 🏗️ Architektur
+
+### APIs
+- **v3 (SQL):** Native InfluxDB 3 Query Language
+- **v2 (Compatibility):** InfluxQL für Migration
+- **v1 (Legacy):** Line Protocol Write
+
+### Datenstruktur
+```
+influxdb/
+├── data/
+│   ├── influxd.bolt       # Meta-Datenbank
+│   ├── engine/            # Query Engine
+│   └── mintfv-node-0/     # Node-Daten
+│       ├── wal/           # Write-Ahead Log
+│       └── catalog/       # Table Metadata
+├── tokens/
+│   └── admin.token        # Admin Token (JSON, git-ignored)
+└── plugins/               # Extensions
+```
 
 ---
 

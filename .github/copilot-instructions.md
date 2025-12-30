@@ -32,6 +32,10 @@
   - `--max-time X`: Timeout in seconds
   - Example: `["CMD", "curl", "-fsS", "--max-time", "5", "http://localhost:8080/"]`
 
+### Git Best Practices
+- **ALWAYS use `git mv` instead of `mv`** - This preserves file history in Git
+- This is critical for tracking documentation and code evolution
+
 ## Current Project State
 
 ### Last Updated
