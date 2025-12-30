@@ -1,0 +1,45 @@
+# ====================================================
+# bad_bots.map – block common malicious / irrelevant User-Agent strings
+# Last updated: 2025-12-30 – maintainer: <your-name>
+# ====================================================
+
+# Vulnerability-scanners and exploit frameworks
+"~*acunetix"                     1;   # Acunetix scanner
+"~*sqlmap"                       1;   # SQLi tool
+"~*nmap"                         1;   # Port scanner
+"~*masscan"                      1;   # High-speed port scanner
+"~*fuzz"                         1;   # Generic fuzzers
+"~*nikto"                        1;   # Nikto vulnerability scanner
+"~*wpscan"                       1;   # WordPress scanner
+"~*zgrab"                        1;   # ZGrab scanner
+"~*libredtail-http"              1;   # LibreDTail HTTP scanner
+"~*nessus"                       1;   # Nessus scanner
+"~*netsparker"                   1;   # Netsparker scanner
+"~*openvas"                      1;   # OpenVAS scanner
+"~*metasploit"                   1;   # Metasploit framework
+"~*msf"                          1;   # Metasploit short UA
+"~*commix"                       1;   # Command injection tool
+"~*w3af"                         1;   # Web app attack framework
+
+# SEO / marketing crawlers – usually unwanted on private services
+"~*MJ12bot"                      1;   # Majestic SEO crawler
+"~*Ahrefs[Bb]ot"                 1;   # Ahrefs crawler
+"~*Semrush[Bb]ot"                1;   # SEMrush crawler
+"~*BLEXBot"                      1;   # Linkdex crawler
+"~*ZoominfoBot"                  1;   # ZoomInfo spider
+"~*DotBot"                       1;   # Moz DotBot
+
+# Generic scraping / automation frameworks
+"~*Scrapy"                       1;   # Python Scrapy
+"~*python-requests"              1;   # python-requests lib
+# "~*curl"                         1;   # curl CLI
+# "~*wget"                         1;   # wget CLI
+
+# Malware / mass-exploitation tools
+"~*ZmEu"                         1;   # ZmEu scanner
+"~*Morfeus"                      1;   # Morfeus scanner
+
+# --- Common HTTP libraries often used for scripting/attacks ---
+# Be careful with these if you have legitimate API clients using them!
+"~*Go-http-client"             1;   # Go HTTP client
+"~*perl"                       1;   # Perl HTTP clients

@@ -1,0 +1,21 @@
+# ====================================================
+# bad_extensions.map – block uploads / downloads of risky file types
+# Last updated: 2025-12-30 – maintainer: <your-name>
+# ====================================================
+
+# Windows executable formats【6-0-0】【6-0-7】【6-0-1】
+"~*\.(?:exe|com|dll|msi|scr|pif)$"    1;
+
+# Script files capable of code execution【6-0-2】【6-0-4】【6-0-3】
+"~*\.(?:bat|cmd|vbs|vbe|js|ps1)$"     1;
+
+# Windows Script Host containers【6-0-1】【6-0-0】
+"~*\.(?:wsf|wsc|wsh|ws)$"             1;
+
+# Macro-enabled Office documents (malware carriers)【6-0-8】
+"~*\.(?:docm?|xls[mx]?|pptx?|xlsm)$"  1;
+
+# macOS applications【6-0-7】
+"~*\.app$"                            1;
+# macOS disk images【6-0-7】
+"~*\.dmg$"                            1;

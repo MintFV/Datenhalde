@@ -1,0 +1,31 @@
+# ====================================================
+# sensitive_files.map – protect config / backup / key / VCS files
+# Last updated: 2025-12-30 – maintainer: <your-name>
+# ====================================================
+
+# Configuration files
+"~*/config\.php$"                1;
+"~*/settings\.py$"               1;
+"~*/application\.properties$"    1;
+"~*/web\.config$"                1;
+
+# Environment files (leak secrets) – OWASP reference【3-0-3】
+"~*/\.env$"                      1;
+"~*/\.env\.(?:local|development|production)$" 1;
+
+# Backup / residual files – OWASP warns about information disclosure【3-0-1】
+"~*\.bak$"                       1;
+"~*\.old$"                       1;
+"~*\.orig$"                      1;
+"~*\.swp$"                       1;
+"~*/backup\.zip$"                1;
+
+# Private keys & certificates
+"~*\.pem$"                       1;
+"~*\.key$"                       1;
+"~*id_rsa$"                      1;
+
+# VCS metadata directories
+"~*/\.git/?"                     1;
+"~*/\.svn/?"                     1;
+"~*/CVS/?"                       1;

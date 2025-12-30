@@ -1,0 +1,22 @@
+# ====================================================
+# potential_risky.map – patterns that MAY cause false positives (REVIEW)
+# Last updated: 2025-12-30 – maintainer: <your-name>
+# ====================================================
+
+# MQTT topic wildcards – could block legitimate traffic
+".*/#"                 1;  # REVIEW
+"+/#"                  1;  # REVIEW
+"/+/sensor/#"          1;  # REVIEW
+
+# Node-RED flow paths – overly broad
+"trigger\.#"           1;  # REVIEW
+".*/alert"             1;  # REVIEW
+
+# InfluxDB measurement regex patterns – may over-match
+"^temp.*"              1;  # REVIEW
+"(cpu|mem)_.*"         1;  # REVIEW
+
+# Grafana dashboard naming overlaps
+"dash_.+"              1;  # REVIEW
+"dash-.+"              1;  # REVIEW
+"test_.+"              1;  # REVIEW

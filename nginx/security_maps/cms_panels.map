@@ -1,0 +1,11 @@
+# ====================================================
+# cms_panels.map – block direct access to CMS admin/login panels
+# Last updated: 2025-12-30 – maintainer: <your-name>
+# ====================================================
+
+# WordPress
+"~^/wp-admin(?:/|$)"             1;   # WordPress admin【2-0-1】
+
+# Magento
+"~^/magento/admin(?:/|$)"        1;   # Magento admin【2-0-0】
+

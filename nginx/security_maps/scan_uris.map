@@ -1,0 +1,64 @@
+# ====================================================
+# scan_uris.map – block typical scanner / probe request paths
+# Last updated: 2025-12-30 – maintainer: <your-name>
+# ====================================================
+
+# CMS, admin & management panels
+# NOTE: /admin/ may collide with Grafana’s internal /admin;
+#       review before enabling in production.
+"~*/phpmyadmin/"                 1;
+"~*/pma/"                        1;
+"~*/wp-admin/"                   1;
+"~*/wp-login\.php"               1;           # WordPress login【2-0-1】
+"~*/xmlrpc\.php"                 1;
+"~*/administrator/"              1;           # Joomla admin
+"~*/joomla\.xml"                 1;           # Joomla
+"~*/admin/"                      1;           # Generic admin panel – SEE NOTE ABOVE
+"~*/adminer\.php"                1;           # Adminer DB tool
+"~*/manager/html"                1;           # Apache Tomcat manager
+"~*/host-manager/html"           1;           # Tomcat host-manager
+"~*/hudson/"                     1;
+"~*/jenkins/"                    1;
+"~*/user/login"                  1;           # Drupal login
+"~*/core/CHANGELOG.txt"          1;           # Drupal changelog leak
+"~*/downloader"                  1;           # Magento downloader
+"~*/app/etc/local.xml"           1;           # Magento config leak
+"~*/configuration\.php"          1;           # Joomla configuration leak
+
+# Source-control & metadata leaks
+"~*/\.git/?"                     1;
+"~*/\.svn/?"                     1;
+"~*/\.hg/?"                      1;
+
+# Common file-disclosure & LFI/RFI probes
+"~*\.\./\.\./\.\./etc/passwd"    1;
+"~*php://filter"                 1;
+"~*\.env"                        1;           # Laravel / generic .env【3-0-3】
+
+# Server info & status endpoints
+"~*/server-status"               1;
+"~*/server-info"                 1;
+"~*/status$"                     1;           # Generic /status
+"~*/healthcheck"                 1;
+"~*/actuator"                    1;           # Spring Boot / Java
+"~*/prometheus"                  1;           # Metrics
+"~*/jolokia"                     1;           # JMX bridge
+"~*/metrics"                     1;           # Generic metrics
+
+# Directory-listing sort probes
+"~*\?C=[NMS];O=[AD]"             1;
+
+# # alte Einträge
+# "~*(/config|/configuration\.php)" 1;
+# "~*(/\$\{jndi:ldap)" 1;
+
+
+
+#########################################################
+
+# --- Common API & Doc Paths ---
+"~*/swagger-ui.html"              1;
+"~*/api-docs"                     1;
+"~*/v2/api-docs"                  1;
+"~*/swagger.json"                 1;
+"~*/graphql"                      1;

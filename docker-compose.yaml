@@ -102,6 +102,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/security_maps:/etc/nginx/security_maps:ro
       - ./nginx/stream.d:/etc/nginx/stream.d:ro
       - ./nginx/html:/usr/share/nginx/html:ro
       - ./certbot/conf:/etc/letsencrypt:ro
