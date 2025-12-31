@@ -78,26 +78,112 @@ docker compose exec certbot certbot renew
 
 ---
 
-## ⚡ Rate Limiting
+## ⚡ Rate Limiting & Security
 
-### Konfiguration (00-rate-limits.conf)
+### Rate Limit Zones (00-rate-limits.conf)
 ```nginx
-# 30 req/s für InfluxDB Write
-limit_req_zone $binary_remote_addr zone=influxdb_api:10m rate=30r/s;
+# General: 10 req/s per IP
+limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
 
-# 100 req/s für Grafana
-limit_req_zone $binary_remote_addr zone=grafana_api:10m rate=100r/s;
+# Grafana: 20 req/s
+limit_req_zone $binary_remote_addr zone=grafana_general:10m rate=20r/s;
 
-# 200 req/s für Node-RED
-limit_req_zone $binary_remote_addr zone=nodered_api:10m rate=200r/s;
+# InfluxDB: 10 req/s
+limit_req_zone $binary_remote_addr zone=influxdb_general:10m rate=10r/s;
+
+# Node-RED: 10 req/s
+limit_req_zone $binary_remote_addr zone=nodered_general:10m rate=10r/s;
+
+# MQTT WebSocket: 5 req/s
+limit_req_zone $binary_remote_addr zone=mqtt_general:10m rate=5r/s;
+
+# Connection limit: 50 simultaneous connections per IP
+limit_conn_zone $binary_remote_addr zone=conn_limit:10m;
 ```
 
-### Aktivierung in Location-Blöcken
+### Security Maps (00-security-maps.conf)
+
+**Blockierte Kategorien:**
+- **Bad Bots:** Scanner (nikto, sqlmap, nmap), SEO-Crawler (AhrefsBot, MJ12bot), HTTP-Libraries (curl, wget, python-requests)
+- **Scan URIs:** Admin-Panels (/phpmyadmin, /wp-admin), Source-Control (/.git), Config-Leaks (/.env, /configuration.php)
+- **SQLi Patterns:** UNION SELECT, boolean-based injection, SQL comments
+- **XSS Patterns:** Script-Injection, event-handler, iframe-injection
+- **Exploits:** Log4Shell, path traversal, RCE-Versuche
+
+**Map-Dateien:**
+```
+nginx/security_maps/
+├── bad_bots.map          # User-Agent Blacklist
+├── scan_uris.map         # Suspicious URI patterns
+├── sensitive_files.map   # Config/Backup file leaks
+├── sqli_patterns.map     # SQL Injection patterns
+├── xss_patterns.map      # Cross-Site Scripting patterns
+└── exploit_patterns.map  # Known exploit signatures
+```
+
+**Logging:** Blockierte Requests werden mit `reason=` geloggt (z.B. `reason=bad_bot`)
+
+### Aktivierung in Location-Blöcken (02-ssl.conf)
 ```nginx
-location /influxdb/ {
-    limit_req zone=influxdb_api burst=10 nodelay;
+location /grafana/ {
+    limit_req zone=grafana_general burst=100 nodelay;
+    limit_conn conn_limit 50;
     # ...
 }
+
+location /influxdb/ {
+    limit_req zone=influxdb_general burst=50 nodelay;
+    limit_conn conn_limit 30;
+    proxy_read_timeout 300s;   # 5 Min für lange Queries
+    proxy_send_timeout 300s;
+    # ...
+}
+```
+
+---
+
+## 🔧 Performance & Timeouts
+
+### Client Timeouts (nginx.conf)
+```nginx
+client_body_timeout 120s;      # Request body read timeout
+client_header_timeout 30s;     # Request header read timeout  
+send_timeout 120s;             # Response send timeout
+keepalive_timeout 120s;        # Keep-alive connection timeout
+```
+
+### Proxy Timeouts (für lange Queries)
+```nginx
+location /influxdb/ {
+    proxy_read_timeout 300s;   # 5 Minuten für Analytics
+    proxy_send_timeout 300s;
+    proxy_connect_timeout 75s;
+    # ...
+}
+
+location /grafana/ {
+    proxy_read_timeout 300s;   # Dashboard rendering
+    # ...
+}
+```
+
+### Compression (gzip)
+```nginx
+gzip on;
+gzip_vary on;
+gzip_min_length 1024;
+gzip_types text/plain text/css text/xml text/javascript
+           application/x-javascript application/xml+rss
+           application/json application/javascript;
+gzip_disable "msie6";
+```
+
+### Buffer Limits
+```nginx
+client_max_body_size 10M;           # Max upload size
+client_body_buffer_size 128k;       # Body buffer
+client_header_buffer_size 1k;       # Normal header buffer
+large_client_header_buffers 2 4k;   # Max 2×4KB für große Headers/URIs
 ```
 
 ---
