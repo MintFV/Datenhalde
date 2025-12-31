@@ -13,6 +13,14 @@
 "~*/\.env$"                      1;
 "~*/\.env\.(?:local|development|production)$" 1;
 
+# .env Varianten (backup, editor-copies)
+"~*/\.env\.backup$"              1;
+"~*/\.env\.save$"                1;
+"~*/\.env\.dist$"                1;
+"~*/\.env\.example$"             1;
+"~*/\.env\.sample$"              1;
+"~*/\.env~$"                     1;  # vim/emacs backup
+
 # Backup / residual files – OWASP warns about information disclosure【3-0-1】
 "~*\.bak$"                       1;
 "~*\.old$"                       1;

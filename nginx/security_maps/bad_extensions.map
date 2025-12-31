@@ -19,3 +19,12 @@
 "~*\.app$"                            1;
 # macOS disk images【6-0-7】
 "~*\.dmg$"                            1;
+
+# APK (Android), IPA (iOS), JAR (Java)
+"~*\.(?:apk|ipa|jar)$"                1;
+
+# Compressed archives die Malware enthalten könnten
+"~*\.(?:7z|rar|tar\.gz|tgz)$"         1;  # Optional - könnte legitim sein!
+
+# Database dumps
+"~*\.sql$"                            1;

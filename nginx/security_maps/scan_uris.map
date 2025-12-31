@@ -71,5 +71,13 @@
 # --- Generic Login/Admin Paths (review carefully for false positives) ---
 # Only enable if these paths are NOT legitimate for your services.
 # Given your setup with /grafana/, /nodered/, /influxdb/, these root paths are likely not legitimate.
-"~*/login"                                              1; # Generic login page scan
-"~*/admin"                                              1; # Generic admin page scan
+"~*/login"                      1; # Generic login page scan
+"~*/admin"                      1; # Generic admin page scan
+
+
+# Alle .env Varianten explizit blocken
+"~*/\.env\.backup$"             1;
+"~*/\.env\.save$"               1;
+"~*/\.env\.sample$"             1;
+"~*/\.env\.example$"            1;
+
