@@ -41,7 +41,8 @@
 "~*/status$"                     1;           # Generic /status
 "~*/healthcheck"                 1;
 "~*/actuator"                    1;           # Spring Boot / Java
-"~*/prometheus"                  1;           # Metrics
+"~^/prometheus(?:/|$)"           1;           # NUR /prometheus am Anfang
+"~^/metrics(?:/|$)"              1;           # NUR /metrics am Anfang
 "~*/jolokia"                     1;           # JMX bridge
 "~*/metrics"                     1;           # Generic metrics
 
