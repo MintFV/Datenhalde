@@ -81,6 +81,7 @@ docker compose exec certbot certbot renew
 ## ⚡ Rate Limiting & Security
 
 ### Rate Limit Zones (00-rate-limits.conf)
+
 ```nginx
 # General: 10 req/s per IP
 limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
@@ -104,6 +105,7 @@ limit_conn_zone $binary_remote_addr zone=conn_limit:10m;
 ### Security Maps (00-security-maps.conf)
 
 **Blockierte Kategorien:**
+
 - **Bad Bots:** Scanner (nikto, sqlmap, nmap), SEO-Crawler (AhrefsBot, MJ12bot), HTTP-Libraries (curl, wget, python-requests)
 - **Scan URIs:** Admin-Panels (/phpmyadmin, /wp-admin), Source-Control (/.git), Config-Leaks (/.env, /configuration.php)
 - **SQLi Patterns:** UNION SELECT, boolean-based injection, SQL comments
@@ -111,6 +113,7 @@ limit_conn_zone $binary_remote_addr zone=conn_limit:10m;
 - **Exploits:** Log4Shell, path traversal, RCE-Versuche
 
 **Map-Dateien:**
+
 ```
 nginx/security_maps/
 ├── bad_bots.map          # User-Agent Blacklist
@@ -124,6 +127,7 @@ nginx/security_maps/
 **Logging:** Blockierte Requests werden mit `reason=` geloggt (z.B. `reason=bad_bot`)
 
 ### Aktivierung in Location-Blöcken (02-ssl.conf)
+
 ```nginx
 location /grafana/ {
     limit_req zone=grafana_general burst=100 nodelay;
@@ -145,6 +149,7 @@ location /influxdb/ {
 ## 🔧 Performance & Timeouts
 
 ### Client Timeouts (nginx.conf)
+
 ```nginx
 client_body_timeout 120s;      # Request body read timeout
 client_header_timeout 30s;     # Request header read timeout  
@@ -153,6 +158,7 @@ keepalive_timeout 120s;        # Keep-alive connection timeout
 ```
 
 ### Proxy Timeouts (für lange Queries)
+
 ```nginx
 location /influxdb/ {
     proxy_read_timeout 300s;   # 5 Minuten für Analytics
@@ -168,6 +174,7 @@ location /grafana/ {
 ```
 
 ### Compression (gzip)
+
 ```nginx
 gzip on;
 gzip_vary on;
@@ -179,6 +186,7 @@ gzip_disable "msie6";
 ```
 
 ### Buffer Limits
+
 ```nginx
 client_max_body_size 10M;           # Max upload size
 client_body_buffer_size 128k;       # Body buffer

@@ -11,6 +11,8 @@ x-security: &default-security
     - no-new-privileges:true
   cap_drop:
     - ALL
+  privileged: false
+  ipc: private
 
 services:
   # Init Container: Creates initial dummy SSL certificates
