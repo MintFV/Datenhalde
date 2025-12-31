@@ -1,0 +1,21 @@
+"~(?i)<script"                                1;
+"~(?i)</script>"                               1;
+"~(?i)onerror\s*="                              1;
+"~(?i)onload\s*="                               1;
+"~(?i)onmouseover\s*="                          1;
+"~(?i)javascript:"                              1;
+"~(?i)alert\("                                  1;
+"~(?i)prompt\("                                 1;
+"~(?i)confirm\("                                1;
+"~(?i)data:text/html"                           1;
+"~(?i)eval\("                                   1;
+"~(?i)String\.fromCharCode"                     1;
+
+# URL-encoded variants
+"~(?i)%3Cscript"                                1; # <script
+"~(?i)%3C%2Fscript"                             1; # </script>
+"~(?i)onerror%3D"                               1; # onerror=
+"~(?i)javascript%3A"                            1; # javascript:
+"~(?i)alert%28"                                 1; # alert(
+"~(?i)data%3Atext%2Fhtml"                        1; # data:text/html
+"~(?i)eval%28"                                  1; # eval(

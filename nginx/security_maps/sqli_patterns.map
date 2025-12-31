@@ -1,0 +1,23 @@
+# Generic SQL keywords. Note: (%20|\s) matches space OR url-encoded space.
+"~* \b(select|update|insert|delete)(%20|\s)+.*(%20|\s)+(from|into|set|where)\b" 1;
+
+# Boolean-based blind SQLi. Note: (%27|'|%22|\") matches encoded and non-encoded quotes.
+"~* (%27|'|%22|\")(%20|\s)*(or|and)(%20|\s)+(\w+=\w+|\d+=\d+|true)" 1;
+
+# UNION-based SQLi.
+"~* union(%20|\s)+(all(%20|\s)+)?select" 1;
+
+# SQL comments. %23 is the encoded hash #.
+"~* (--|#|/\*|%23)" 1;
+
+# Time-based blind SQLi. (%28|\() matches encoded and non-encoded parenthesis.
+"~* \b(sleep|benchmark)(%20|\s)*(%28|\()" 1;
+
+# Accessing database metadata.
+"~* \b(information_schema|pg_catalog|mysql)\b" 1;
+
+# Common SQL functions used in attacks.
+"~* \b(load_file|outfile|group_concat|concat|cast|convert|user|database|version)(%20|\s)*(%28|\()" 1;
+
+# DROP/TRUNCATE statements.
+"~* \b(drop|truncate|alter)(%20|\s)+(table|database)" 1;
