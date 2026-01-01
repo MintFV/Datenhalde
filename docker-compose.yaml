@@ -229,7 +229,7 @@ services:
       - GF_SERVER_ROOT_URL=https://mintfv.peddy.net/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
       # Security
-      - GF_SECURITY_ADMIN_USER=admingrafana
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admingrafana}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_AUTH_ANONYMOUS_ENABLED=false
       # Logging to STDOUT/STDERR
@@ -390,13 +390,6 @@ services:
     user: "2004:2100"
     group_add:
       - "2100"
-    env_file:
-      - .env
-    # Oder explizit:
-    # environment:
-    #   - NODE_RED_ADMIN_USER=${NODE_RED_ADMIN_USER}
-    #   - NODE_RED_ADMIN_PASSWORD_HASH=${NODE_RED_ADMIN_PASSWORD_HASH}
-    #   - NODE_RED_CREDENTIAL_SECRET=${NODE_RED_CREDENTIAL_SECRET}
 
     depends_on:
       influxdb:
@@ -406,6 +399,10 @@ services:
       - TZ=${TZ:-Europe/Berlin}
       - NODE_RED_ENABLE_SAFE_MODE=false
       - NODE_RED_ENABLE_PROJECTS=false
+      - NODE_RED_ADMIN_USER=${NODE_RED_ADMIN_USER:-adminnodered}
+    # To enable admin authentication, uncomment the following lines and set the password hash and credential secret in your .env file
+    #   - NODE_RED_ADMIN_PASSWORD_HASH=${NODE_RED_ADMIN_PASSWORD_HASH}
+    #   - NODE_RED_CREDENTIAL_SECRET=${NODE_RED_CREDENTIAL_SECRET}
 
     volumes:
       - ./nodered/data:/data:rw
