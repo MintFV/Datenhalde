@@ -242,6 +242,13 @@ services:
       # Leeren String = alle deaktiviert
       - GF_FEATURE_TOGGLES_ENABLE=
       - GF_FEATURE_MANAGEMENT_OFREP_ENABLED=false
+      # SMTP Configuration for email notifications
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp-relay:8025
+      - GF_SMTP_FROM_ADDRESS=${SMTP_USER_PROVIDER}${SMTP_USER_PROVIDER}
+      - GF_SMTP_USER=${SMTP_USER_PROVIDER}
+      - GF_SMTP_PASSWORD=${SMTP_PASS_PROVIDER}
+      - GF_SMTP_SKIP_VERIFY=
 
     volumes:
       - ./grafana/data:/var/lib/grafana
@@ -462,8 +469,9 @@ services:
 
       # Optional: keine lokalen Zustellungen, alles per Smarthost weiterleiten
       LOCAL_DOMAINS: ""
-
-      # Optional: DKIM etc. könntest du später ergänzen (DKIM_SELECTOR, dkim.pem-Mount).[web:25][web:61]
+      # TLS für Smarthost-Verbindung erzwingen
+      USE_TLS: "yes"
+      TLS_VERIFY: "may"
 
     healthcheck:
       # Exim-Prozess läuft als 'exim'; einfache Prüfung auf Port mit 2s Timeout
@@ -481,6 +489,10 @@ services:
           pids: 100
       # Logging wie bisher
     logging: *default-logging
+
+    volumes:
+      - ./smtp-relay/spool:/var/spool/exim
+      # Logging geht per Default ins STDOUT/STDERR des Containers; kein Log-Volume nötig
 
     networks:
       - mintfv-network
