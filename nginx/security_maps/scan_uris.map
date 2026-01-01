@@ -69,12 +69,10 @@
 "~*/goform/goform_get_cmd_process"                      1;
 "~*/goform/formJsonAjaxReq"                             1;
 
-# --- Generic Login/Admin Paths (review carefully for false positives) ---
-# Only enable if these paths are NOT legitimate for your services.
-# Given your setup with /grafana/, /nodered/, /influxdb/, these root paths are likely not legitimate.
-"~*/login"                      1; # Generic login page scan
-"~*/admin"                      1; # Generic admin page scan
-
+# ⚠️ REMOVED: Generic /login and /admin blocking
+# These are now whitelisted in 00-security-maps.conf
+# "~*/login" 1;  # ❌ REMOVED - blocks legitimate /grafana/login
+# "~*/admin" 1;  # ❌ REMOVED - blocks legitimate /grafana/admin
 
 # Alle .env Varianten explizit blocken
 "~*/\.env\.backup$"             1;
