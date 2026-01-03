@@ -245,7 +245,7 @@ services:
       # SMTP Configuration for email notifications
       - GF_SMTP_ENABLED=true
       - GF_SMTP_HOST=smtp-relay:8025
-      - GF_SMTP_FROM_ADDRESS=${SMTP_USER_PROVIDER}${SMTP_USER_PROVIDER}
+      - GF_SMTP_FROM_ADDRESS=${SMTP_USER_PROVIDER}
       - GF_SMTP_USER=${SMTP_USER_PROVIDER}
       - GF_SMTP_PASSWORD=${SMTP_PASS_PROVIDER}
       - GF_SMTP_SKIP_VERIFY=
