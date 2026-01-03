@@ -83,6 +83,8 @@ services:
     group_add:
       - "2100"
 
+    stop_grace_period: 30s  # Aktive Connections sauber beenden
+
     depends_on:
       certbot-init:
         condition: service_completed_successfully
@@ -222,6 +224,8 @@ services:
     group_add:
       - "2100"
 
+    stop_grace_period: 30s  # SQLite DB sauber schließen
+
     environment:
       # Run Grafana in /grafana/ subdirectory
       - GF_SERVER_ROOT_URL=${GRAFANA_SERVER_ROOT_URL:-https://mintfv.example.com/grafana/}
@@ -299,6 +303,9 @@ services:
     user: "2005:2100"
     group_add:
       - "2100"
+
+    stop_grace_period: 60s  # WAL flush und Datenkonsistenz sicherstellen
+
     expose:
       - "8181"  # Nur im internen Netzwerk erreichbar
     command:
@@ -400,6 +407,8 @@ services:
     group_add:
       - "2100"
 
+    stop_grace_period: 30s  # Flows und Credentials sicher speichern
+
     depends_on:
       influxdb:
         condition: service_healthy
@@ -442,6 +451,9 @@ services:
     # optional kannst du das explizit setzen:
     user: "100:101"
     restart: unless-stopped
+
+    stop_grace_period: 45s  # Mail-Queue verarbeiten und spool flushen
+
     <<: *default-security
     # keine cap_add nötig – Image ist explizit non-root, basierend auf Alpine.[web:25][web:68]
     expose:
