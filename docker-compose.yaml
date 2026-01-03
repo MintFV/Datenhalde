@@ -372,6 +372,8 @@ services:
 
     <<: *default-security
 
+    stop_grace_period: 30s  # Gibt Mosquitto Zeit für sauberen Shutdown + DB-Flush
+
     deploy:
       resources:
         limits:
