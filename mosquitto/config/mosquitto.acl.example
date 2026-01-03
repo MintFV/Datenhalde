@@ -53,14 +53,14 @@ user tenant-a-admin
 topic readwrite tenant/tenant-a/#
 topic read $SYS/#
 
-# Sensoren (können nur eigene Topics schreiben, Commands empfangen)
+# Sensoren (können beliebige Topics im Tenant schreiben)
 user tenant-a-sensor01
-topic write tenant/tenant-a/sensor01/#
+topic write tenant/tenant-a/#
 topic read tenant/tenant-a/commands/sensor01/#
 topic read $SYS/broker/version
 
 user tenant-a-sensor02
-topic write tenant/tenant-a/sensor02/#
+topic write tenant/tenant-a/#
 topic read tenant/tenant-a/commands/sensor02/#
 topic read $SYS/broker/version
 
@@ -78,12 +78,12 @@ topic readwrite tenant/tenant-b/#
 topic read $SYS/#
 
 user tenant-b-sensor01
-topic write tenant/tenant-b/sensor01/#
+topic write tenant/tenant-b/#
 topic read tenant/tenant-b/commands/sensor01/#
 topic read $SYS/broker/version
 
 user tenant-b-sensor02
-topic write tenant/tenant-b/sensor02/#
+topic write tenant/tenant-b/#
 topic read tenant/tenant-b/commands/sensor02/#
 topic read $SYS/broker/version
 
@@ -100,12 +100,12 @@ topic readwrite tenant/tenant-c/#
 topic read $SYS/#
 
 user tenant-c-sensor01
-topic write tenant/tenant-c/sensor01/#
+topic write tenant/tenant-c/#
 topic read tenant/tenant-c/commands/sensor01/#
 topic read $SYS/broker/version
 
 user tenant-c-sensor02
-topic write tenant/tenant-c/sensor02/#
+topic write tenant/tenant-c/#
 topic read tenant/tenant-c/commands/sensor02/#
 topic read $SYS/broker/version
 

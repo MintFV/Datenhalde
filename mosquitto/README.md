@@ -38,7 +38,7 @@ mosquitto/
 **ACL-System:** Pattern-based Access Control
 - Admin: Vollzugriff auf alle Topics
 - Tenant: Namespace-isoliert (Read/Write nur eigener Namespace)
-- Sensoren: Write-Only + Command-Read
+- Sensoren: Write-Zugriff auf gesamten Tenant-Namespace + Command-Read
 - Monitoring: Read-Only $SYS topics
 
 **Demo-Credentials:** Siehe [mosquitto/README.md](mosquitto/README.md#-multi-tenant-credentials-demo)
@@ -76,10 +76,10 @@ docker compose exec mosquitto mosquitto_passwd /mosquitto/config/mosquitto.passw
 docker compose ps mosquitto
 docker compose logs -f mosquitto
 
-# Test-Publikation
+# Test-Publikation (Sensor kann auf beliebige Topics im Tenant schreiben)
 mosquitto_pub -h mintfv.peddy.net -p 1883 \
   -u tenant-a-sensor01 -P sensor01 \
-  -t "tenant/tenant-a/sensor01/test" -m "Hello"
+  -t "tenant/tenant-a/raspi4/temperature" -m "22.5"
 
 # ACL-Tests
 ./tmp/test-acl.sh
