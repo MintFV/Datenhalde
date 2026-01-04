@@ -73,6 +73,8 @@ nodered/data/.sessions.json
 !nodered/data/package.json
 !nodered/data/package-lock.json
 
+## SMTP-Relay / Exim
+smtp-relay/spool
 
 ################################################################################
 ## backup files
