@@ -11,144 +11,165 @@ Die räumliche Darstellung der Messdaten ist ein **Kernfeature** des Umweltbox-P
 
 ## 📊 Visualisierungs-Typen
 
-### 1. Live-Karte (Aktuelle Werte)
+### 1. Live-Karte (Aktuelle Messwerte)
 
-**Zweck**: Zeigt die **letzten Messwerte** aller Geräte auf einer Karte
+**Zweck**: Zeigt die aktuellsten Messwerte aller Geräte auf einer Karte
 
 **Features**:
-- Farbcodierte Marker (z.B. grün = gut, rot = schlecht)
-- Tooltips mit aktuellen Werten beim Hover
-- Filter nach Sensor-Typ (Temperatur, PM2.5, etc.)
-- Auto-Refresh alle 5 Minuten
+- Farbcodierte Marker (z.B. grün = gute Luftqualität, rot = schlecht)
+- Tooltips mit Detailwerten beim Hover
+- Filter nach Sensor-Typ, Tenant, Zeitbereich
+- Auto-Refresh (alle 5 Minuten)
 
 **Technologie**: Grafana GeoMap Panel
 
----
-
-### 2. Heatmap (Räumliche Verteilung)
-
-**Zweck**: Zeigt **Intensitäten** als Heatmap (z.B. Feinstaubbelastung)
-
-**Features**:
-- Interpolation zwischen Messpunkten
-- Zeitraffer-Animation (z.B. Tagesverlauf)
-- Vergleich verschiedener Zeiträume
-
-**Technologie**: Grafana Heatmap oder externe Tools (Leaflet.js)
+**Beispiel-Use-Case**:
+> "Wo ist die Luftqualität in Hamburg gerade am schlechtesten?"
 
 ---
 
-### 3. Verlaufs-Karte (Zeitreihen auf Karte)
+### 2. Heatmap (Zeitliche Aggregation)
 
-**Zweck**: Zeigt **Trends** pro Standort über Zeit
+**Zweck**: Zeigt räumliche Verteilung über einen Zeitraum (z.B. Tagesmittelwerte)
 
 **Features**:
-- Klick auf Marker → Time-Series-Chart
-- Multi-Standort-Vergleich
-- Historische Daten abrufbar
+- Interpolation zwischen Messpunkten (Kriging/IDW)
+- Farbverläufe (z.B. blau = kalt, rot = warm)
+- Zeitslider für Animation (z.B. Tagesverlauf)
 
-**Technologie**: Grafana GeoMap + Time Series Panel
+**Technologie**: Grafana Heatmap + GeoMap oder externe Tools (Kepler.gl, Mapbox)
+
+**Beispiel-Use-Case**:
+> "Wie verteilt sich die Temperatur über den Tag in München?"
 
 ---
 
-### 4. Mobile Tracking (GPS-Routen)
+### 3. Trajektorien (Mobile Messstationen)
 
-**Zweck**: Zeigt **Bewegungsdaten** von mobilen Messstationen (z.B. Fahrrad-Touren)
+**Zweck**: Zeigt Bewegungspfade von mobilen Sensoren (z.B. Fahrrad-Messungen)
 
 **Features**:
-- Routenverlauf mit Farbcodierung nach Messwert
-- Playback-Funktion (Animation)
-- Export als GPX/KML
+- Linien mit Farbcodierung nach Messwert
+- Zeitstempel-Animation
+- Geschwindigkeitsanzeige (optional)
 
-**Technologie**: Grafana GeoMap mit Linien-Layer
+**Technologie**: Grafana Geomap mit Polylines oder Deck.gl
+
+**Beispiel-Use-Case**:
+> "Wie ändert sich die Luftqualität auf dem Schulweg?"
+
+---
+
+### 4. Vergleichskarte (Multi-Tenant)
+
+**Zweck**: Vergleicht Messwerte verschiedener Schulen/Regionen
+
+**Features**:
+- Side-by-Side-Ansicht oder Overlay
+- Statistische Vergleiche (Mittelwerte, Extremwerte)
+- Ranking (z.B. "Top 10 sauberste Standorte")
+
+**Technologie**: Grafana Dashboard mit mehreren Panels
+
+**Beispiel-Use-Case**:
+> "Welche Schule hat die beste Luftqualität in NRW?"
 
 ## 🛠️ Technologie-Stack
 
-### Grafana GeoMap Panel
+### Primär: Grafana GeoMap Panel
 
 **Vorteile**:
-- ✅ Native Integration mit InfluxDB
-- ✅ Keine zusätzliche Software nötig
-- ✅ Public Dashboards möglich
-- ✅ Responsive (funktioniert auf Handy)
+- ✅ Nativ in Grafana integriert
+- ✅ Direkte InfluxDB-Anbindung
+- ✅ Echtzeit-Updates
+- ✅ Public Dashboards (ohne Login)
+- ✅ Responsive (Mobile-fähig)
 
-**Nachteile**:
-- ❌ Begrenzte Styling-Optionen
-- ❌ Keine 3D-Visualisierungen
-- ❌ Performance-Limits bei >10.000 Punkten
+**Einschränkungen**:
+- ❌ Begrenzte Kartenstile
+- ❌ Keine komplexen Interpolationen
+- ❌ Performance-Limit bei >10.000 Punkten
 
-**Empfehlung**: **Perfekt für Umweltbox-Projekt** (1.500 Geräte = kein Problem)
+**Geeignet für**: Live-Karten, einfache Heatmaps
 
 ---
 
-### Alternative: Leaflet.js + Custom Frontend
+### Sekundär: Kepler.gl (für erweiterte Analysen)
 
 **Vorteile**:
-- ✅ Volle Kontrolle über Design
-- ✅ Erweiterte Interaktivität
-- ✅ 3D-Visualisierungen möglich (via Mapbox GL)
+- ✅ Professionelle 3D-Visualisierungen
+- ✅ Zeitslider-Animationen
+- ✅ Hexagon-Binning (Aggregation)
+- ✅ Export als HTML/PNG
 
-**Nachteile**:
-- ❌ Mehr Entwicklungsaufwand
-- ❌ Separate Hosting-Infrastruktur
-- ❌ Wartungsaufwand
+**Einschränkungen**:
+- ❌ Keine Echtzeit-Updates (CSV/GeoJSON-Export nötig)
+- ❌ Komplexere Einrichtung
 
-**Empfehlung**: Nur für spezielle Use Cases (z.B. wissenschaftliche Publikationen)
+**Geeignet für**: Wissenschaftliche Präsentationen, Papers
+
+---
+
+### Tertiär: Custom Web-App (React + Mapbox/Leaflet)
+
+**Vorteile**:
+- ✅ Vollständige Kontrolle
+- ✅ Custom-Features (z.B. Routing, POI-Integration)
+- ✅ Branding
+
+**Einschränkungen**:
+- ❌ Hoher Entwicklungsaufwand
+- ❌ Wartung nötig
+
+**Geeignet für**: Langfristige Produktentwicklung
 
 ## 📍 Geo-Daten-Quellen
 
-### Statische Standorte (Schulen/Gebäude)
+### Statische Standorte (Schulen)
 
-**Quelle**: Device-Registry (Datenbank)
+**Quelle**: Device-Registry (PostgreSQL/SQLite)
 
-**Struktur**:
+**Schema**:
 ```sql
 CREATE TABLE devices (
-    device_id VARCHAR(100) PRIMARY KEY,
+    device_id VARCHAR(50) PRIMARY KEY,
     tenant_id VARCHAR(100),
-    name VARCHAR(255),
-    location_name VARCHAR(255),
+    name VARCHAR(200),
+    location_type VARCHAR(50),  -- 'classroom', 'outdoor', 'mobile'
     latitude DECIMAL(10, 8),
     longitude DECIMAL(11, 8),
     altitude DECIMAL(6, 2),
-    location_type VARCHAR(50),  -- classroom, outdoor, lab
+    address TEXT,
     created_at TIMESTAMP
 );
 ```
 
-**Beispiel-Eintrag**:
+**Beispiel-Daten**:
 ```sql
-INSERT INTO devices VALUES (
-    'esp-klassenraum-3b',
-    'de-hh-gs-altona',
-    'ESP32 Klassenraum 3b',
-    'Grundschule Altona, Hamburg',
-    53.5511,
-    9.9937,
-    12.0,
-    'classroom',
-    NOW()
-);
+INSERT INTO devices VALUES
+('esp-klassenraum-3b', 'de-hh-gs-altona', 'Klassenraum 3b', 'classroom', 
+ 53.5511, 9.9937, 12.0, 'Altonaer Straße 38, 20357 Hamburg', NOW());
 ```
 
-**Workflow**:
-1. Beim Onboarding: Adresse eingeben
-2. Backend: Geocoding via OpenStreetMap Nominatim API
-3. Koordinaten in Datenbank speichern
-4. Node-RED: Geo-Daten aus Registry holen und in InfluxDB schreiben
+**Verwendung in Node-RED**:
+```javascript
+// Geo-Lookup beim MQTT-Empfang
+const deviceRegistry = global.get('deviceRegistry') || {};
+const geo = deviceRegistry[msg.device_id];
+
+if (geo) {
+    msg.payload.latitude = geo.lat;
+    msg.payload.longitude = geo.lon;
+}
+```
 
 ---
 
-### Mobile Geräte (GPS-Tracker)
+### Dynamische Standorte (Mobile Sensoren)
 
-**Quelle**: MQTT-Payload (live)
+**Quelle**: GPS-Sensor im MQTT-Payload
 
-**MQTT-Topic**:
-```
-umweltbox/{tenant}/{device}/environment/temperature
-```
-
-**Payload mit Geo-Daten**:
+**MQTT-Payload-Format**:
 ```json
 {
   "value": 18.5,
@@ -157,111 +178,56 @@ umweltbox/{tenant}/{device}/environment/temperature
     "lat": 52.5201,
     "lon": 13.4051,
     "alt": 35.2,
-    "accuracy": 5.0
+    "accuracy": 5.0  // Meter (optional)
   }
 }
 ```
 
-**Node-RED Verarbeitung**:
+**Node-RED-Verarbeitung**:
 ```javascript
-// Geo-Daten aus Payload extrahieren
+// GPS-Daten extrahieren
 if (msg.payload.geo) {
     msg.latitude = msg.payload.geo.lat;
     msg.longitude = msg.payload.geo.lon;
     msg.altitude = msg.payload.geo.alt || null;
 } else {
-    // Fallback: Aus Device-Registry holen
-    const device = getDeviceFromRegistry(msg.tenant_id, msg.device_id);
-    msg.latitude = device.latitude;
-    msg.longitude = device.longitude;
+    // Fallback: Statische Koordinaten aus Registry
+    const geo = getStaticGeo(msg.device_id);
+    msg.latitude = geo.lat;
+    msg.longitude = geo.lon;
 }
 ```
 
 ## 🎨 Grafana GeoMap Konfiguration
 
-### Dashboard-Setup
-
-**1. Neue Visualisierung erstellen**
-
-- Panel-Typ: **Geomap**
-- Datenquelle: **InfluxDB**
-
-**2. Flux-Query (Aktuelle Werte)**
-
-```flux
-from(bucket: "umweltbox")
-  |> range(start: -15m)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r.sensor_type == "temperature")
-  |> filter(fn: (r) => r._field == "value" or r._field == "latitude" or r._field == "longitude")
-  |> last()
-  |> pivot(rowKey: ["device_id"], columnKey: ["_field"], valueColumn: "_value")
-```
-
-**Ergebnis**:
-```
-device_id          | value | latitude | longitude | _time
--------------------|-------|----------|-----------|-------------------
-esp-klassenraum-3b | 22.8  | 53.5511  | 9.9937    | 2025-01-03T15:00:00Z
-raspi-schulhof     | 18.2  | 53.5520  | 9.9950    | 2025-01-03T15:00:00Z
-```
-
-**3. GeoMap-Layer konfigurieren**
-
-- **Layer-Typ**: Markers
-- **Location**: Auto (latitude/longitude)
-- **Size**: Fixed (10px) oder basierend auf Wert
-- **Color**: Thresholds (siehe unten)
-
-**4. Thresholds (Farbcodierung)**
-
-Für Temperatur:
-```
-< 10°C   → Blau (#3498db)
-10-20°C  → Grün (#27ae60)
-20-25°C  → Gelb (#f39c12)
-> 25°C   → Rot (#e74c3c)
-```
-
-Für PM2.5 (WHO-Grenzwerte):
-```
-0-10 µg/m³   → Grün (gut)
-10-25 µg/m³  → Gelb (mäßig)
-25-50 µg/m³  → Orange (ungesund für sensible Gruppen)
-> 50 µg/m³   → Rot (ungesund)
-```
-
-**5. Tooltips konfigurieren**
-
-```
-Gerät: {{device_id}}
-Wert: {{value}} {{unit}}
-Standort: {{location_name}}
-Letzte Messung: {{_time}}
-```
-
-### Beispiel-Dashboard-JSON (Auszug)
+### Panel-Setup (JSON-Konfiguration)
 
 ```json
 {
   "type": "geomap",
   "title": "Umweltbox Live-Karte",
   "datasource": "InfluxDB",
-  "targets": [
-    {
-      "query": "from(bucket: "umweltbox") |> range(start: -15m) |> filter(fn: (r) => r.sensor_type == "temperature") |> last()"
-    }
-  ],
   "fieldConfig": {
     "defaults": {
+      "custom": {
+        "hideFrom": {
+          "tooltip": false,
+          "viz": false,
+          "legend": false
+        }
+      },
+      "mappings": [],
       "thresholds": {
         "mode": "absolute",
         "steps": [
-          {"value": 0, "color": "blue"},
-          {"value": 10, "color": "green"},
-          {"value": 20, "color": "yellow"},
-          {"value": 25, "color": "red"}
+          {"value": null, "color": "green"},
+          {"value": 25, "color": "yellow"},
+          {"value": 50, "color": "orange"},
+          {"value": 75, "color": "red"}
         ]
+      },
+      "color": {
+        "mode": "thresholds"
       }
     }
   },
@@ -272,155 +238,162 @@ Letzte Messung: {{_time}}
       "lon": 10.4515,
       "zoom": 6
     },
+    "controls": {
+      "showZoom": true,
+      "showAttribution": true,
+      "mouseWheelZoom": true,
+      "showDebug": false
+    },
+    "basemap": {
+      "type": "osm-standard"
+    },
     "layers": [
       {
         "type": "markers",
         "config": {
           "size": {
-            "fixed": 10
+            "fixed": 8,
+            "min": 2,
+            "max": 15
           },
           "color": {
             "field": "value",
             "fixed": "dark-green"
-          }
-        }
+          },
+          "fillOpacity": 0.8,
+          "shape": "circle"
+        },
+        "location": {
+          "mode": "coords",
+          "latitude": "latitude",
+          "longitude": "longitude"
+        },
+        "tooltip": true
       }
     ]
   }
 }
 ```
 
-## 🌍 Basiskarten (Map Layers)
+### Flux-Query für Live-Karte
 
-### OpenStreetMap (Standard)
+```flux
+from(bucket: "umweltbox")
+  |> range(start: -15m)
+  |> filter(fn: (r) => r._measurement == "umweltbox")
+  |> filter(fn: (r) => r.sensor_type == "pm25")
+  |> filter(fn: (r) => r._field == "value" or r._field == "latitude" or r._field == "longitude")
+  |> last()  // Nur letzter Wert pro Gerät
+  |> pivot(rowKey: ["device_id"], columnKey: ["_field"], valueColumn: "_value")
+  |> filter(fn: (r) => exists r.latitude and exists r.longitude)
+```
 
-**Vorteile**:
-- ✅ Kostenlos
-- ✅ Keine API-Keys nötig
-- ✅ Gute Abdeckung in Deutschland
+**Ergebnis-Schema**:
+```
+device_id         | value | latitude | longitude | _time
+------------------|-------|----------|-----------|-------------------
+esp-klassenraum-3b| 15.2  | 53.5511  | 9.9937    | 2025-01-03T14:30:00Z
+raspi-schulhof    | 23.7  | 48.1351  | 11.5820   | 2025-01-03T14:28:00Z
+```
 
-**URL**: `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`
+### Farbcodierung nach Grenzwerten
 
----
-
-### Mapbox (Optional, besseres Design)
-
-**Vorteile**:
-- ✅ Schönere Karten
-- ✅ Satelliten-Layer verfügbar
-- ✅ 3D-Gebäude
-
-**Nachteile**:
-- ❌ API-Key erforderlich
-- ❌ 50.000 Requests/Monat kostenlos, dann kostenpflichtig
-
-**URL**: `https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={token}`
-
----
-
-### Empfehlung für Umweltbox
-
-**OpenStreetMap** für öffentliche Dashboards (kostenlos, keine Limits)
-
-## 📱 Responsive Design
-
-### Desktop-Ansicht
-
-- Karte: 70% der Breite
-- Sidebar: 30% (Liste der Geräte, Filter)
-- Zoom-Level: 6-8 (Deutschland-Übersicht)
-
-### Mobile-Ansicht
-
-- Karte: 100% der Breite
-- Sidebar: Ausklappbar (Hamburger-Menü)
-- Zoom-Level: Auto (basierend auf Geräte-Positionen)
-
-### Grafana-Konfiguration
-
+**PM2.5 (Feinstaub) - WHO-Grenzwerte**:
 ```json
-{
-  "panels": [
-    {
-      "type": "geomap",
-      "gridPos": {
-        "h": 20,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      }
-    }
+"thresholds": {
+  "steps": [
+    {"value": 0,   "color": "green"},   // Gut
+    {"value": 15,  "color": "yellow"},  // Mäßig
+    {"value": 25,  "color": "orange"},  // Ungesund für sensible Gruppen
+    {"value": 50,  "color": "red"},     // Ungesund
+    {"value": 75,  "color": "purple"}   // Sehr ungesund
   ]
 }
 ```
 
-## 🔍 Erweiterte Features
-
-### 1. Cluster-Marker (bei vielen Geräten)
-
-**Problem**: Bei 1.500 Geräten wird die Karte unübersichtlich
-
-**Lösung**: Marker-Clustering (Geräte in der Nähe werden gruppiert)
-
-**Implementierung**:
-- Grafana: Aktuell keine native Unterstützung
-- Workaround: Leaflet.js mit MarkerCluster-Plugin
-
-**Beispiel** (Leaflet.js):
-```javascript
-var markers = L.markerClusterGroup();
-data.forEach(function(device) {
-    var marker = L.marker([device.lat, device.lon])
-        .bindPopup(`<b>${device.name}</b><br>Temp: ${device.value}°C`);
-    markers.addLayer(marker);
-});
-map.addLayer(markers);
+**Temperatur**:
+```json
+"thresholds": {
+  "steps": [
+    {"value": -10, "color": "dark-blue"},
+    {"value": 0,   "color": "light-blue"},
+    {"value": 10,  "color": "green"},
+    {"value": 20,  "color": "yellow"},
+    {"value": 30,  "color": "orange"},
+    {"value": 35,  "color": "red"}
+  ]
+}
 ```
 
----
 
-### 2. Zeitraffer-Animation
 
-**Zweck**: Zeigt Veränderungen über Zeit (z.B. Tagesverlauf)
+## � Heatmap-Visualisierung
 
-**Implementierung**:
-1. Flux-Query mit Zeitfenster (z.B. letzte 24h, alle 1h)
-2. Grafana: Time-Series-Modus aktivieren
-3. Playback-Button einblenden
+### Grafana Heatmap (Zeitbasiert)
 
-**Flux-Query**:
-```flux
-from(bucket: "umweltbox_hourly")
-  |> range(start: -24h)
-  |> filter(fn: (r) => r.sensor_type == "pm25")
-  |> filter(fn: (r) => r._field == "value_mean")
-  |> aggregateWindow(every: 1h, fn: mean)
-```
-
----
-
-### 3. Vergleichs-Modus (Split-Screen)
-
-**Zweck**: Zwei Zeiträume nebeneinander vergleichen
-
-**Beispiel**:
-- Links: Montag 08:00-10:00 Uhr
-- Rechts: Freitag 08:00-10:00 Uhr
-
-**Grafana-Setup**:
-- Zwei GeoMap-Panels nebeneinander
-- Unterschiedliche Time-Range-Overrides
-
----
-
-### 4. Routen-Visualisierung (Mobile Geräte)
-
-**Zweck**: GPS-Track mit Messwerten anzeigen
+**Zweck**: Zeigt Werte über Zeit und Raum (z.B. Tagesverlauf)
 
 **Flux-Query**:
 ```flux
 from(bucket: "umweltbox")
-  |> range(start: -1h)
+  |> range(start: -24h)
+  |> filter(fn: (r) => r._measurement == "umweltbox")
+  |> filter(fn: (r) => r.tenant_id == "de-hh-gs-altona")
+  |> filter(fn: (r) => r.sensor_type == "temperature")
+  |> filter(fn: (r) => r._field == "value")
+  |> aggregateWindow(every: 1h, fn: mean)
+  |> pivot(rowKey: ["_time"], columnKey: ["device_id"], valueColumn: "_value")
+```
+
+**Darstellung**: X-Achse = Zeit, Y-Achse = Geräte, Farbe = Temperatur
+
+---
+
+### Kepler.gl Heatmap (Räumlich)
+
+**Workflow**:
+1. **Daten exportieren** (InfluxDB → CSV/GeoJSON)
+2. **Kepler.gl laden**: https://kepler.gl
+3. **Datei hochladen**
+4. **Layer konfigurieren**:
+   - Layer-Typ: Heatmap
+   - Radius: 1000m
+   - Intensity: value
+   - Color Range: Viridis
+
+**Export-Query (Flux → CSV)**:
+```flux
+from(bucket: "umweltbox_daily")
+  |> range(start: -30d)
+  |> filter(fn: (r) => r._measurement == "umweltbox")
+  |> filter(fn: (r) => r.sensor_type == "pm25")
+  |> filter(fn: (r) => r._field == "value_mean")
+  |> pivot(rowKey: ["_time", "device_id"], columnKey: ["_field"], valueColumn: "_value")
+  |> map(fn: (r) => ({
+      time: r._time,
+      device: r.device_id,
+      lat: r.latitude,
+      lon: r.longitude,
+      pm25: r.value_mean
+  }))
+```
+
+**CSV-Format**:
+```csv
+time,device,lat,lon,pm25
+2025-01-01T00:00:00Z,esp01,53.5511,9.9937,12.5
+2025-01-01T00:00:00Z,raspi01,48.1351,11.5820,18.3
+```
+
+## 🚴 Trajektorien (Mobile Sensoren)
+
+### Grafana Geomap mit Polylines
+
+**Flux-Query**:
+```flux
+from(bucket: "umweltbox")
+  |> range(start: -2h)
+  |> filter(fn: (r) => r._measurement == "umweltbox")
   |> filter(fn: (r) => r.device_id == "mobile-01")
   |> filter(fn: (r) => r.sensor_type == "temperature")
   |> filter(fn: (r) => r._field == "value" or r._field == "latitude" or r._field == "longitude")
@@ -428,105 +401,179 @@ from(bucket: "umweltbox")
   |> sort(columns: ["_time"])
 ```
 
-**GeoMap-Layer**:
-- Layer-Typ: **Route** (Linien zwischen Punkten)
-- Farbcodierung: Basierend auf Messwert
+**Layer-Konfiguration**:
+```json
+{
+  "type": "route",
+  "config": {
+    "style": {
+      "color": {
+        "field": "value",
+        "fixed": "blue"
+      },
+      "size": 3,
+      "opacity": 0.8
+    }
+  }
+}
+```
+
+---
+
+### Deck.gl (für komplexe Animationen)
+
+**Technologie**: React + deck.gl TripsLayer
+
+**Beispiel-Code**:
+```javascript
+import {TripsLayer} from '@deck.gl/geo-layers';
+
+const layer = new TripsLayer({
+  id: 'trips',
+  data: trajectoryData,
+  getPath: d => d.path,  // Array of [lon, lat]
+  getTimestamps: d => d.timestamps,
+  getColor: d => colorScale(d.value),
+  opacity: 0.8,
+  widthMinPixels: 2,
+  rounded: true,
+  trailLength: 180,
+  currentTime: animationTime
+});
+```
+
+
 
 ## 📊 Dashboard-Beispiele
 
-### Dashboard 1: Bundesweite Übersicht
+### Dashboard 1: "Bundesweite Übersicht"
 
-**Komponenten**:
-- GeoMap (gesamtes Deutschland, Zoom 6)
-- Filter: Sensor-Typ, Bundesland, Zeitraum
-- Statistik-Panel: Anzahl aktiver Geräte, Durchschnittswerte
+**Panels**:
+1. **GeoMap**: Alle aktiven Geräte mit letztem Messwert
+2. **Stat Panel**: Anzahl aktiver Geräte
+3. **Time Series**: Durchschnittswerte pro Bundesland
+4. **Table**: Top 10 höchste/niedrigste Werte
 
-**URL**: `https://grafana.umweltbox.de/d/deutschland-overview`
-
----
-
-### Dashboard 2: Schul-Dashboard (Tenant-spezifisch)
-
-**Komponenten**:
-- GeoMap (nur Geräte der Schule, Zoom 15)
-- Time-Series: Verlauf der letzten 24h
-- Tabelle: Aktuelle Werte aller Geräte
-
-**URL**: `https://grafana.umweltbox.de/d/tenant?var-tenant=de-hh-gs-altona`
+**Filter-Variablen**:
+- `$sensor_type` (Dropdown: temperature, pm25, humidity, ...)
+- `$timerange` (Dropdown: Last 1h, Last 24h, Last 7d)
 
 ---
 
-### Dashboard 3: Vergleichs-Dashboard
+### Dashboard 2: "Schul-Detailansicht"
 
-**Komponenten**:
-- GeoMap: Alle Schulen in Hamburg
-- Bar-Chart: Durchschnittswerte pro Schule
-- Heatmap: Tagesverlauf (Stunden vs. Schulen)
+**Panels**:
+1. **GeoMap**: Alle Geräte der Schule (zoomed in)
+2. **Heatmap**: Tagesverlauf (X=Zeit, Y=Raum)
+3. **Time Series**: Vergleich Innen vs. Außen
+4. **Gauge**: Aktuelle Luftqualität (AQI)
 
-**URL**: `https://grafana.umweltbox.de/d/city-comparison?var-city=hamburg`
+**Filter-Variablen**:
+- `$tenant` (fest gesetzt via URL-Parameter)
 
-## 🔐 Public Access
+---
 
-### Grafana Anonymous Access
+### Dashboard 3: "Mobile Messstation"
 
-**Konfiguration** (`grafana.ini`):
-```ini
-[auth.anonymous]
-enabled = true
-org_name = Umweltbox
-org_role = Viewer
+**Panels**:
+1. **GeoMap**: Trajektorie der letzten 2 Stunden
+2. **Time Series**: Messwerte über Fahrtzeit
+3. **Stat Panel**: Zurückgelegte Strecke (km)
+4. **Table**: Hotspots (höchste Werte)
 
-[security]
-allow_embedding = true
+## 🎓 Best Practices
+
+### 1. Performance-Optimierung
+
+**Problem**: Zu viele Datenpunkte → langsame Karte
+
+**Lösungen**:
+- **Clustering**: Gruppiere nahe Marker (Grafana Cluster-Layer)
+- **Downsampling**: Nutze aggregierte Buckets für längere Zeiträume
+- **Limit**: Zeige max. 1.000 Punkte gleichzeitig
+- **Caching**: Statische Geo-Daten im Browser cachen
+
+**Flux-Optimierung**:
+```flux
+from(bucket: "umweltbox")
+  |> range(start: -1h)
+  |> filter(fn: (r) => r._measurement == "umweltbox")
+  |> last()  // Nur letzter Wert pro Serie
+  |> limit(n: 1000)  // Max. 1000 Punkte
 ```
 
-**Effekt**: Jeder kann Dashboards ohne Login sehen (Read-Only)
+---
 
-### Embedding in Webseiten
+### 2. Datenschutz & Anonymisierung
 
-**HTML-Code**:
-```html
-<iframe 
-  src="https://grafana.umweltbox.de/d-solo/live-map/umweltbox-live?orgId=1&panelId=2" 
-  width="100%" 
-  height="600" 
-  frameborder="0">
-</iframe>
+**Problem**: Genaue Standorte könnten Rückschlüsse auf Personen ermöglichen
+
+**Lösungen**:
+- **Geo-Fuzzing**: Koordinaten auf 100m runden (optional)
+- **Aggregation**: Nur Durchschnittswerte pro Postleitzahl zeigen
+- **Opt-Out**: Schulen können Standorte verbergen
+
+**Beispiel (Geo-Fuzzing)**:
+```javascript
+// Runde auf ~100m Genauigkeit
+const fuzzedLat = Math.round(lat * 1000) / 1000;  // 3 Dezimalstellen
+const fuzzedLon = Math.round(lon * 1000) / 1000;
 ```
 
-**Verwendung**:
-- Schul-Webseiten
-- Projekt-Homepage
-- Wissenschaftliche Publikationen
+---
 
-## 🎓 Pädagogische Nutzung
+### 3. Barrierefreiheit
 
-### Unterrichtsideen
+- **Farbblindheit**: Nutze Muster zusätzlich zu Farben
+- **Kontrast**: Mindestens WCAG AA (4.5:1)
+- **Tastaturnavigation**: Alle Funktionen per Tastatur bedienbar
+- **Screen Reader**: Alt-Texte für Karten-Elemente
 
-1. **Geografie**: Wo sind die Messstellen? Welche Regionen fehlen?
-2. **Mathematik**: Durchschnitte berechnen, Korrelationen finden
-3. **Physik**: Temperaturunterschiede Stadt/Land erklären
-4. **Informatik**: Eigene Dashboards erstellen (Grafana-Workshop)
+---
 
-### Schüler-Projekte
+### 4. Mobile Optimierung
 
-- **Fahrrad-Tour**: Mobile Messstation durch die Stadt
-- **Vergleichsstudie**: Schulhof vs. Straße vs. Park
-- **Zeitreihenanalyse**: Wie ändert sich die Luftqualität über Wochen?
+- **Responsive Design**: Karte passt sich Bildschirmgröße an
+- **Touch-Gesten**: Pinch-to-Zoom, Swipe
+- **Reduzierte Daten**: Weniger Marker auf kleinen Screens
+- **Offline-Modus**: Cached Tiles für schlechte Verbindungen
 
-## 📚 Ressourcen
+## 🔗 Externe Ressourcen
 
-### Dokumentation
+### Kartendienste
 
-- Grafana GeoMap: https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/geomap/
-- InfluxDB Flux Geo-Queries: https://docs.influxdata.com/flux/v0/stdlib/experimental/geo/
-- Leaflet.js: https://leafletjs.com/
+| Dienst | Typ | Kosten | Lizenz |
+|--------|-----|--------|--------|
+| **OpenStreetMap** | Basiskarte | Kostenlos | ODbL |
+| **Mapbox** | Basiskarte + Styles | 50k Views/Monat kostenlos | Proprietär |
+| **CartoDB** | Basiskarte + Analytics | Kostenlos (Public) | BSD |
 
-### Beispiel-Projekte
+### Tools
 
-- **Sensor.Community**: https://maps.sensor.community/ (Feinstaub-Karte)
-- **OpenSenseMap**: https://opensensemap.org/ (Citizen Science)
-- **PurpleAir**: https://map.purpleair.com/ (Luftqualität)
+- **Grafana GeoMap**: https://grafana.com/docs/grafana/latest/panels/visualizations/geomap/
+- **Kepler.gl**: https://kepler.gl
+- **Deck.gl**: https://deck.gl
+- **Leaflet**: https://leafletjs.com
+- **Mapbox GL JS**: https://docs.mapbox.com/mapbox-gl-js/
+
+### Beispiel-Dashboards
+
+- **AirGradient**: https://www.airgradient.com/open-airgradient/map/
+- **Sensor.Community**: https://sensor.community/en/
+- **OpenAQ**: https://openaq.org/#/map
+
+## 📋 Checkliste: Karten-Setup
+
+- [ ] Device-Registry mit Geo-Koordinaten befüllt
+- [ ] InfluxDB-Schema enthält `latitude`/`longitude` Fields
+- [ ] Grafana GeoMap Panel konfiguriert
+- [ ] Basiskarte ausgewählt (OSM/Mapbox)
+- [ ] Farbcodierung nach Grenzwerten eingerichtet
+- [ ] Tooltips mit sinnvollen Informationen
+- [ ] Filter-Variablen für Sensor-Typ/Zeitbereich
+- [ ] Public Dashboard-Link erstellt
+- [ ] Mobile-Ansicht getestet
+- [ ] Performance-Test mit 1.000+ Punkten
 
 ---
 
