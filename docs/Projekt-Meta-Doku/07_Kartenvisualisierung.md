@@ -558,9 +558,9 @@ const fuzzedLon = Math.round(lon * 1000) / 1000;
 
 ### Beispiel-Dashboards
 
-- **AirGradient**: https://www.airgradient.com/open-airgradient/map/
+- **AirGradient**: https://map.airgradient.com/
 - **Sensor.Community**: https://sensor.community/en/
-- **OpenAQ**: https://openaq.org/#/map
+- **OpenAQ**: https://explore.openaq.org/
 
 ## 📋 Checkliste: Karten-Setup
 

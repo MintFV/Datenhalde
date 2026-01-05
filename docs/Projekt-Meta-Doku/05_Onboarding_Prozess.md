@@ -35,7 +35,7 @@ graph TD
 
 ### Portal-Features
 
-- **URL**: `https://onboarding.umweltbox.de`
+- **URL**: `https://mintfv.peddy.net/onboarding`
 - **Technologie**: Einfaches Web-Frontend (Flask/FastAPI)
 - **Authentifizierung**: E-Mail-Verifizierung
 
@@ -86,7 +86,7 @@ topic read \$SYS/#
 EOF
 
 # 3. InfluxDB-Bucket erstellen (via API)
-curl -X POST "http://localhost:8086/api/v2/buckets"   -H "Authorization: Token ADMIN_TOKEN"   -H "Content-Type: application/json"   -d '{
+curl -X POST "http://localhost:8181/api/v2/buckets"   -H "Authorization: Token ADMIN_TOKEN"   -H "Content-Type: application/json"   -d '{
     "orgID": "umweltbox-org-id",
     "name": "umweltbox",
     "retentionRules": [{"type": "expire", "everySeconds": 2592000}]
@@ -107,21 +107,21 @@ VALUES ('de-by-gym-max-planck', 'Gymnasium Max Planck',
 Tenant-ID: de-by-gym-max-planck
 
 MQTT (Admin-Zugang):
-  Broker: mqtt.umweltbox.de
+  Broker: mintfv.peddy.net
   Port: 8883 (TLS)
   Username: de-by-gym-max-planck-admin
   Password: Xy9#mK2$qL8@vN3!
   Topic-Pattern: umweltbox/de-by-gym-max-planck/#
 
 InfluxDB (für direkten Zugriff):
-  URL: https://influx.umweltbox.de
+  URL: https://mintfv.peddy.net/influxdb
   Token: Abc123XyZ...789 (write-only)
   Bucket: umweltbox
   Organization: umweltbox
 
 Grafana (Read-Only):
-  URL: https://grafana.umweltbox.de
-  Dashboard: https://grafana.umweltbox.de/d/tenant-overview?var-tenant=de-by-gym-max-planck
+  URL: https://mintfv.peddy.net/grafana/
+  Dashboard: https://mintfv.peddy.net/grafana/d/tenant-overview?var-tenant=de-by-gym-max-planck
 ```
 
 ## 3️⃣ Config-Download
@@ -134,7 +134,7 @@ Das Portal generiert **fertige Konfigurationsdateien** für verschiedene Geräte
 
 `tasmota_config.txt`:
 ```
-Backlog0 MqttHost mqtt.umweltbox.de;   MqttPort 8883;   MqttUser de-by-gym-max-planck-esp01;   MqttPassword Xy9#mK2$qL8@vN3!;   MqttClient esp01;   Topic umweltbox/de-by-gym-max-planck/esp01;   FullTopic %prefix%/%topic%/;   SetOption3 1;   TelePeriod 300
+Backlog0 MqttHost mintfv.peddy.net;   MqttPort 8883;   MqttUser de-by-gym-max-planck-esp01;   MqttPassword Xy9#mK2$qL8@vN3!;   MqttClient esp01;   Topic umweltbox/de-by-gym-max-planck/esp01;   FullTopic %prefix%/%topic%/;   SetOption3 1;   TelePeriod 300
 ```
 
 **Verwendung**: Über Tasmota-Konsole einfügen
@@ -144,7 +144,7 @@ Backlog0 MqttHost mqtt.umweltbox.de;   MqttPort 8883;   MqttUser de-by-gym-max-p
 `umweltbox_config.yaml`:
 ```yaml
 mqtt:
-  broker: mqtt.umweltbox.de
+  broker: mintfv.peddy.net
   port: 8883
   username: de-by-gym-max-planck-raspi01
   password: Xy9#mK2$qL8@vN3!
@@ -177,7 +177,7 @@ sensors:
   interval = "5m"
   
 [[outputs.mqtt]]
-  servers = ["ssl://mqtt.umweltbox.de:8883"]
+  servers = ["ssl://mintfv.peddy.net:8883"]
   username = "de-by-gym-max-planck-pc01"
   password = "Xy9#mK2$qL8@vN3!"
   topic_prefix = "umweltbox/de-by-gym-max-planck/pc01"
@@ -225,8 +225,8 @@ sensors:
 
 2. **Umweltbox-Script herunterladen**:
    ```bash
-   wget https://umweltbox.de/downloads/umweltbox-client.py
-   wget https://umweltbox.de/downloads/umweltbox_config.yaml
+   wget https://mintfv.peddy.net/downloads/umweltbox-client.py
+   wget https://mintfv.peddy.net/downloads/umweltbox_config.yaml
    ```
 
 3. **Config anpassen** (siehe oben)
@@ -257,11 +257,15 @@ Das Onboarding-Portal zeigt in Echtzeit:
 
 1. **MQTT-Test** (via mosquitto_sub):
    ```bash
-   mosquitto_sub -h mqtt.umweltbox.de -p 8883      -u de-by-gym-max-planck-admin      -P "Xy9#mK2$qL8@vN3!"      -t "umweltbox/de-by-gym-max-planck/#"      --cafile /path/to/ca.crt
-   ```
+   mosquitto_sub -h mintfv.peddy.net -p 8883      -u de-by-gym-max-planck-admin      -P "Xy9#mK2$qL8@vN3!"      -t "umweltbox/de-by-gym-max-planck/#"      --cafile /path/to/ca.crt
+   2. **MQTT-Publish-Test** (via mosquitto_pub, TLS ber Port 8883 via mintfv.peddy.net):
+ ```bash
+ mosquitto_pub -h mintfv.peddy.net  -p 8883  -u tenant-a-sensor01 -P sensor01    -t "tenant/tenant-a/$HOSTNAME/cpu/temp"    -m "{"host": "$HOSTNAME", "temp": $(vcgencmd measure_temp | cut -c 6-9) }"
+ ```
 
-2. **Grafana-Dashboard öffnen**:
-   - URL: `https://grafana.umweltbox.de/d/tenant-live`
+3. **Grafana-Dashboard ffnen**:
+ öffnen**:
+   - URL: `https://mintfv.peddy.net/grafana/d/tenant-live`
    - Filter: `tenant_id = de-by-gym-max-planck`
    - Zeitbereich: Letzte 15 Minuten
 
@@ -289,7 +293,7 @@ Das Onboarding-Portal zeigt in Echtzeit:
 1. **MQTT-Ebene testen**:
    ```bash
    # Von Gerät senden (mosquitto_pub)
-   mosquitto_pub -h mqtt.umweltbox.de -p 8883      -u de-by-gym-max-planck-esp01      -P "Xy9#mK2$qL8@vN3!"      -t "umweltbox/de-by-gym-max-planck/esp01/environment/temperature"      -m '{"value": 23.5}'      --cafile /path/to/ca.crt
+   mosquitto_pub -h mintfv.peddy.net -p 8883      -u de-by-gym-max-planck-esp01      -P "Xy9#mK2$qL8@vN3!"      -t "umweltbox/de-by-gym-max-planck/esp01/environment/temperature"      -m '{"value": 23.5}'      --cafile /path/to/ca.crt
    ```
 
 2. **Node-RED Debug-Log aktivieren**:
@@ -298,7 +302,7 @@ Das Onboarding-Portal zeigt in Echtzeit:
 
 3. **InfluxDB-Write direkt testen**:
    ```bash
-   curl -X POST "https://influx.umweltbox.de/api/v2/write?org=umweltbox&bucket=umweltbox"      -H "Authorization: Token ABC123..."      --data-raw "umweltbox,tenant_id=de-by-gym-max-planck,device_id=test,sensor_type=temperature value=99.9"
+   curl -X POST "https://mintfv.peddy.net/influxdb/api/v2/write?org=umweltbox&bucket=umweltbox"      -H "Authorization: Token ABC123..."      --data-raw "umweltbox,tenant_id=de-by-gym-max-planck,device_id=test,sensor_type=temperature value=99.9"
    ```
 
 ## 📧 Support-Kontakt

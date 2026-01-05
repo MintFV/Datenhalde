@@ -415,3 +415,5 @@ from(bucket: "umweltbox_daily")
 
 **Erstellt**: Januar 2026  
 **Version**: 1.0
+
+Hinweis: Detaillierte Speicherberechnungen siehe 06_Speicherplanung_und_Downsampling.md (Szenario "MITTEL").

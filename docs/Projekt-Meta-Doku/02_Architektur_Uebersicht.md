@@ -200,6 +200,12 @@ graph LR
     style INFLUX fill:#3498db,color:#fff
 ```
 
+**MQTT ber TLS (Referenzumgebung mintfv.peddy.net)**:
+- Externe Clients verbinden sich verschl sselt mit `mintfv.peddy.net:8883` (MQTTS).
+- Nginx terminiert TLS im Stream-Block und leitet die Verbindung intern an `mosquitto:1883` weiter.
+- Die Authentifizierung und Topic-ACLs erfolgen im Mosquitto-Broker; nach außen ist nur Port 8883 sichtbar.
+
+
 **Sicherheitsmaßnahmen**:
 1. TLS für alle MQTT-Verbindungen
 2. ACL-basierte Isolation pro Tenant
