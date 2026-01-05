@@ -2,16 +2,23 @@
 
 ## 🌍 Übersicht
 
-Diese Dokumentation sammelt **existierende Citizen-Science- und IoT-Projekte**, die als Inspiration und technische Referenz für das Umweltbox-Projekt dienen. Wir analysieren:
+Diese Sammlung zeigt **erfolgreiche Citizen-Science- und IoT-Projekte**, die als Inspiration und technische Referenz für das Umweltbox-Projekt dienen. Alle Projekte sind Open Source oder Open Data.
 
-- **Architektur**: Wie ist das System aufgebaut?
-- **Technologie-Stack**: Welche Tools werden verwendet?
-- **Datenmodell**: Wie werden Daten strukturiert?
-- **Lessons Learned**: Was können wir übernehmen/vermeiden?
+## 📊 Vergleichstabelle
+
+| Projekt | Fokus | Geräte | Daten | Technologie | Lizenz |
+|---------|-------|--------|-------|-------------|--------|
+| **[Sensor.Community](https://sensor.community/)** | Luftqualität | 15.000+ | Open Data | ESP8266, InfluxDB | CC BY-SA 4.0 |
+| **[OpenSenseMap](https://opensensemap.org/)** | Multi-Sensor | 8.000+ | Open Data | Arduino, API | LGPL |
+| **[AirGradient](https://www.airgradient.com)** | CO2 + Luftqualität | 5.000+ | Teilweise offen | ESP32, Cloud | Proprietär |
+| **[PurpleAir](https://www.purpleair.com/)** | Luftqualität | 20.000+ | Kommerziell | ESP32, Cloud | Proprietär |
+| **[Safecast](https://safecast.org)** | Radioaktivität | 1.000+ | Open Data | Custom HW, API | CC0 |
+| **[Smart Citizen](https://smartcitizen.me)** | Multi-Sensor | 2.000+ | Open Data | ESP32, API | GPL v3 |
+| **[The Things Network](https://www.thethingsnetwork.org/)** | LoRaWAN-Infrastruktur | 100.000+ | Open Data | LoRa, MQTT | AGPL v3 |
 
 ---
 
-## 1. Sensor.Community (ehem. Luftdaten.info)
+## 1️⃣ Sensor.Community (ehem. Luftdaten.info)
 
 ### 📊 Projekt-Übersicht
 
@@ -113,7 +120,7 @@ SELECT create_hypertable('sensor_data', 'timestamp');
 
 ---
 
-## 2. OpenSenseMap (senseBox)
+## 2️⃣ OpenSenseMap (senseBox)
 
 ### 📊 Projekt-Übersicht
 
@@ -207,356 +214,303 @@ Payload: {"value": 23.5}
 }
 ```
 
-### ✅ Was können wir übernehmen?
+### ✅ Lessons Learned (für Umweltbox)
 
-1. **Pädagogischer Ansatz**: Blockly-Programmierung für Schüler
-2. **Multi-Sensor-Support**: Flexible Sensor-Konfiguration
-3. **Web-Interface**: Schöne Karten-Visualisierung
-4. **Dokumentation**: Sehr gute Tutorials
+| Aspekt | OpenSenseMap | Umweltbox-Adaption |
+|--------|--------------|-------------------|
+| **Bildungsansatz** | Sehr stark | Übernehmen! |
+| **Hardware-Kosten** | 100-150 € | 30-50 € (günstiger) |
+| **Datenbank** | MongoDB | InfluxDB (besser für Zeitreihen) |
+| **Onboarding** | Web-Formular | Automatisiert + Config-Download |
+| **Multi-Tenancy** | Keine | Ja (wichtig für Schulen) |
 
-### ❌ Was machen wir besser?
-
-1. **Günstigere Hardware**: ESP8266 (~5€) statt senseBox (~100€)
-2. **InfluxDB statt MongoDB**: Bessere Zeitreihen-Performance
-3. **MQTT als Standard**: Nicht optional
-4. **Multi-Tenancy**: Isolierte Bereiche pro Schule
+**Übernahme**:
+- ✅ Unterrichtsmaterialien-Konzept
+- ✅ Modularer Sensor-Ansatz
+- ✅ Community-Features (Forum, Projekte teilen)
 
 ---
 
-## 3. PurpleAir
+## 3️⃣ AirGradient
 
-### 📊 Projekt-Übersicht
+### 📋 Projekt-Steckbrief
 
-| Eigenschaft | Details |
-|-------------|---------|
-| **Website** | https://www.purpleair.com/ |
-| **Gegründet** | 2015 (USA) |
-| **Fokus** | Luftqualität (PM2.5, PM10) |
-| **Geräte** | ~20.000 weltweit |
-| **Open Source** | ❌ Nein (proprietär) |
-| **Hardware** | PurpleAir Sensor (~250 USD) |
+- **Website**: https://www.airgradient.com
+- **Start**: 2020 (Thailand/USA)
+- **Geräte**: ~5.000 aktive Geräte
+- **Fokus**: CO2, PM2.5, Temperatur, Luftfeuchtigkeit
+- **Zielgruppe**: Privathaushalte, Schulen, Büros
 
-### 🏗️ Architektur
+### 🛠️ Technischer Aufbau
 
-```mermaid
-graph LR
-    PA[PurpleAir Sensor<br/>ESP32 + 2× PMS5003] -->|WiFi| CLOUD[PurpleAir Cloud<br/>AWS]
-    CLOUD --> MAP[Web-Map<br/>Google Maps]
-    CLOUD --> API[Public API<br/>JSON]
-    CLOUD --> THINGSPEAK[ThingSpeak<br/>Export]
-    
-    style PA fill:#9b59b6,color:#fff
-    style CLOUD fill:#3498db,color:#fff
+**Hardware**:
+- **MCU**: ESP32-C3
+- **Sensoren**: 
+  - PMS5003 (Feinstaub)
+  - SenseAir S8 (CO2)
+  - SHT40 (Temperatur, Luftfeuchtigkeit)
+- **Display**: OLED (optional)
+- **Kosten**: ~80-120 € (DIY-Kit)
+
+**Software**:
+- **Firmware**: Open Source (Arduino)
+- **Protokoll**: MQTT + HTTP
+- **Backend**: Proprietäre Cloud (kostenlos)
+- **Alternative**: Lokale InfluxDB-Integration möglich
+- **Visualisierung**: Web-Dashboard + Grafana
+
+**MQTT-Topics**:
+```
+airgradient/{device_id}/pm25
+airgradient/{device_id}/co2
+airgradient/{device_id}/temperature
 ```
 
-### 🔧 Technologie-Stack
+### 🌟 Besonderheiten
 
-| Komponente | Technologie | Details |
-|------------|-------------|---------|
-| **Hardware** | ESP32 + 2× PMS5003 | Dual-Sensor für Redundanz |
-| **Firmware** | Proprietär | Closed Source |
-| **Protokoll** | HTTPS (verschlüsselt) | - |
-| **Backend** | AWS (vermutlich) | Nicht öffentlich |
-| **Datenbank** | Unbekannt | Vermutlich DynamoDB |
-| **Visualisierung** | Google Maps API | - |
-| **API** | REST (JSON) | Public, kostenlos |
+- **Kalibrierung**: Automatische Sensor-Kalibrierung
+- **Firmware-Updates**: OTA (Over-The-Air)
+- **Display**: Echtzeit-Anzeige am Gerät
+- **API**: Öffentliche API für Daten-Export
 
-### 📡 Public API
+### ✅ Lessons Learned (für Umweltbox)
 
-**Endpoint**:
+| Aspekt | AirGradient | Umweltbox-Adaption |
+|--------|-------------|-------------------|
+| **Hardware-Qualität** | Sehr hoch | Anstreben (bessere Sensoren) |
+| **CO2-Messung** | Ja (wichtig!) | Übernehmen |
+| **Display** | Ja | Optional (Kosten) |
+| **Cloud** | Proprietär | Open Source (InfluxDB) |
+| **Kalibrierung** | Automatisch | Dokumentieren |
+
+**Übernahme**:
+- ✅ CO2-Sensor-Integration (wichtig für Schulen!)
+- ✅ OTA-Update-Mechanismus
+- ✅ Lokale Anzeige (motiviert Schüler*innen)
+
+---
+
+## 4️⃣ Safecast
+
+### 📋 Projekt-Steckbrief
+
+- **Website**: https://safecast.org
+- **Start**: 2011 (nach Fukushima-Katastrophe)
+- **Geräte**: ~1.000 Geigerzähler
+- **Fokus**: Radioaktivität (Gamma-Strahlung)
+- **Zielgruppe**: Bürger*innen in Japan, weltweit
+
+### 🛠️ Technischer Aufbau
+
+**Hardware (bGeigie Nano)**:
+- **MCU**: Arduino Nano
+- **Sensor**: LND 7317 Geiger-Müller-Zählrohr
+- **GPS**: NEO-6M
+- **Speicher**: SD-Karte (lokale Logs)
+- **Kosten**: ~400-500 € (spezialisiert)
+
+**Software**:
+- **Firmware**: Open Source (C++)
+- **Protokoll**: CSV-Upload via Web
+- **Backend**: Ruby on Rails, PostgreSQL
+- **API**: RESTful (JSON)
+- **Visualisierung**: Leaflet.js (Heatmap)
+
+**Daten-Format**:
+```csv
+timestamp,latitude,longitude,cpm,usv_h
+2025-01-03T14:30:00Z,35.6762,139.6503,42,0.35
+```
+
+### 🌟 Besonderheiten
+
+- **Mobile Messungen**: GPS-Tracking während Fahrten
+- **Langzeitarchiv**: Daten seit 2011 verfügbar
+- **Wissenschaftliche Nutzung**: Peer-reviewed Papers
+- **Transparenz**: Alle Rohdaten downloadbar
+
+### ✅ Lessons Learned (für Umweltbox)
+
+| Aspekt | Safecast | Umweltbox-Adaption |
+|--------|----------|-------------------|
+| **Mobile Sensoren** | Ja (GPS-Tracking) | Übernehmen! |
+| **Langzeitarchiv** | 10+ Jahre | Ja (tägliche Aggregate ewig) |
+| **Daten-Download** | CSV/JSON | Ja (API + Export) |
+| **Wissenschaft** | Viele Papers | Ziel für Umweltbox |
+
+**Übernahme**:
+- ✅ GPS-Tracking für mobile Messstationen
+- ✅ CSV-Export für Offline-Analysen
+- ✅ Langzeitarchivierung (wichtig für Forschung)
+
+---
+
+## 5️⃣ Smart Citizen
+
+### 📋 Projekt-Steckbrief
+
+- **Website**: https://smartcitizen.me
+- **Start**: 2012 (Barcelona, Spanien)
+- **Geräte**: ~2.000 Smart Citizen Kits
+- **Fokus**: Multi-Sensor (Luft, Lärm, Licht)
+- **Zielgruppe**: Urbane Communities, Aktivist*innen
+
+### 🛠️ Technischer Aufbau
+
+**Hardware (SCK 2.1)**:
+- **MCU**: ESP32
+- **Sensoren**: 
+  - PMS5003 (Feinstaub)
+  - BME680 (Temperatur, Luftfeuchtigkeit, VOC)
+  - MEMS-Mikrofon (Lärm)
+  - BH1730FVC (Licht)
+- **Kosten**: ~150-200 €
+
+**Software**:
+- **Firmware**: Open Source (Arduino)
+- **Protokoll**: HTTP POST (JSON)
+- **Backend**: Python (Django), PostgreSQL
+- **API**: RESTful (OpenAPI)
+- **Visualisierung**: Custom Web-App (React)
+
+**API-Beispiel**:
+```bash
+# Geräte-Infos
+curl https://api.smartcitizen.me/v0/devices/{device_id}
+
+# Letzte Messwerte
+curl https://api.smartcitizen.me/v0/devices/{device_id}/readings
+```
+
+### 🌟 Besonderheiten
+
+- **Community-Plattform**: Nutzer können Projekte teilen
+- **Daten-Analyse-Tools**: Jupyter Notebooks
+- **Kalibrierung**: Community-basierte Kalibrierungs-Algorithmen
+- **Integration**: Sensor.Community, OpenAQ
+
+### ✅ Lessons Learned (für Umweltbox)
+
+| Aspekt | Smart Citizen | Umweltbox-Adaption |
+|--------|---------------|-------------------|
+| **Community-Features** | Sehr stark | Übernehmen (Forum, Projekte) |
+| **Lärm-Messung** | Ja | Optional (Datenschutz!) |
+| **Jupyter-Integration** | Ja | Für Schulen interessant |
+| **Kalibrierung** | Community | Dokumentieren |
+
+**Übernahme**:
+- ✅ Community-Plattform (Projekte teilen)
+- ✅ Jupyter-Notebooks für Schüler-Analysen
+- ✅ Lärm-Sensor (optional, mit Datenschutz-Hinweis)
+
+---
+
+## 🎁 Bonus: Weitere Projekte
+
+### PurpleAir
+
+**Projekt-Übersicht**:
+- **Website**: https://www.purpleair.com/
+- **Gegründet**: 2015 (USA)
+- **Fokus**: Luftqualität (PM2.5, PM10)
+- **Geräte**: ~20.000 weltweit
+- **Open Source**: ❌ Nein (proprietär)
+
+**Hardware**: ESP32 + 2× PMS5003 (Dual-Sensor für Redundanz)
+
+**Software**: Proprietär (Closed Source), AWS Backend
+
+**Public API**:
 ```
 GET https://api.purpleair.com/v1/sensors/:sensor_index
 ```
 
-**Response**:
-```json
-{
-  "sensor": {
-    "sensor_index": 12345,
-    "name": "School Sensor",
-    "latitude": 37.7749,
-    "longitude": -122.4194,
-    "pm2.5": 15.2,
-    "temperature": 68.5,
-    "humidity": 45.0,
-    "last_seen": 1704384000
-  }
-}
-```
-
-### ✅ Was können wir übernehmen?
-
-1. **Dual-Sensor-Ansatz**: Redundanz für Qualitätssicherung
-2. **Public API**: Einfacher Zugriff für Dritte
-3. **Real-Time-Map**: Sehr schnelle Aktualisierung
-
-### ❌ Was machen wir besser?
-
-1. **Open Source**: Transparenz statt Closed Source
-2. **Günstigere Hardware**: ESP8266 + SDS011 (~30€) statt PurpleAir (~250 USD)
-3. **Eigene Infrastruktur**: Keine Abhängigkeit von kommerziellen Anbietern
-4. **Multi-Sensor**: Nicht nur Luftqualität
+**Lessons Learned**: Dual-Sensor-Ansatz interessant, aber proprietär und teuer (250 USD)
 
 ---
 
-## 4. The Things Network (TTN)
+### The Things Network (TTN)
 
-### 📊 Projekt-Übersicht
+**Projekt-Übersicht**:
+- **Website**: https://www.thethingsnetwork.org/
+- **Gegründet**: 2015 (Niederlande)
+- **Fokus**: LoRaWAN-Infrastruktur (IoT)
+- **Geräte**: >100.000 weltweit
+- **Open Source**: ✅ Ja (GitHub: TheThingsNetwork)
+- **Protokoll**: LoRaWAN (Low Power, Long Range)
 
-| Eigenschaft | Details |
-|-------------|---------|
-| **Website** | https://www.thethingsnetwork.org/ |
-| **Gegründet** | 2015 (Niederlande) |
-| **Fokus** | LoRaWAN-Infrastruktur (IoT) |
-| **Geräte** | >100.000 weltweit |
-| **Open Source** | ✅ Ja (GitHub: TheThingsNetwork) |
-| **Protokoll** | LoRaWAN (Low Power, Long Range) |
+**Hardware**: LoRa-Module (Low Power, bis 10 km Reichweite)
 
-### 🏗️ Architektur
+**Software**: Go (TTN Stack v3), Open Source
 
-```mermaid
-graph LR
-    SENSOR[LoRa-Sensor] -->|LoRaWAN| GATEWAY[LoRa-Gateway]
-    GATEWAY -->|Internet| TTN[TTN Network Server]
-    TTN -->|MQTT| APP[Application Server]
-    APP --> INFLUX[(InfluxDB)]
-    APP --> GRAFANA[Grafana]
-    
-    style SENSOR fill:#e74c3c,color:#fff
-    style TTN fill:#3498db,color:#fff
-```
+**Integration**: MQTT, HTTP, Webhooks
 
-### 🔧 Technologie-Stack
-
-| Komponente | Technologie | Details |
-|------------|-------------|---------|
-| **Hardware** | LoRa-Module (z.B. RN2483) | Low Power, bis 10 km Reichweite |
-| **Protokoll** | LoRaWAN | Lizenzfrei (868 MHz in EU) |
-| **Gateway** | Community-betrieben | Freiwillige stellen Gateways bereit |
-| **Backend** | Go (TTN Stack v3) | Open Source |
-| **Integration** | MQTT, HTTP, Webhooks | Flexible Datenweiterleitung |
-
-### 📡 MQTT-Integration
-
-**Topic-Struktur**:
-```
-v3/{application_id}/devices/{device_id}/up
-```
-
-**Payload**:
-```json
-{
-  "end_device_ids": {
-    "device_id": "sensor-01"
-  },
-  "uplink_message": {
-    "decoded_payload": {
-      "temperature": 23.5,
-      "humidity": 65.0
-    },
-    "rx_metadata": [
-      {
-        "gateway_ids": {"gateway_id": "gateway-hamburg"},
-        "rssi": -85,
-        "snr": 9.5
-      }
-    ]
-  }
-}
-```
-
-### ✅ Was können wir übernehmen?
-
-1. **Community-Ansatz**: Freiwillige betreiben Infrastruktur
-2. **MQTT-Integration**: Einfache Weiterleitung an eigene Systeme
-3. **Low Power**: Batterielaufzeit von Jahren möglich
-
-### ❌ Warum nicht für Umweltbox?
-
-1. **Komplexität**: LoRaWAN ist schwieriger als WiFi
-2. **Gateway-Abhängigkeit**: Braucht lokale Gateways
-3. **Geringere Datenrate**: Nur kleine Pakete (max. 51 Bytes)
-4. **Nicht für Schulen geeignet**: WiFi ist einfacher
-
-**Fazit**: Interessant für **ländliche Regionen** ohne WiFi, aber nicht Hauptfokus
+**Lessons Learned**: Interessant für ländliche Regionen, aber zu komplex für Schulen (WiFi reicht aus)
 
 ---
 
-## 5. Telegraf + InfluxDB (System-Monitoring)
+## 🔧 Technologie-Vergleiche
 
-### 📊 Projekt-Übersicht
+### MQTT vs. HTTP POST
 
-| Eigenschaft | Details |
-|-------------|---------|
-| **Website** | https://www.influxdata.com/time-series-platform/telegraf/ |
-| **Gegründet** | 2015 (InfluxData) |
-| **Fokus** | System-Monitoring (Server, IoT) |
-| **Open Source** | ✅ Ja (GitHub: influxdata/telegraf) |
-| **Protokoll** | MQTT, HTTP, StatsD, ... |
+| Kriterium | MQTT | HTTP POST |
+|-----------|------|----------|
+| **Overhead** | Sehr niedrig (~2 Bytes Header) | Hoch (~200 Bytes Header) |
+| **Verbindung** | Persistent (Keep-Alive) | Pro Request neu |
+| **QoS** | Ja (0, 1, 2) | Nein (nur TCP) |
+| **Bidirektional** | Ja (Subscribe/Publish) | Nein (nur Request/Response) |
+| **Firewall** | Port 8883 (manchmal blockiert) | Port 443 (immer offen) |
+| **Komplexität** | Broker nötig | Einfacher (nur HTTP-Server) |
 
-### 🏗️ Architektur
-
-```mermaid
-graph LR
-    SERVER[Linux-Server] -->|Telegraf Agent| MQTT[MQTT Broker]
-    MQTT --> INFLUX[(InfluxDB)]
-    INFLUX --> GRAFANA[Grafana]
-    
-    style SERVER fill:#e74c3c,color:#fff
-    style INFLUX fill:#3498db,color:#fff
-```
-
-### 🔧 Konfiguration (telegraf.conf)
-
-```toml
-# Input: System-Metriken
-[[inputs.cpu]]
-  percpu = false
-  totalcpu = true
-
-[[inputs.disk]]
-  ignore_fs = ["tmpfs", "devtmpfs"]
-
-[[inputs.mem]]
-
-[[inputs.temp]]
-
-# Output: MQTT
-[[outputs.mqtt]]
-  servers = ["ssl://mqtt.umweltbox.de:8883"]
-  topic_prefix = "umweltbox/de-hh-gs-altona/pc-01"
-  username = "de-hh-gs-altona-pc01"
-  password = "SECRET"
-  
-  # Topic-Mapping
-  [outputs.mqtt.topic]
-    cpu = "system/cpu_load"
-    disk = "system/disk_usage"
-    mem = "system/ram_usage"
-    temp = "system/cpu_temp"
-```
-
-### ✅ Was können wir übernehmen?
-
-1. **Fertige Lösung**: Kein eigenes Script nötig
-2. **Viele Input-Plugins**: CPU, Disk, Netzwerk, Sensoren
-3. **MQTT-Output**: Direkt ins Umweltbox-Netzwerk
-4. **Cross-Platform**: Linux, Windows, macOS
-
-### 📊 Verwendung in Umweltbox
-
-**Use Case**: Computer-Monitoring in Schulen
-
-**Beispiel-Daten**:
-```
-umweltbox/de-hh-gs-altona/pc-01/system/cpu_temp
-Payload: {"value": 59.3, "unit": "°C"}
-
-umweltbox/de-hh-gs-altona/pc-01/system/cpu_load
-Payload: {"value": 42.5, "unit": "%"}
-```
+**Empfehlung für Umweltbox**: **MQTT** (effizienter, bidirektional für Commands)
 
 ---
 
-## 6. Home Assistant (Smart Home)
+### InfluxDB vs. PostgreSQL vs. MongoDB
 
-### 📊 Projekt-Übersicht
+| Kriterium | InfluxDB | PostgreSQL | MongoDB |
+|-----------|----------|------------|---------|
+| **Zeitreihen** | Nativ optimiert | Erweiterung (TimescaleDB) | Nicht optimal |
+| **Downsampling** | Eingebaut (Tasks) | Manuell (Cron) | Manuell |
+| **Query-Sprache** | Flux / InfluxQL | SQL | MongoDB Query Language |
+| **Retention** | Automatisch | Manuell | Manuell |
+| **Aggregationen** | Sehr schnell | Schnell | Mittel |
+| **Schema** | Schema-on-write | Streng (Schema) | Schema-less |
 
-| Eigenschaft | Details |
-|-------------|---------|
-| **Website** | https://www.home-assistant.io/ |
-| **Gegründet** | 2013 |
-| **Fokus** | Smart Home Automation |
-| **Open Source** | ✅ Ja (GitHub: home-assistant) |
-| **Geräte** | 1.000+ Integrationen |
-
-### 🏗️ Architektur
-
-```mermaid
-graph LR
-    TASMOTA[Tasmota ESP] -->|MQTT| MQTT[Mosquitto]
-    MQTT --> HA[Home Assistant]
-    HA --> INFLUX[(InfluxDB)]
-    HA --> GRAFANA[Grafana]
-    
-    style TASMOTA fill:#e74c3c,color:#fff
-    style HA fill:#27ae60,color:#fff
-```
-
-### 🔧 MQTT-Integration
-
-**Home Assistant Configuration** (`configuration.yaml`):
-```yaml
-mqtt:
-  broker: mqtt.umweltbox.de
-  port: 8883
-  username: !secret mqtt_user
-  password: !secret mqtt_password
-  
-sensor:
-  - platform: mqtt
-    name: "Klassenraum Temperatur"
-    state_topic: "umweltbox/de-hh-gs-altona/esp01/environment/temperature"
-    unit_of_measurement: "°C"
-    value_template: "{{ value_json.value }}"
-```
-
-### ✅ Was können wir übernehmen?
-
-1. **MQTT-Discovery**: Automatisches Erkennen von Geräten
-2. **Dashboards**: Einfache UI für Nicht-Techniker
-3. **Automationen**: Alarme bei Grenzwerten
-
-### ❌ Warum nicht für Umweltbox?
-
-1. **Overhead**: Zu komplex für reines Daten-Logging
-2. **Nicht Multi-Tenant**: Nur für eine Instanz designed
-3. **Grafana ist besser**: Für Zeitreihen-Visualisierung
-
-**Fazit**: Interessant für **einzelne Schulen**, aber nicht für zentrale Infrastruktur
+**Empfehlung für Umweltbox**: **InfluxDB** (spezialisiert auf Zeitreihen)
 
 ---
 
-## 📊 Vergleichstabelle
+## 🎯 Lessons Learned für Umweltbox-Architektur
 
-| Projekt | Hardware | Protokoll | Datenbank | Multi-Tenant | Open Source | Kosten/Gerät |
-|---------|----------|-----------|-----------|--------------|-------------|--------------|
-| **Sensor.Community** | ESP8266 + SDS011 | HTTP | PostgreSQL | ❌ | ✅ | ~30€ |
-| **OpenSenseMap** | senseBox MCU | HTTP/MQTT | MongoDB | ❌ | ✅ | ~100€ |
-| **PurpleAir** | ESP32 + 2× PMS5003 | HTTPS | Proprietär | ❌ | ❌ | ~250 USD |
-| **The Things Network** | LoRa-Module | LoRaWAN | Flexibel | ✅ | ✅ | ~50€ + Gateway |
-| **Telegraf** | Jeder Computer | MQTT/HTTP | InfluxDB | ❌ | ✅ | 0€ (Software) |
-| **Home Assistant** | Diverse | MQTT | SQLite/PostgreSQL | ❌ | ✅ | 0€ (Software) |
-| **🌱 Umweltbox** | ESP8266/Raspi | MQTT | InfluxDB | ✅ | ✅ | ~30€ |
+### ✅ Best Practices (von allen Projekten übernehmen)
 
----
-
-## 🎯 Lessons Learned für Umweltbox
-
-### ✅ Best Practices (übernehmen)
-
-1. **Einfache Hardware**: ESP8266 + günstige Sensoren (~30€)
-2. **MQTT als Standard**: Flexibler als HTTP
-3. **Open Data**: Alle Daten öffentlich via API
-4. **Community**: Forum + Wiki für Support
-5. **DIY-Kits**: Fertige Bauanleitungen für Schulen
-6. **Visualisierung**: Karten + Zeitreihen (Grafana)
+| Best Practice | Beispiel | Umsetzung in Umweltbox |
+|---------------|---------|----------------------|
+| **Einfache Hardware** | Sensor.Community ESP8266 | ✅ ESP32 + modulare Sensoren |
+| **MQTT-Standard** | OpenSenseMap, Safecast | ✅ Primäres Protokoll |
+| **Open Data** | Sensor.Community, Smart Citizen | ✅ Alle Daten via REST API |
+| **Community Support** | Sensor.Community, TTN | ✅ Forum + GitHub Wiki |
+| **Schulgerechte Kits** | senseBox | ✅ Fertige Bauanleitungen |
+| **Langzeitarchiv** | Safecast (13+ Jahre) | ✅ InfluxDB Retention |
 
 ### ❌ Fehler vermeiden
 
-1. **Proprietäre Hardware**: Keine Abhängigkeit von teuren Geräten
-2. **Closed Source**: Transparenz ist wichtig für Bildungsprojekte
-3. **Keine Multi-Tenancy**: Isolierte Bereiche pro Schule sind essentiell
-4. **Komplexität**: LoRaWAN ist zu komplex für Schulen
-5. **Vendor Lock-In**: Keine Abhängigkeit von Cloud-Anbietern
+1. **Proprietäre Hardware** → Keine Abhängigkeit von teuren Lock-in Geräten
+2. **Closed Source** → Transparenz kritisch für Bildungsprojekte
+3. **Keine Multi-Tenancy** → Isolierte Bereiche pro Schule erforderlich
+4. **Zu hohe Komplexität** → LoRaWAN übertrieben für Schulen
+5. **Vendor Lock-In** → Keine Cloud-Abhängigkeiten
 
-### 🚀 Unique Selling Points von Umweltbox
+### 🚀 Unique Selling Points (Umweltbox als Synthese)
 
-1. **Multi-Tenancy**: Erste Plattform mit isolierten Bereichen pro Schule
-2. **Generisches System**: Nicht nur Feinstaub, sondern alle Sensoren
-3. **Pädagogischer Fokus**: Speziell für Schulen designed
-4. **Langzeitarchiv**: 10+ Jahre Daten für wissenschaftliche Auswertungen
-5. **DSGVO-konform**: Keine personenbezogenen Daten
+| Feature | Andere Projekte | Umweltbox |
+|---------|-----------------|----------|
+| **Multi-Tenancy** | ❌ Keine | ✅ Schulen-Isolation |
+| **Sensor-Generika** | Spezialisiert (nur PM/CO2) | ✅ Alle Sensoren |
+| **Pädagogik-First** | Sekundär | ✅ Primärer Fokus |
+| **DSGVO-Compliance** | Teils | ✅ Von Anfang an |
+| **Offenes System** | Teils proprietär | ✅ 100% Open Stack |
 
 ---
 
