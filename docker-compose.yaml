@@ -399,6 +399,36 @@ services:
     networks:
       - mintfv-network
 
+  # Mosquitto Admin: Management container for user administration
+  # Used for password management without restarting main broker
+  mosquitto-admin:
+    image: eclipse-mosquitto:latest
+    restart: "no"
+    user: "2003:2100"
+    group_add:
+      - "2100"
+
+    volumes:
+      - ./mosquitto/config/mosquitto.passwd:/tmp/mosquitto.passwd:rw
+
+    <<: *default-security
+
+    entrypoint: sleep
+    command: ["infinity"]
+    stop_grace_period: 3s
+
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 32M
+
+    logging: *default-logging
+
+    network_mode: "none"
+
+
   # Node-RED: Flow-based development tool for IoT and automation
   nodered:
     image: nodered/node-red:latest
