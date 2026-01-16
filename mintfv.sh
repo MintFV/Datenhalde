@@ -206,6 +206,117 @@ show_logs() {
     fi
 }
 
+show_version() {
+    log_info "=== MintFV Service Versions ==="
+    echo ""
+
+    # Parse docker-compose.yaml for service images, excluding helper services
+    local helper_services=("certbot-init" "mosquitto-admin")
+    local service_name=""
+    local image=""
+
+    while IFS= read -r line; do
+        # Match service names (lines starting with 2 spaces and ending with :)
+        if [[ "$line" =~ ^[[:space:]]{2}([a-zA-Z0-9_-]+):[[:space:]]*$ ]]; then
+            service_name="${BASH_REMATCH[1]}"
+        # Match image lines
+        elif [[ "$line" =~ ^[[:space:]]+image:[[:space:]]+(.+)$ ]]; then
+            image="${BASH_REMATCH[1]}"
+
+            # Skip helper services and networks section
+            local skip=false
+            for helper in "${helper_services[@]}"; do
+                if [[ "$service_name" == "$helper" ]]; then
+                    skip=true
+                    break
+                fi
+            done
+
+            if [[ "$skip" == false ]] && [[ "$service_name" != "mintfv-network" ]]; then
+                printf "%-15s %s\n" "$service_name:" "$image"
+            fi
+        fi
+    done < "$COMPOSE_FILE"
+
+    echo ""
+    log_info "=== Application Versions ==="
+
+    # Check if services are running and get application versions
+    local running_services
+    running_services=$(docker compose ps --services --filter status=running 2>/dev/null || true)
+
+    if [[ -z "$running_services" ]]; then
+        echo "No services are currently running. Start services with: $0 start"
+    else
+        # Nginx version
+        if echo "$running_services" | grep -q "^nginx$"; then
+            local nginx_version
+            nginx_version=$(docker compose exec -T nginx nginx -v 2>&1 | grep -o "nginx/[0-9.]*" 2>/dev/null || echo "unavailable")
+            printf "%-15s %s\n" "nginx:" "$nginx_version"
+        fi
+
+        # Mosquitto version
+        if echo "$running_services" | grep -q "^mosquitto$"; then
+            local mosquitto_version
+            mosquitto_version=$(docker compose exec -T mosquitto mosquitto -h 2>&1 | grep -i "mosquitto version" | head -1 2>/dev/null || echo "unavailable")
+            printf "%-15s %s\n" "mosquitto:" "${mosquitto_version:-unavailable}"
+        fi
+
+        # InfluxDB version (via API)
+        if echo "$running_services" | grep -q "^influxdb$"; then
+            local influx_version
+            influx_version=$(docker compose exec -T influxdb curl -s --max-time 3 http://localhost:8181/ping 2>/dev/null | grep -o '"version":"[^"]*"' | cut -d'"' -f4 || echo "unavailable")
+            if [[ -n "$influx_version" && "$influx_version" != "unavailable" ]]; then
+                printf "%-15s InfluxDB %s\n" "influxdb:" "$influx_version"
+            else
+                printf "%-15s %s\n" "influxdb:" "unavailable"
+            fi
+        fi
+
+        # Grafana version (via binary)
+        if echo "$running_services" | grep -q "^grafana$"; then
+            local grafana_version
+            grafana_version=$(docker compose exec -T grafana grafana --version 2>/dev/null | grep -o "grafana version [0-9.]*" | cut -d' ' -f3 || echo "unavailable")
+            if [[ -n "$grafana_version" && "$grafana_version" != "unavailable" ]]; then
+                printf "%-15s Grafana %s\n" "grafana:" "$grafana_version"
+            else
+                printf "%-15s %s\n" "grafana:" "unavailable"
+            fi
+        fi
+
+        # Node-RED version (via binary)
+        if echo "$running_services" | grep -q "^nodered$"; then
+            local nodered_version
+            nodered_version=$(docker compose exec -T nodered node-red --version 2>/dev/null | head -1 | grep -o "Node-RED v[0-9.]*" | cut -d'v' -f2 || echo "unavailable")
+            if [[ -n "$nodered_version" && "$nodered_version" != "unavailable" ]]; then
+                printf "%-15s Node-RED %s\n" "nodered:" "$nodered_version"
+            else
+                printf "%-15s %s\n" "nodered:" "unavailable"
+            fi
+        fi
+
+        # Certbot version
+        if echo "$running_services" | grep -q "^certbot$"; then
+            local certbot_version
+            certbot_version=$(docker compose exec -T certbot certbot --version 2>/dev/null | grep -o "certbot [0-9.]*" || echo "unavailable")
+            printf "%-15s %s\n" "certbot:" "${certbot_version:-unavailable}"
+        fi
+
+        # SMTP Relay (Exim) version
+        if echo "$running_services" | grep -q "^smtp-relay$"; then
+            local exim_version
+            exim_version=$(docker compose exec -T smtp-relay exim -bV 2>/dev/null | head -1 | grep -o "Exim version [0-9.]*" || echo "unavailable")
+            printf "%-15s %s\n" "smtp-relay:" "${exim_version:-unavailable}"
+        fi
+    fi
+
+    echo ""
+    log_info "=== System Information ==="
+    echo "Docker Version: $(docker --version | cut -d' ' -f3 | tr -d ',')"
+    echo "Compose Version: $(docker compose version --short)"
+    echo "Script Location: $SCRIPT_DIR"
+}
+
 
 cleanup() {
     log_warn "=== Cleanup ==="
@@ -240,6 +351,7 @@ Commands:
     restart             Restart all services
     status              Show service status
     logs [service]      Show logs (optional: specific service)
+    version             Show service versions from docker-compose.yaml
 
     request-cert        Request real SSL certificate from Let's Encrypt
     enable-ssl          Enable HTTPS (switches nginx to SSL config)
@@ -300,6 +412,10 @@ main() {
 
         logs)
             show_logs "${2:-}"
+            ;;
+
+        version)
+            show_version
             ;;
 
         request-cert)
