@@ -114,10 +114,90 @@ topic readwrite tenant/tenant-c/#
 topic read $SYS/#
 
 # ============================================================================
+# TENANT D - Realschule Köln (umweltbox-Format nach 03_MQTT_Topic_Struktur.md)
+# umweltbox/{tenant-id}/{device-id}/{category}/{measurement}
+# {land}-{bundesland}-{schultyp}-{schulname}[-{einheit}]
+# ============================================================================
+
+# Tenant Admin (kann alles in seinem Tenant lesen/schreiben)
+user de-nrw-rs-koeln-admin
+topic readwrite umweltbox/de-nrw-rs-koeln/#
+topic read $SYS/#
+
+# Sensoren (können beliebige Topics im Tenant schreiben)
+user de-nrw-rs-koeln-sensor01
+topic write umweltbox/de-nrw-rs-koeln/#
+topic read umweltbox/de-nrw-rs-koeln/commands/sensor01/#
+topic read $SYS/broker/version
+
+user de-nrw-rs-koeln-sensor02
+topic write umweltbox/de-nrw-rs-koeln/#
+topic read umweltbox/de-nrw-rs-koeln/commands/sensor02/#
+topic read $SYS/broker/version
+
+# Node-RED für Tenant (verarbeitet alle Tenant-Daten)
+user de-nrw-rs-koeln-nodered
+topic readwrite umweltbox/de-nrw-rs-koeln/#
+topic read $SYS/#
+
+# ============================================================================
+# TENANT E - Arbeitsgruppe Klima Berlin (umweltbox-Format nach 03_MQTT_Topic_Struktur.md)
+# ============================================================================
+
+# Tenant Admin (kann alles in seinem Tenant lesen/schreiben)
+user de-be-ag-klima-admin
+topic readwrite umweltbox/de-be-ag-klima/#
+topic read $SYS/#
+
+# Sensoren (können beliebige Topics im Tenant schreiben)
+user de-be-ag-klima-sensor01
+topic write umweltbox/de-be-ag-klima/#
+topic read umweltbox/de-be-ag-klima/commands/sensor01/#
+topic read $SYS/broker/version
+
+user de-be-ag-klima-sensor02
+topic write umweltbox/de-be-ag-klima/#
+topic read umweltbox/de-be-ag-klima/commands/sensor02/#
+topic read $SYS/broker/version
+
+# Node-RED für Tenant (verarbeitet alle Tenant-Daten)
+user de-be-ag-klima-nodered
+topic readwrite umweltbox/de-be-ag-klima/#
+topic read $SYS/#
+
+# ============================================================================
+# TENANT Z - für eine Privatperson (umweltbox-Format nach 03_MQTT_Topic_Struktur.md)
+# umweltbox/{tenant-id}/{device-id}/{category}/{measurement}
+# {land}-{bundesland}-{schultyp}-{schulname}[-{einheit}]
+# ============================================================================
+
+# Tenant Admin (kann alles in seinem Tenant lesen/schreiben)
+user de-hh-privat-peddy-admin
+topic readwrite umweltbox/de-hh-privat-peddy/#
+topic read $SYS/#
+
+# Sensoren (können beliebige Topics im Tenant schreiben)
+user de-hh-privat-peddy-raspi4
+topic write umweltbox/de-hh-privat-peddy/#
+topic read umweltbox/de-hh-privat-peddy/commands/raspi4/#
+topic read $SYS/broker/version
+
+user de-hh-privat-peddy-raspi2
+topic write umweltbox/de-hh-privat-peddy/#
+topic read umweltbox/de-hh-privat-peddy/commands/raspi2/#
+topic read $SYS/broker/version
+
+# Node-RED für Tenant (verarbeitet alle Tenant-Daten)
+user de-hh-privat-peddy-nodered
+topic readwrite umweltbox/de-hh-privat-peddy/#
+topic read $SYS/#
+
+# ============================================================================
 # MONITORING USER (optional - read-only für Systemüberwachung)
 # ============================================================================
 user monitoring
-topic read #  # Kann alles lesen (für Monitoring-Dashboards)
+topic read $SYS/#
+topic read tenant/+/+/status
 
 # ============================================================================
 # HINWEISE & BEST PRACTICES
