@@ -57,6 +57,15 @@ grafana/data/csv/              # NEU: CSV Exports
 !grafana/data/.gitkeep
 
 
+## nodered auf jeden Fall mit aufnehmen im GIT
+!nodered/data/settings.js
+!nodered/data/flows_*.json
+!nodered/data/flows.json
+!nodered/data/settings.js
+!nodered/data/package.json
+!nodered/data/package-lock.js
+!nodered/data/lib/flows/
+
 ## nodered data and npm cache
 nodered/data/flows_cred.json
 nodered/data/context/
@@ -65,13 +74,9 @@ nodered/data/.npm/
 nodered/data/settings.js.*
 nodered/data/.config.*.json*
 nodered/data/.sessions.json
-!nodered/data/settings.js
-!nodered/data/flows.json
-!nodered/data/flows_*.json
-!nodered/data/flows_*.json.backup
-!nodered/data/lib/flows/
-!nodered/data/package.json
-!nodered/data/package-lock.json
+nodered/data/*.backup
+
+
 
 ## SMTP-Relay / Exim
 smtp-relay/spool

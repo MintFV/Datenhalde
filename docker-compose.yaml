@@ -451,6 +451,7 @@ services:
     # To enable admin authentication, uncomment the following lines and set the password hash and credential secret in your .env file
       - NODE_RED_ADMIN_PASSWORD_HASH=${NODE_RED_ADMIN_PASSWORD_HASH}
       - NODE_RED_CREDENTIAL_SECRET=${NODE_RED_CREDENTIAL_SECRET}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
 
     volumes:
       - ./nodered/data:/data:rw

@@ -334,3 +334,11 @@ docker compose logs | grep -i error
 ## 📜 License
 
 [License Type] - Siehe LICENSE Datei
+
+---
+
+## Merker
+
+- ```sh docker compose exec influxdb curl -s http://localhost:8181/health | jq```
+- ```docker compose exec influxdb curl -s http://localhost:8181/ping  |jq```
+- ```nc -zv mosquitto 1883```
