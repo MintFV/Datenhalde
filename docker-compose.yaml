@@ -228,7 +228,7 @@ services:
 
     environment:
       # Run Grafana in /grafana/ subdirectory
-      - GF_SERVER_ROOT_URL=${GRAFANA_SERVER_ROOT_URL:-https://mintfv.example.com/grafana/}
+      - GF_SERVER_ROOT_URL=${GRAFANA_SERVER_ROOT_URL:-https://mintfv.peddy.net/grafana/}
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
       # Security
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admingrafana}
@@ -253,9 +253,13 @@ services:
       - GF_SMTP_USER=${SMTP_USER_PROVIDER}
       - GF_SMTP_PASSWORD=${SMTP_PASS_PROVIDER}
       - GF_SMTP_SKIP_VERIFY=
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
 
     volumes:
       - ./grafana/data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
 
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS4 --max-time 2 http://localhost:3000/grafana/api/health || exit 1"]

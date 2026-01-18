@@ -1,0 +1,16 @@
+apiVersion: 1
+datasources:
+  - name: InfluxDB-MintFV
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8181
+    jsonData:
+      dbName: mintfv
+      insecureGrpc: true
+      pdcInjected: false
+      tlsAuth: false
+      version: SQL
+    isDefault: true
+    editable: false
+    secureJsonData:
+      token: ${INFLUXDB_TOKEN}
