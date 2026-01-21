@@ -109,13 +109,14 @@ init_ssl() {
 request_real_certificate() {
     log_info "Requesting real SSL certificate from Let's Encrypt..."
 
-    # Request certificate using webroot method
-    docker compose run --rm certbot certonly \
+    # Request certificate using webroot method with proper certbot entrypoint
+    docker compose run --rm --entrypoint="certbot" certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
         --email "$EMAIL" \
         --agree-tos \
         --no-eff-email \
+        --key-type rsa \
         -d "$DOMAIN" || {
         log_error "Certificate request failed"
         log_info "Check if:"
@@ -126,6 +127,71 @@ request_real_certificate() {
     }
 
     log_info "✓ Real certificate obtained successfully"
+    
+    # Fix permissions for certificate files
+    log_info "Setting certificate file permissions..."
+    chown -R root:2100 ./certbot/conf 2>/dev/null || true
+    find ./certbot/conf -type d -exec chmod 750 {} \; 2>/dev/null || true
+    find ./certbot/conf -type f -exec chmod 640 {} \; 2>/dev/null || true
+    chmod g+r ./certbot/conf/archive/*/privkey*.pem 2>/dev/null || true
+    
+    # Restart nginx to load new certificates
+    log_info "Restarting nginx to load new certificates..."
+    docker compose restart nginx
+    
+    # Wait for nginx to become healthy
+    sleep 5
+    if docker compose ps nginx | grep -q "healthy"; then
+        log_info "✓ nginx restarted successfully with new certificates"
+    else
+        log_warn "nginx may have issues loading the new certificates"
+        docker compose logs nginx | tail -10
+    fi
+}
+
+
+request_real_certificate_force() {
+    log_info "Force renewing SSL certificate from Let's Encrypt..."
+
+    # Request certificate using webroot method with force renewal
+    docker compose run --rm --entrypoint="certbot" certbot certonly \
+        --webroot \
+        --webroot-path=/var/www/certbot \
+        --email "$EMAIL" \
+        --agree-tos \
+        --no-eff-email \
+        --key-type rsa \
+        --force-renewal \
+        -d "$DOMAIN" || {
+        log_error "Certificate force renewal failed"
+        log_info "Check if:"
+        log_info "  1. Domain $DOMAIN points to this server"
+        log_info "  2. Port 80 is accessible from the internet"
+        log_info "  3. nginx is running and healthy"
+        return 1
+    }
+
+    log_info "✓ Certificate force renewed successfully"
+    
+    # Fix permissions for certificate files
+    log_info "Setting certificate file permissions..."
+    chown -R root:2100 ./certbot/conf 2>/dev/null || true
+    find ./certbot/conf -type d -exec chmod 750 {} \; 2>/dev/null || true
+    find ./certbot/conf -type f -exec chmod 640 {} \; 2>/dev/null || true
+    chmod g+r ./certbot/conf/archive/*/privkey*.pem 2>/dev/null || true
+    
+    # Restart nginx to load new certificates
+    log_info "Restarting nginx to load new certificates..."
+    docker compose restart nginx
+    
+    # Wait for nginx to become healthy
+    sleep 5
+    if docker compose ps nginx | grep -q "healthy"; then
+        log_info "✓ nginx restarted successfully with new certificates"
+    else
+        log_warn "nginx may have issues loading the new certificates"
+        docker compose logs nginx | tail -10
+    fi
 }
 
 enable_ssl() {
@@ -354,6 +420,7 @@ Commands:
     version             Show service versions from docker-compose.yaml
 
     request-cert        Request real SSL certificate from Let's Encrypt
+    force-renewal       Force renewal of existing SSL certificate
     enable-ssl          Enable HTTPS (switches nginx to SSL config)
     disable-ssl         Disable HTTPS (switches nginx to HTTP-only config)
 
@@ -422,6 +489,12 @@ main() {
             check_requirements
             load_config
             request_real_certificate
+            ;;
+
+        force-renewal)
+            check_requirements
+            load_config
+            request_real_certificate_force
             ;;
 
         enable-ssl)

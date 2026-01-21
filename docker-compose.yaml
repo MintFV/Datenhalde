@@ -183,7 +183,9 @@ services:
             --webroot \
             --webroot-path=/var/www/certbot \
             --quiet \
-            --deploy-hook "echo Certificate renewed at $(date)" || true
+            --deploy-hook "echo Certificate renewed at $(date)" \
+            --key-type rsa \
+            || true
           echo "[$(date)] Next renewal check in $${RENEWAL_INTERVAL}"
           sleep $${RENEWAL_INTERVAL} & wait $${!}
         done
@@ -322,6 +324,7 @@ services:
       - --http-bind=0.0.0.0:8181
       - --disable-authz=health,ping
       - --admin-token-file=/var/lib/influxdb3/tokens/admin.token
+      - --disable-telemetry-upload
 
     volumes:
       - ./influxdb/data:/var/lib/influxdb3/data
@@ -377,7 +380,7 @@ services:
       - "9001"    # WebSocket nur intern, via nginx
       - "1883"    # MQTT nur intern, via nginx
     volumes:
-      - ./mosquitto/config:/mosquitto/config:ro
+      - ./mosquitto/config:/mosquitto/config:rw
       - ./mosquitto/data:/mosquitto/data:rw
       - ./mosquitto/logs:/mosquitto/log:rw
 
