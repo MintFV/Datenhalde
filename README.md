@@ -1,4 +1,5 @@
-# MintFV Datenserver
+# ![MintFV Logo](nginx/html/images/logo-cleaned-60x46.webp) MintFV Datenhalde
+
 
 IoT-Datenplattform mit MQTT, Node-RED, InfluxDB & Grafana.
 
