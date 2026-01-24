@@ -248,6 +248,8 @@ services:
       # Leeren String = alle deaktiviert
       - GF_FEATURE_TOGGLES_ENABLE=
       - GF_FEATURE_MANAGEMENT_OFREP_ENABLED=false
+      - GF_NEWS_NEWS_FEED_ENABLED=false
+      - GF_USERS_HOME_PAGE=/grafana/dashboards
       # SMTP Configuration for email notifications
       - GF_SMTP_ENABLED=true
       - GF_SMTP_HOST=smtp-relay:8025
@@ -258,10 +260,12 @@ services:
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
 
     volumes:
-      - ./grafana/data:/var/lib/grafana
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/data:/var/lib/grafana:rw
+      - ./grafana/provisioning:/etc/grafana/provisioning:rw
       - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      # - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      # - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+
 
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS4 --max-time 2 http://localhost:3000/grafana/api/health || exit 1"]

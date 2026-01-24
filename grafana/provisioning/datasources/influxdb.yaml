@@ -8,9 +8,8 @@ datasources:
       dbName: mintfv
       insecureGrpc: true
       pdcInjected: false
-      tlsAuth: false
       version: SQL
     isDefault: true
-    editable: false
+    editable: true
     secureJsonData:
       token: ${INFLUXDB_TOKEN}
