@@ -50,6 +50,8 @@ docker compose up -d
 ### Grafana
 - **URL:** https://[DOMAIN]/grafana/
 - **Login:** admin / admin (bitte nach Login ändern!)
+- **Features:** Dashboards, Alerting, Data Source Management
+- **Details:** [grafana/README.md](grafana/README.md)
 
 ### MQTT (Mosquitto)
 - **Master Admin:** `master-admin` / `master2024!` (Vollzugriff)
@@ -94,11 +96,6 @@ void setup() {
 1. MQTT In: `tenant/tenant-a/sensor01/+`
 2. Function: Parse & Transform
 3. InfluxDB Out: `http://influxdb:8181`
-
-### Grafana Dashboard
-1. Data Source: InfluxDB (`http://influxdb:8181`)
-2. Query: `SELECT * FROM temperature ORDER BY time DESC`
-3. Visualization: Time Series
 
 ---
 
