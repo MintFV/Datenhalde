@@ -80,7 +80,7 @@ init_directories() {
     mkdir -p certbot/{conf,www,logs}
 
     # Set permissions for log directories
-    chmod 770 nginx/logs certbot/logs 2>/dev/null || true
+    chmod 775 nginx/logs certbot/logs 2>/dev/null || true
 
     log_info "Directory structure created"
 }
@@ -127,18 +127,18 @@ request_real_certificate() {
     }
 
     log_info "✓ Real certificate obtained successfully"
-    
+
     # Fix permissions for certificate files
     log_info "Setting certificate file permissions..."
     chown -R root:2100 ./certbot/conf 2>/dev/null || true
     find ./certbot/conf -type d -exec chmod 750 {} \; 2>/dev/null || true
     find ./certbot/conf -type f -exec chmod 640 {} \; 2>/dev/null || true
     chmod g+r ./certbot/conf/archive/*/privkey*.pem 2>/dev/null || true
-    
+
     # Restart nginx to load new certificates
     log_info "Restarting nginx to load new certificates..."
     docker compose restart nginx
-    
+
     # Wait for nginx to become healthy
     sleep 5
     if docker compose ps nginx | grep -q "healthy"; then
@@ -172,18 +172,18 @@ request_real_certificate_force() {
     }
 
     log_info "✓ Certificate force renewed successfully"
-    
+
     # Fix permissions for certificate files
     log_info "Setting certificate file permissions..."
     chown -R root:2100 ./certbot/conf 2>/dev/null || true
     find ./certbot/conf -type d -exec chmod 750 {} \; 2>/dev/null || true
     find ./certbot/conf -type f -exec chmod 640 {} \; 2>/dev/null || true
     chmod g+r ./certbot/conf/archive/*/privkey*.pem 2>/dev/null || true
-    
+
     # Restart nginx to load new certificates
     log_info "Restarting nginx to load new certificates..."
     docker compose restart nginx
-    
+
     # Wait for nginx to become healthy
     sleep 5
     if docker compose ps nginx | grep -q "healthy"; then
@@ -404,6 +404,108 @@ cleanup() {
     log_info "✓ Cleanup complete"
 }
 
+test_email() {
+    log_info "=== SMTP Relay Email Test ==="
+    
+    # Check if smtp-relay is running
+    if ! docker compose ps smtp-relay | grep -q "Up"; then
+        log_error "smtp-relay service is not running"
+        log_info "Start services with: $0 start"
+        exit 1
+    fi
+    
+    # Get recipient from parameter or ask interactively
+    local recipient="${1:-}"
+    if [ -z "$recipient" ]; then
+        echo ""
+        log_info "Enter recipient email address (default: $SMTP_USER_PROVIDER):"
+        read -p "Recipient: " recipient
+        recipient="${recipient:-$SMTP_USER_PROVIDER}"
+    fi
+    
+    # Validate email format (basic check)
+    if [[ ! "$recipient" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+        log_error "Invalid email address: $recipient"
+        exit 1
+    fi
+    
+    local timestamp=$(date "+%Y-%m-%d %H:%M:%S %Z")
+    local date_short=$(date "+%Y-%m-%d_%H:%M")
+    local from="${SMTP_USER_PROVIDER}"
+    local subject="MintFV SMTP Test - ${date_short}"
+    
+    log_info "Sending test email..."
+    log_info "  From:    $from"
+    log_info "  To:      $recipient"
+    log_info "  Subject: $subject"
+    echo ""
+    
+    # Send email via nc with SMTP protocol
+    docker compose exec -T smtp-relay sh -c "nc localhost 8025 << 'SMTP_END'
+EHLO ${DOMAIN}
+MAIL FROM:<${from}>
+RCPT TO:<${recipient}>
+DATA
+From: MintFV Server <${from}>
+To: ${recipient}
+Subject: ${subject}
+Date: $(date -R)
+Content-Type: text/plain; charset=UTF-8
+
+=== MintFV SMTP Relay Test Email ===
+
+This is an automated test email from your MintFV IoT platform.
+
+Timestamp:  ${timestamp}
+Server:     ${DOMAIN}
+From:       ${from}
+To:         ${recipient}
+Relay:      smtp-relay (Exim) via smtp.ionos.de:587
+
+--- System Information ---
+Docker Network: mintfv_mintfv-network
+SMTP Port:      8025 (internal)
+Timezone:       ${TZ}
+
+--- Purpose ---
+This email verifies that:
+✓ SMTP relay container is running
+✓ Network connectivity is working
+✓ External smarthost (smtp.ionos.de) is reachable
+✓ Email delivery pipeline is functional
+
+If you receive this email, your SMTP configuration is working correctly!
+
+--- Next Steps ---
+1. Check email headers to verify routing
+2. Configure Grafana alerts for monitoring notifications
+3. Monitor SMTP logs: docker compose logs smtp-relay
+
+---
+MintFV Datenserver | https://${DOMAIN}
+.
+QUIT
+SMTP_END
+" 2>&1 | grep -v "^220\|^250\|^354\|^221" || {
+        log_error "Failed to send email via SMTP relay"
+        log_info "Check SMTP relay logs for details:"
+        echo ""
+        docker compose logs smtp-relay --tail 20
+        exit 1
+    }
+    
+    log_info "✓ Email sent successfully"
+    echo ""
+    log_info "Recent SMTP relay logs:"
+    docker compose logs smtp-relay --tail 20
+    echo ""
+    log_info "If you don't receive the email, check:"
+    log_info "  1. Spam/Junk folder"
+    log_info "  2. Recipient email address: $recipient"
+    log_info "  3. SMTP credentials in .env.smtp"
+    log_info "  4. Relay domains (*.net, *.com, *.org, *.de)"
+}
+
 show_usage() {
     cat << EOF
 MintFV Management Script
@@ -418,6 +520,7 @@ Commands:
     status              Show service status
     logs [service]      Show logs (optional: specific service)
     version             Show service versions from docker-compose.yaml
+    test-email [addr]   Send test email via SMTP relay (optional: recipient address)
 
     request-cert        Request real SSL certificate from Let's Encrypt
     force-renewal       Force renewal of existing SSL certificate
@@ -431,6 +534,8 @@ Examples:
     $0 start            # Start all services
     $0 status           # Check service status
     $0 logs nginx       # Show nginx logs
+    $0 test-email       # Send test email (interactive)
+    $0 test-email user@example.com  # Send test email to specific address
 
 Configuration:
     Edit config.yaml to change domain, email, and other settings
@@ -483,6 +588,12 @@ main() {
 
         version)
             show_version
+            ;;
+
+        test-email)
+            check_requirements
+            load_config
+            test_email "${2:-}"
             ;;
 
         request-cert)

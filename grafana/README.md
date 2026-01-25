@@ -45,18 +45,17 @@ grafana/
 1. Configuration (Zahnrad) → Data Sources → Add data source
 2. Wähle: InfluxDB
 3. Konfiguration:
-   - Name: InfluxDB
-   - Query Language: SQL oder InfluxQL
+   - Name: InfluxDB-MintFV
+   - Query Language: SQL
    - URL: http://influxdb:8181
-   - Custom HTTP Headers:
-     * Header: Authorization
-     * Value: Token [DEIN_ADMIN_TOKEN]
-   - Organization: InfluxDB
-   - Default Bucket: mydb
+   - InfluxDB Details
+      - Database: mintfv
+      - Token: <kommt via .env>
+      - Insecure Connection: true
 4. Save & Test
 ```
 
-**Admin Token auslesen:**
+**influxdb Admin Token auslesen:**
 ```bash
 cat ./influxdb/tokens/admin.token | jq -r '.token'
 ```
@@ -247,7 +246,130 @@ docker compose restart grafana
 
 ---
 
-## 🔒 Sicherheit
+## � Email Notifications
+
+Grafana ist bereits für Email-Versand via SMTP-Relay konfiguriert.
+
+### SMTP-Konfiguration (bereits aktiv)
+
+```yaml
+GF_SMTP_ENABLED: true
+GF_SMTP_HOST: smtp-relay:8025
+GF_SMTP_FROM_ADDRESS: mintfv@example.com
+```
+
+**Der SMTP-Relay leitet Emails über smtp.ionos.de:587 weiter.**
+
+### Test-Email senden
+
+#### Methode 1: Via MintFV Management Script (ohne Grafana UI)
+
+```bash
+# Interaktiv (fragt nach Empfänger)
+./mintfv.sh test-email
+
+# Mit Empfänger-Parameter
+./mintfv.sh test-email user@example.com
+```
+
+#### Methode 2: Via Grafana UI
+
+```
+1. Alerting (Glockensymbol) → Contact points
+2. + New contact point
+3. Name: Email Notifications
+4. Integration: Email
+5. Addresses: deine@email.de (komma-separiert für mehrere)
+6. Optional: Message Templates anpassen
+7. Test → Send test notification
+8. Save contact point
+```
+
+### Alert Rule mit Email erstellen
+
+**Schritt 1: Contact Point erstellen** (siehe oben)
+
+**Schritt 2: Alert Rule anlegen**
+
+```
+1. Alerting → Alert rules → + New alert rule
+2. Rule name: z.B. "High Temperature Alert"
+3. Data source: InfluxDB-MintFV
+4. Query: SELECT temperature FROM sensors WHERE location='garden'
+5. Expression: WHEN last() > 30  (Beispiel: Temperatur über 30°C)
+6. Evaluation interval: 1m
+7. Pending period: 5m (verhindert Spam bei kurzen Spikes)
+8. Contact point: Email Notifications
+9. Save rule
+```
+
+**Schritt 3: Notification Policy (optional)**
+
+```
+Alerting → Notification policies
+├─ Root policy (default)
+│  ├─ Contact point: Email Notifications
+│  ├─ Group by: alertname, grafana_folder
+│  └─ Timings:
+│     ├─ Group wait: 30s
+│     ├─ Group interval: 5m
+│     └─ Repeat interval: 4h
+```
+
+### Troubleshooting
+
+**Email kommt nicht an?**
+
+```bash
+# 1. SMTP-Relay Logs prüfen
+docker compose logs smtp-relay --tail 50
+
+# 2. Grafana Logs prüfen
+docker compose logs grafana | grep -i smtp
+
+# 3. Test-Email senden
+./mintfv.sh test-email deine@email.de
+
+# 4. Spam-Ordner checken!
+```
+
+**Häufige Fehler:**
+
+- **"Email address not allowed"** → Domain nicht in `RELAY_TO_DOMAINS` (docker-compose.yaml)
+- **"Connection refused"** → smtp-relay Container läuft nicht: `docker compose ps smtp-relay`
+- **"Authentication failed"** → SMTP-Credentials in `.env.smtp.password` prüfen
+- **Keine Error, aber Email fehlt** → Spam-Ordner, Graylisting (15min warten)
+
+**Erlaubte Email-Domains** (konfiguriert im smtp-relay):
+
+- *.net,*.com, *.org,*.de
+
+**Andere Domain hinzufügen:**
+
+```yaml
+# In docker-compose.yaml beim smtp-relay Service:
+RELAY_TO_DOMAINS: "*.net:*.com:*.org:*.de:*.eu"  # *.eu hinzugefügt
+```
+
+### Email-Templates anpassen
+
+Grafana verwendet Go-Templates für Email-Benachrichtigungen:
+
+```
+{{ define "custom_email" }}
+{{ range .Alerts }}
+Alert: {{ .Labels.alertname }}
+Status: {{ .Status }}
+Value: {{ .Values }}
+{{ end }}
+{{ end }}
+```
+
+Siehe: [Grafana Notification Templates](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/)
+
+---
+
+## �🔒 Sicherheit
 
 ### API Key erstellen (für Automation)
 ```

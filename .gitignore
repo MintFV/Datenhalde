@@ -8,8 +8,8 @@
 
 ## config files, sensitive data
 **/.env
-**/.env.local
-!env.example
+**/.env.*
+!env.*
 
 ## nginx files
 nginx/logs/*

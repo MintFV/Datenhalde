@@ -83,7 +83,7 @@ services:
     group_add:
       - "2100"
 
-    stop_grace_period: 30s  # Aktive Connections sauber beenden
+    stop_grace_period: 10s  # Aktive Connections sauber beenden, evtl. noch finetunen
 
     depends_on:
       certbot-init:
@@ -255,7 +255,7 @@ services:
       - GF_SMTP_HOST=smtp-relay:8025
       - GF_SMTP_FROM_ADDRESS=${SMTP_USER_PROVIDER}
       - GF_SMTP_USER=${SMTP_USER_PROVIDER}
-      - GF_SMTP_PASSWORD=${SMTP_PASS_PROVIDER}
+      - GF_SMTP_PASSWORD="" # No password needed for internal relay
       - GF_SMTP_SKIP_VERIFY=
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
 
@@ -488,6 +488,7 @@ services:
       - mintfv-network
 
   smtp-relay:
+    # https://github.com/devture/exim-relay/blob/main/Dockerfile
     image: ghcr.io/devture/exim-relay:latest
     # Container läuft im Image selbst als User "exim" (UID 100, GID 101),
     # optional kannst du das explizit setzen:
@@ -495,6 +496,9 @@ services:
     restart: unless-stopped
 
     stop_grace_period: 45s  # Mail-Queue verarbeiten und spool flushen
+
+    env_file:
+      - .env.smtp.password  # Externe Datei mit SMTP_PASS_PROVIDER
 
     <<: *default-security
     # keine cap_add nötig – Image ist explizit non-root, basierend auf Alpine.[web:25][web:68]
@@ -512,12 +516,13 @@ services:
 
       # Auth zum Smarthost
       SMTP_USERNAME: "${SMTP_USER_PROVIDER}"
-      SMTP_PASSWORD: "${SMTP_PASS_PROVIDER}"
+      # SMTP_PASSWORD: "" # via .env.smtp.password
 
       # Eingrenzung, wer senden darf (Clients/Netze)
       # Standard wäre: <; 10.0.0.0/8; 172.16.0.0/12; 192.168.0.0/16; fc00::/7
       # Passe das an dein Docker-Netz an:
-      RELAY_FROM_HOSTS: "<; 172.20.0.0/16"
+      # Localhost (127.0.0.1, ::1) für Test-Emails via docker exec
+      RELAY_FROM_HOSTS: "<; 127.0.0.1; ::1; 172.20.0.0/16"
 
       # Eingrenzung, wohin gesendet werden darf
       # Nur Versand zu .net/.com/.org/.de erlaubt (colon-separated)

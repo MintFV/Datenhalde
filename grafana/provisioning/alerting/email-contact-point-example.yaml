@@ -1,0 +1,26 @@
+# Grafana Contact Point Provisioning - Email Notifications
+# 
+# HINWEIS: Dies ist ein BEISPIEL und aktuell deaktiviert (apiVersion: 0)
+# 
+# Um dieses Provisioning zu aktivieren:
+# 1. Ändere apiVersion von 0 auf 1
+# 2. Passe die Email-Adresse an
+# 3. Starte Grafana neu: docker compose restart grafana
+#
+# Grafana wird dann automatisch beim Start den Contact Point erstellen.
+#
+# Alternativ: Erstelle Contact Points manuell in der Grafana UI:
+# Alerting → Contact points → + New contact point
+
+apiVersion: 0  # Auf 1 setzen zum Aktivieren
+
+contactPoints:
+  - orgId: 1
+    name: email-notifications
+    receivers:
+      - uid: email-notifications-uid
+        type: email
+        settings:
+          addresses: admin@example.com  # ANPASSEN: Deine Email-Adresse(n), komma-separiert
+          singleEmail: false
+        disableResolveMessage: false
