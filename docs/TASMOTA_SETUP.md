@@ -96,4 +96,5 @@ Full Topic: tenant/tenant-b/%topic%/
 
 - **MQTT ACLs:** [mosquitto/README.md](../mosquitto/README.md)
 - **Node-RED Flow:** [nodered/README.md](../nodered/README.md)
-- **Tasmota Docs:** https://tasmota.github.io/docs/
+- **Tasmota Docs:** <https://tasmota.github.io/docs/>
+- **Datenblätter hier DHT22:** <https://www.elektronik-kompendium.de/sites/praxis/bauteil_dht22.htm>
