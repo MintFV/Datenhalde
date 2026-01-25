@@ -23,10 +23,16 @@ InfluxDB → Grafana → Dashboard
 ### Konfiguration
 ```
 grafana/
-└── data/
-    ├── grafana.db         # SQLite (Dashboards, Users, Settings)
-    ├── plugins/           # Installierte Plugins
-    └── csv/, pdf/, png/   # Exports
+├── data/
+│   ├── grafana.db         # SQLite (Dashboards, Users, Settings)
+│   ├── plugins/           # Installierte Plugins
+│   └── csv/, pdf/, png/   # Exports
+├── provisioning/          # Automatic configuration
+│   ├── datasources/       # Auto-configure InfluxDB
+│   ├── dashboards/        # Auto-import providers
+│   └── alerting/          # Email contact points
+└── dashboards/            # Dashboard JSON files
+    └── *.json             # Auto-imported on startup
 ```
 
 ---
@@ -74,7 +80,106 @@ cat ./influxdb/tokens/admin.token | jq -r '.token'
 
 ---
 
-## 📊 Query-Beispiele
+## � Provisioning (Automatic Setup)
+
+Grafana ist bereits für automatisches Setup konfiguriert. Beim Container-Start werden automatisch geladen:
+
+### Data Sources (InfluxDB)
+
+**File:** `grafana/provisioning/datasources/influxdb.yaml`
+
+```yaml
+apiVersion: 1
+datasources:
+  - name: InfluxDB-MintFV
+    type: influxdb
+    url: http://influxdb:8181
+    jsonData:
+      version: SQL
+      dbName: mintfv
+    isDefault: true
+    secureJsonData:
+      token: ${INFLUXDB_TOKEN}  # From .env
+```
+
+✅ **Data Source ist automatisch verfügbar** - kein manuelles Setup nötig!
+
+### Dashboards
+
+**Provider Config:** `grafana/provisioning/dashboards/default.yaml`
+
+```yaml
+apiVersion: 1
+providers:
+  - name: 'MintFV Dashboards'
+    folder: 'MintFV'
+    type: file
+    updateIntervalSeconds: 10  # Auto-reload every 10s
+    allowUiUpdates: true       # UI changes allowed
+    options:
+      path: /etc/grafana/dashboards
+```
+
+**Dashboard Files:** `grafana/dashboards/*.json`
+
+```
+grafana/dashboards/
+└── umweltbox-cpu-v5.json  # Example dashboard (auto-imported)
+```
+
+✅ **Dashboards werden automatisch importiert** aus `grafana/dashboards/`!
+
+### Alerting (Email)
+
+**Example:** `grafana/provisioning/alerting/email-contact-point-example.yaml`
+
+Details siehe [Email Notifications](#-email-notifications) weiter unten.
+
+### Neues Dashboard hinzufügen
+
+**Methode 1: JSON-File kopieren** (empfohlen)
+
+```bash
+# Dashboard in Grafana UI erstellen & exportieren
+# Dashboard Settings (⚙️) → JSON Model → Copy
+
+# JSON speichern
+cat > grafana/dashboards/my-dashboard.json <<EOF
+{
+  "title": "My Dashboard",
+  "panels": [...]
+}
+EOF
+
+# Grafana lädt automatisch nach ~10 Sekunden
+# Oder Container neu starten:
+docker compose restart grafana
+```
+
+**Methode 2: Via Docker Copy**
+
+```bash
+# Dashboard aus Container exportieren
+docker compose exec grafana cat /var/lib/grafana/grafana.db > backup.db
+
+# Oder via API (siehe Backup & Restore)
+```
+
+### Provisioning deaktivieren
+
+Falls du manuelle Konfiguration bevorzugst:
+
+```yaml
+# docker-compose.yaml - Volumes auskommentieren:
+volumes:
+  - ./grafana/data:/var/lib/grafana:rw
+  # - ./grafana/provisioning:/etc/grafana/provisioning:rw
+  # - ./grafana/dashboards:/etc/grafana/dashboards:ro
+```
+
+---
+
+## �📊 Query-Beispiele
 
 ### SQL (v3)
 ```sql
