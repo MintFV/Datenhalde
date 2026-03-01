@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="de">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>MINT.FV Content Manager</title>
+    <link rel="stylesheet" href="custom-admin.css">
+    <!-- WICHTIG: VOR allen anderen Scripts! -->
+    <script>
+      (function () {
+        const SORT_KEY = 'decap-cms.entries.sort';
+        if (!localStorage.getItem(SORT_KEY)) {
+          localStorage.setItem(SORT_KEY, JSON.stringify({
+            "events": {
+              "start_date": {
+                "key": "start_date",
+                "direction": "Descending",
+                "index": 0
+              }
+            }
+          }));
+          console.log('✅ Default-Sortierung initialisiert');
+        }
+      })();
+    </script>
+
+    <!-- Unterdrücke Source-Map-Fehler von Decap CMS CDN -->
+    <script>
+      window.addEventListener('error', function (e) {
+        if (e.filename && e.filename.includes('decap-cms.js.map')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }, true);
+    </script>
+    </head>
+
+  <body>
+    <!-- Farbindikator - sicheres eigenes Element -->
+    <div id="event-type-indicator"></div>
+
+    <script src="https://unpkg.com/decap-cms@3.10.1/dist/decap-cms.js"></script>
+
+    <script>
+      // ============================================
+      // MINT.FV Decap CMS Customization
+      // Version: 4.0.0 - Refactored & Optimized
+      // ============================================
+
+      // Lade Event-Type-Konfiguration
+      let EVENT_TYPE_DEFAULTS = {};
+
+      fetch('./event-types.json')
+        .then(response => response.json())
+        .then(data => {
+          EVENT_TYPE_DEFAULTS = data;
+          console.log('✅ Event-Types geladen:', Object.keys(EVENT_TYPE_DEFAULTS));
+
+        // Generiere dynamisches CSS für Quick-Create Buttons
+        generateQuickBtnStyles(data);
+
+        // Teste Emoji-Ausgabe
+        Object.entries(data).forEach(([type, config]) => {
+          console.log(`📝 ${type}: emoji="${config.emoji}" name="${config.name}"`);
+        });
+      })
+      .catch(error => {
+        console.error('❌ Fehler beim Laden der event-types.json:', error);
+        // Fallback auf minimale Defaults
+        EVENT_TYPE_DEFAULTS = {
+          'mach-mit-mathe': { emoji: '📐', name: 'Mach mit Mathe', color: '#E8F4F8' },
+          'offene-werkstatt': { emoji: '🔧', name: 'Offene Werkstatt', color: '#F0F8E8' },
+          'ferienpass': { emoji: '🎪', name: 'Ferienpass', color: '#FFF4E6' },
+          'sonstige': { emoji: '📅', name: 'Sonstige', color: '#F5F0F8' }
+        };
+        generateQuickBtnStyles(EVENT_TYPE_DEFAULTS);
+      });
+
+      // ============================================
+      // Helper: Generiere dynamisches CSS für Quick-Buttons
+      // ============================================
+      function generateQuickBtnStyles(eventTypes) {
+        // Entferne alten Style-Tag falls vorhanden
+        const oldStyle = document.getElementById('quick-btn-styles');
+        if (oldStyle) oldStyle.remove();
+
+        // Erstelle neuen Style-Tag
+        const styleTag = document.createElement('style');
+        styleTag.id = 'quick-btn-styles';
+        let css = '/* Dynamische Farben aus event-types.json */\n';
+
+        Object.entries(eventTypes).forEach(([type, config]) => {
+          if (config.color) {
+            css += `.quick-btn.${type} { background-color: ${config.color} !important; }\n`;
+          }
+        });
+
+        styleTag.textContent = css;
+        document.head.appendChild(styleTag);
+        console.log('✅ Dynamic Quick-Button Styles generiert');
+      }
+
+      // ============================================
+      // Helper: Setze React Input Wert
+      // LEGITIM: Decap bietet keine API für programmatische Feld-Updates
+      // ============================================
+      function setInputValue(input, value) {
+        if (!input || !value) return false;
+
+        input.focus();
+
+        const nativeSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype, 'value'
+        )?.set;
+
+        if (nativeSetter) {
+          nativeSetter.call(input, value);
+        } else {
+          input.value = value;
+        }
+
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        input.dispatchEvent(new Event('blur', { bubbles: true }));
+
+        return true;
+      }
+
+      // ============================================
+      // Helper: Erstelle datetime-local Wert
+      // ============================================
+      function createDateTimeLocalValue(timeString) {
+        if (!timeString) return '';
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}T${timeString}`;
+      }
+
+      // ============================================
+      // SICHERE Editor Einfärbung
+      // LEGITIM: Decap bietet keine Dynamic-Styling-API für Editor
+      // ============================================
+      function colorizeEditor() {
+        const hash = window.location.hash;
+        const indicator = document.getElementById('event-type-indicator');
+
+        if (!indicator) return;
+
+        // Nur auf Editor-Seiten (new oder entries)
+        if (!hash.includes('/collections/events/new') &&
+          !hash.includes('/collections/events/entries/')) {
+          indicator.style.backgroundColor = 'transparent';
+          document.body.removeAttribute('data-event-type');
+          return;
+        }
+
+        const applyColor = () => {
+          let eventType = null;
+
+          // Versuche aus URL zu lesen (bei bestehenden Einträgen)
+          for (const type of Object.keys(EVENT_TYPE_DEFAULTS)) {
+            if (hash.includes(type)) {
+              eventType = type;
+              break;
+            }
+          }
+
+          // Oder aus dem Select-Widget lesen
+          if (!eventType) {
+            const selectValue = document.querySelector('[class*="singleValue"]');
+            if (selectValue) {
+              const text = selectValue.textContent || '';
+              for (const [type, config] of Object.entries(EVENT_TYPE_DEFAULTS)) {
+                const matchText = config.name;
+                if (text.includes(matchText)) {
+                  eventType = type;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (!eventType) {
+            indicator.style.backgroundColor = 'transparent';
+            document.body.removeAttribute('data-event-type');
+            return;
+          }
+
+          const config = EVENT_TYPE_DEFAULTS[eventType];
+          if (!config) return;
+
+          indicator.style.backgroundColor = config.color;
+
+          // Setze data-attribute für Editor-Hintergrund
+          document.body.setAttribute('data-event-type', eventType);
+        };
+
+        applyColor();
+
+        const observer = new MutationObserver(applyColor);
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+
+      // ============================================
+      // Select Event Type
+      // LEGITIM: Decap bietet keine API für programmatische Widget-Interaktion
+      // ============================================
+      async function selectEventType(optionMatch) {
+        try {
+          const labels = document.querySelectorAll('label');
+          let fieldContainer = null;
+
+          for (const label of labels) {
+            if (label.textContent.includes('Veranstaltungstyp')) {
+              fieldContainer = label.closest('[class*="ControlContainer"]');
+              break;
+            }
+          }
+
+          if (!fieldContainer) return false;
+
+          const indicator = fieldContainer.querySelector('[class*="indicatorContainer"]');
+
+          if (indicator) {
+            indicator.dispatchEvent(new MouseEvent('mousedown', {
+              view: window,
+              bubbles: true,
+              cancelable: true
+            }));
+          } else {
+            const control = fieldContainer.querySelector('[class*="control"]');
+            if (control) {
+              control.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+            }
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 300));
+
+          let options = document.querySelectorAll('[class*="option"]');
+
+          if (options.length === 0) {
+            const menu = document.querySelector('[class*="menu"]');
+            if (menu) {
+              options = menu.querySelectorAll('[class*="option"]');
+            }
+          }
+
+          for (const option of options) {
+            const text = option.textContent || '';
+
+            if (text.includes(optionMatch)) {
+              option.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+              option.click();
+              return true;
+            }
+          }
+
+          return false;
+
+        } catch (error) {
+          console.error('❌ Fehler beim Event-Type-Select:', error);
+          return false;
+        }
+      }
+
+      // ============================================
+      // Defaults anwenden (mit URL-Parameter-Support)
+      // ============================================
+      async function applyDefaults(eventType) {
+        const defaults = EVENT_TYPE_DEFAULTS[eventType];
+        if (!defaults) return;
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const inputs = document.querySelectorAll('input:not([type="hidden"])');
+
+        let startSet = false;
+        let endSet = false;
+        let locationSet = false;
+        let createdSet = false;
+        let lastModifiedSet = false;
+        let sequenceSet = false;
+
+        inputs.forEach((input) => {
+          const container = input.closest('[class*="Field"], [class*="Widget"]') || input.parentElement?.parentElement;
+          const label = container?.querySelector('label');
+          const labelText = label?.textContent?.toUpperCase() || '';
+
+          // Location setzen
+          if (input.type === 'text' && labelText.includes('ORT') && !locationSet && !input.value) {
+            if (defaults.location) {
+              setInputValue(input, defaults.location);
+              locationSet = true;
+            }
+          }
+
+          // Start-Datum/Zeit setzen
+          if (input.type === 'datetime-local' && labelText.includes('STARTDATUM') && !startSet) {
+            if (defaults.start_time && !input.value) {
+              const dateTimeValue = createDateTimeLocalValue(defaults.start_time);
+              setInputValue(input, dateTimeValue);
+              startSet = true;
+            }
+          }
+
+          // End-Datum/Zeit setzen
+          if (input.type === 'datetime-local' && labelText.includes('ENDDATUM') && !endSet) {
+            if (defaults.end_time && !input.value) {
+              const dateTimeValue = createDateTimeLocalValue(defaults.end_time);
+              setInputValue(input, dateTimeValue);
+              endSet = true;
+            }
+          }
+
+          // CREATED setzen - automatisch beim Erstellen
+          if (input.type === 'datetime-local' && labelText.includes('ERSTELLT') && !createdSet && !input.value) {
+            const now = new Date();
+            const createdValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            setInputValue(input, createdValue);
+            createdSet = true;
+            console.log('✅ CREATED gesetzt:', createdValue);
+          }
+
+          // LAST-MODIFIED setzen - automatisch beim Erstellen (= CREATED)
+          if (input.type === 'datetime-local' && labelText.includes('ZULETZT') && !lastModifiedSet && !input.value) {
+            const now = new Date();
+            const lastModifiedValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            setInputValue(input, lastModifiedValue);
+            lastModifiedSet = true;
+            console.log('✅ LAST-MODIFIED gesetzt:', lastModifiedValue);
+          }
+
+          // SEQUENCE setzen - automatisch beim Erstellen (startet bei 0)
+          if (input.type === 'number' && labelText.includes('REVISIONS') && !sequenceSet && !input.value) {
+            setInputValue(input, '0');
+            sequenceSet = true;
+            console.log('✅ SEQUENCE gesetzt: 0');
+          }
+        });
+
+        colorizeEditor();
+      }
+
+      // ============================================
+      // 1. CMS Initialisierung (vereinfacht)
+      // ============================================
+      function initDecapCMS() {
+        // Lade CSS für Standard-Preview (kein Custom Template!)
+        if (typeof CMS !== 'undefined') {
+          CMS.registerPreviewStyle('/cms/admin/preview.css');
+          console.log('✅ Decap CMS initialisiert');
+
+          // preSave Hook als Fallback für fehlende Defaults
+          CMS.registerEventListener({
+            name: 'preSave',
+            handler: ({ entry }) => {
+              let modified = entry;
+              const eventType = entry.getIn(['data', 'event_type']);
+              const location = entry.getIn(['data', 'location']);
+
+              // Nur wenn Location leer ist und Event-Type gesetzt
+              if (!location && eventType && EVENT_TYPE_DEFAULTS[eventType]) {
+                const defaults = EVENT_TYPE_DEFAULTS[eventType];
+                if (defaults.location) {
+                  console.log(`💾 preSave: Setze Location für ${eventType}`);
+                  modified = modified.setIn(['data', 'location'], defaults.location);
+                }
+              }
+
+              // CREATED-Feld prüfen und setzen
+              const created = modified.getIn(['data', 'created']);
+              const startDate = modified.getIn(['data', 'start_date']);
+
+              if (!created && startDate) {
+                const now = new Date();
+                const eventDate = new Date(startDate);
+
+                // Regel: Zukunft = jetzt, Vergangenheit = Event-Datum
+                const createdDate = eventDate > now ? now : eventDate;
+
+                const createdString = createdDate.toISOString().slice(0, 16).replace('T', ' ');
+                modified = modified.setIn(['data', 'created'], createdString);
+
+                console.log(`💾 preSave: Setze CREATED auf ${createdString}`);
+              }
+
+              // LAST-MODIFIED immer aktualisieren
+              const now = new Date();
+              const lastModifiedString = now.toISOString().slice(0, 16).replace('T', ' ');
+              modified = modified.setIn(['data', 'last_modified'], lastModifiedString);
+              console.log(`💾 preSave: LAST-MODIFIED aktualisiert auf ${lastModifiedString}`);
+
+              // SEQUENCE inkrementieren bei Änderungen (oder initialisieren mit 0)
+              const currentSequence = modified.getIn(['data', 'sequence']);
+              const newSequence = currentSequence !== undefined && currentSequence !== null ? currentSequence + 1 : 0;
+              modified = modified.setIn(['data', 'sequence'], newSequence);
+              console.log(`💾 preSave: SEQUENCE aktualisiert auf ${newSequence}`);
+
+              return modified;
+            }
+          });
+        }
+      }
+
+      // ============================================
+      // 2. Quick-Create Buttons
+      // LEGITIM: Decap bietet keine API für Custom UI in Collection-Listen
+      // ============================================
+      function addQuickCreateButtons() {
+        const tryAddButtons = () => {
+          const hash = window.location.hash;
+          if (!hash.includes('/collections/events')) return;
+          if (hash.includes('/new')) return;
+          if (hash.includes('/entries/')) return;
+          if (document.getElementById('quick-create-container')) return;
+
+          const newButton = document.querySelector('a[href*="/new"]');
+          if (!newButton) return;
+
+          const headerArea = newButton.closest('div');
+          if (!headerArea) return;
+
+          const container = document.createElement('div');
+          container.id = 'quick-create-container';
+
+          Object.entries(EVENT_TYPE_DEFAULTS).forEach(([type, config]) => {
+            const btn = document.createElement('button');
+            btn.className = `quick-btn ${type}`;
+            btn.textContent = config.emoji;
+            btn.title = `${config.emoji} ${config.name}`;
+
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              sessionStorage.setItem('preselectedEventType', type);
+              console.log('🎯 Quick-Create:', type);
+
+              // Verwende URL-Parameter für einfachere Defaults wo möglich
+              const params = new URLSearchParams();
+              if (config.location) params.append('location', config.location);
+
+              const paramString = params.toString();
+              window.location.hash = paramString
+                ? `#/collections/events/new?${paramString}`
+                : '#/collections/events/new';
+            });
+
+            container.appendChild(btn);
+          });
+
+          headerArea.parentNode.insertBefore(container, headerArea);
+          console.log('✅ Quick-Create Buttons hinzugefügt');
+
+          // Färbe Liste-Einträge ein
+          colorizeListItems();
+        };
+
+        const observer = new MutationObserver(() => {
+          tryAddButtons();
+          colorizeListItems();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        window.addEventListener('hashchange', () => {
+          document.getElementById('quick-create-container')?.remove();
+          setTimeout(colorizeEditor, 500);
+          setTimeout(colorizeListItems, 500);
+        });
+      }
+
+        // ============================================
+        // Liste-Einträge einfärben basierend auf Event-Typ
+        // LEGITIM: Decap zeigt keine Event-Type-Badges in Listen
+        // ============================================
+        function colorizeListItems() {
+          const links = document.querySelectorAll('a[href*="/events/entries/"]');
+
+          links.forEach(async (link) => {
+            const href = link.getAttribute('href');
+            const entryId = href.split('/entries/')[1];
+
+          // Versuche Event-Typ aus dem Dateinamen zu erkennen
+          let eventType = null;
+
+          if (href.includes('mach-mit-mathe')) {
+            eventType = 'mach-mit-mathe';
+          } else if (href.includes('offene-werkstatt')) {
+            eventType = 'offene-werkstatt';
+          } else if (href.includes('ferienpass')) {
+            eventType = 'ferienpass';
+          } else {
+            // Fallback: sonstige
+            eventType = 'sonstige';
+          }
+
+          if (eventType && EVENT_TYPE_DEFAULTS[eventType]) {
+            const config = EVENT_TYPE_DEFAULTS[eventType];
+
+            // Setze data-event-type Attribut
+            link.setAttribute('data-event-type', eventType);
+
+            // Füge Emoji hinzu, wenn noch nicht vorhanden
+            if (!link.querySelector('.event-emoji')) {
+              const emoji = document.createElement('span');
+              emoji.className = 'event-emoji';
+              emoji.textContent = config.emoji;
+              emoji.style.marginRight = '8px';
+              emoji.style.fontSize = '1.2rem';
+              link.insertBefore(emoji, link.firstChild);
+            }
+          }
+        });
+      }
+
+      // ============================================
+      // 3. Event Type Handler
+      // LEGITIM: Decap bietet keine onCreate/Navigation-Hooks
+      // ============================================
+      function setupEventTypeHandler() {
+
+        const handleNewPage = async () => {
+          const preselected = sessionStorage.getItem('preselectedEventType');
+
+          if (!preselected) {
+            setTimeout(colorizeEditor, 1000);
+            return;
+          }
+
+          console.log('🎯 Vorauswahl:', preselected);
+          const defaults = EVENT_TYPE_DEFAULTS[preselected];
+
+          if (!defaults) return;
+
+          await new Promise(resolve => setTimeout(resolve, 1500));
+
+          const success = await selectEventType(defaults.name);
+
+          if (success) {
+            console.log('✅ Event-Type gesetzt!');
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await applyDefaults(preselected);
+
+          sessionStorage.removeItem('preselectedEventType');
+        };
+
+        window.addEventListener('hashchange', () => {
+          if (window.location.hash.includes('/collections/events/new')) {
+            console.log('📄 Neue Veranstaltung Seite');
+            handleNewPage();
+          } else if (window.location.hash.includes('/collections/events/entries/')) {
+            setTimeout(colorizeEditor, 500);
+          }
+        });
+
+        if (window.location.hash.includes('/collections/events/new')) {
+          handleNewPage();
+        } else if (window.location.hash.includes('/collections/events/entries/')) {
+          setTimeout(colorizeEditor, 500);
+        }
+      }
+
+      // ============================================
+      // Init
+      // ============================================
+      const init = () => {
+        initDecapCMS();
+        addQuickCreateButtons();
+        setupEventTypeHandler();
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+      console.log('🚀 MINT.FV CMS v4.0.0 geladen (Optimiert)');
+    </script>
+  </body>
+</html>

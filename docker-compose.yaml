@@ -119,6 +119,7 @@ services:
     read_only: true
 
     <<: *default-security
+    logging: *default-logging
     cap_add:
       - CHOWN
       - SETGID
@@ -147,7 +148,6 @@ services:
       retries: 3
       start_period: 40s
 
-    logging: *default-logging
 
     networks:
       - mintfv-network
@@ -557,6 +557,37 @@ services:
 
     networks:
       - mintfv-network
+
+
+  # =============================================================================
+  # Decap CMS (itsmejoeeey/docker-decap-cms-standalone)
+  # - https://github.com/itsmejoeeey/docker-decap-cms-standalone/
+  # =============================================================================
+  decap-cms:
+    image: itsmejoeeey/docker-decap-cms-standalone:latest
+    restart: unless-stopped
+    <<: *default-security
+    logging: *default-logging
+    networks:
+      - mintfv-network
+    expose:
+      - 80
+    # ports:
+    #   - "3100:80"
+    environment:
+      - OAUTH_CLIENT_ID=${DECAP_OAUTH_CLIENT_ID}
+      - OAUTH_CLIENT_SECRET=${DECAP_OAUTH_CLIENT_SECRET}
+      - GIT_HOSTNAME=https://github.com
+      - OAUTH_PROVIDER=github
+      - ORIGINS=mintfv.peddy.net,www.mintarium-fv.de
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 
 # Networks

@@ -1,0 +1,296 @@
+# /admin/config.yml
+# Decap CMS Konfiguration für MINT.FV Veranstaltungsverwaltung
+
+local_backend: true # diese Zeile aktivieren, bevor Sie lokal testen
+publish_mode: simple  # Direktes Speichern, kein Editorial Workflow
+
+backend:
+  name: github
+  repo: MintFV/MintFV.github.io
+  branch: main
+  base_url: https://mintfv.peddy.net/
+  auth_endpoint: auth
+
+site_url: https://www.mintarium-fv.de
+
+
+# Media-Verwaltung
+media_folder:  "assets/images/events"
+public_folder: "assets/images/events"
+
+# Deutsche Sprache
+locale: "de"
+
+# Hier definieren wir die bearbeitbaren Inhalte
+collections:
+  # Veranstaltungen - EINE zentrale Collection mit Type-Attribut
+  - name: "events" # Interner Name für die Collection
+    label: "📅 Veranstaltungen" # Angezeigter Name in der CMS-Oberfläche
+    label_singular: "Veranstaltung"
+    folder: "_events" # Der Ordner im Repo, in dem die Veranstaltungs-Dateien liegen
+    create: true # Erlaubt das Erstellen neuer Veranstaltungen
+    identifier_field: title  # ← KRITISCH! Ohne das geht Speichern nicht!
+    slug: "{{start_date}}-{{title}}-{{event_type}}" # Dateiname-Format, z.B. "2025-12-05-roboter-workshop.md"
+    summary: "{{start_date | date('DD.MM.YYYY HH:mm')}} - {{title}}"
+    editor:
+      preview: true
+    # Sortierung: Neueste zuerst
+    sortable_fields: ['start_date', 'title', 'event_type']
+    sort: "start_date:desc"
+    view_filters:
+      - label: "Mach mit Mathe"
+        field: event_type
+        pattern: 'mach-mit-mathe'
+      - label: "Offene Werkstatt"
+        field: event_type
+        pattern: 'offene-werkstatt'
+      - label: "Ferienpass"
+        field: event_type
+        pattern: 'ferienpass'
+      - label: "Sonstige"
+        field: event_type
+        pattern: 'sonstige'
+      - label: "Veröffentlicht"
+        field: published
+        pattern: true
+      - label: "Entwürfe"
+        field: published
+        pattern: false
+    fields:
+      # ===== PFLICHTFELDER =====
+
+      - label: "Veranstaltungstyp"
+        name: "event_type"
+        widget: "select"
+        hint: |
+          Wählen Sie den passenden Veranstaltungstyp. Bei Verwendung der Quick-Create-Buttons werden automatisch passende Standardwerte gesetzt:
+          • Mach mit Mathe: Ausstellungsraum, 14:00-16:00 Uhr
+          • Offene Werkstatt: Werkstatt, 16:00-19:00 Uhr
+          • Ferienpass: Vereinsräume, 11:00-12:00 Uhr, Anmeldung erforderlich
+          • Sonstige: Flexible Einstellungen
+        # WICHTIG: Icons müssen mit cms-static/admin/event-types.json synchron bleiben!
+        # Single Source of Truth für alle anderen Definitionen: event-types.json
+        options:
+          - { label: "📐 Mach mit Mathe - Ausstellung", value: "mach-mit-mathe" }
+          - { label: "🔧 Offene Werkstatt", value: "offene-werkstatt" }
+          - { label: "🎪 Ferienpass Aktion", value: "ferienpass" }
+          - { label: "📅 Sonstige Veranstaltung", value: "sonstige" }
+
+      - label: "Titel"
+        name: "title"
+        widget: "string"
+        hint: "Kurzer, aussagekräftiger Titel der Veranstaltung (z.B. 'Roboter-Programmierung mit NAO')"
+
+      - label: "Startdatum und Uhrzeit"
+        name: "start_date"
+        widget: "datetime"
+        format: "YYYY-MM-DD HH:mm"
+        date_format: "DD.MM.YYYY"
+        time_format: "HH:mm"
+        picker_utc: false
+        hint: "Wann beginnt die Veranstaltung? Bei Quick-Create wird die Uhrzeit automatisch je nach Typ gesetzt (kann angepasst werden)."
+
+      - label: "Enddatum und Uhrzeit"
+        name: "end_date"
+        widget: "datetime"
+        format: "YYYY-MM-DD HH:mm"
+        date_format: "DD.MM.YYYY"
+        time_format: "HH:mm"
+        picker_utc: false
+        required: true
+        hint: "Endzeitpunkt der Veranstaltung. Bei Quick-Create wird die End-Uhrzeit automatisch je nach Typ gesetzt (anpassbar)."
+
+      - label: "Kurzbeschreibung"
+        name: "excerpt"
+        widget: "text"
+        hint: "Kurze Zusammenfassung (10-200 Zeichen) für Übersichtsseiten"
+        pattern: ['.{10,200}', "Bitte zwischen 10 und 200 Zeichen eingeben"]
+
+      - label: "Ausführliche Beschreibung"
+        name: "body"
+        widget: "markdown"
+        hint: "Detaillierte Beschreibung der Veranstaltung mit allen wichtigen Informationen. Sie können Formatierungen wie Fett, Kursiv, Listen etc. verwenden."
+        buttons:
+          - bold
+          - italic
+          - link
+          - heading-two
+          - heading-three
+          - quote
+          - bulleted-list
+          - numbered-list
+
+      - label: "Veröffentlicht"
+        name: "published"
+        widget: "boolean"
+        default: true
+        hint: "Nur veröffentlichte Veranstaltungen werden auf der Website angezeigt"
+
+      - label: "Erstellt am (automatisch)"
+        name: "created"
+        widget: "datetime"
+        format: "YYYY-MM-DD HH:mm"
+        date_format: "DD.MM.YYYY"
+        time_format: "HH:mm"
+        picker_utc: false
+        required: false
+        hint: "Wird automatisch beim Erstellen gesetzt. Bei zukünftigen Events = Erstellungsdatum, bei vergangenen Events = Termin-Datum"
+
+      - label: "Zuletzt geändert (automatisch)"
+        name: "last_modified"
+        widget: "datetime"
+        format: "YYYY-MM-DD HH:mm"
+        date_format: "DD.MM.YYYY"
+        time_format: "HH:mm"
+        picker_utc: false
+        required: false
+        hint: "Wird automatisch bei jeder Bearbeitung aktualisiert. Initial = CREATED, bei Änderungen = aktuelles Datum/Zeit"
+
+      - label: "Revisions-Nummer (automatisch)"
+        name: "sequence"
+        widget: "number"
+        value_type: "int"
+        min: 0
+        required: false
+        hint: "Revisions-Zähler für iCal-Synchronisation. Startet bei 0, wird bei jeder Änderung automatisch erhöht. Nicht manuell ändern!"
+
+      # ===== OPTIONALE FELDER =====
+
+      - label: "Veranstaltungsort"
+        name: "location"
+        widget: "string"
+        required: false
+        hint: |
+          Wo findet die Veranstaltung statt? Bei Quick-Create wird automatisch der Standard-Ort für den gewählten Typ eingetragen:
+          • Mach mit Mathe: MINTarium Eingang A / Ausstellungsraum
+          • Offene Werkstatt: MINTarium Eingang B
+          • Ferienpass: MINTarium Eingang B
+          Der Ort kann natürlich angepasst werden.
+
+      # --- BILDER ---
+
+      - label: "Vorschaubild"
+        name: "teaser_image"
+        widget: "image"
+        required: false
+        allow_multiple: false
+        hint: "Optional: Bild für Übersichtsseiten (max. 5MB). JPG oder PNG empfohlen."
+        media_library:
+          config:
+            max_file_size: 5242880
+
+      - label: "Bildunterschrift"
+        name: "teaser_alt"
+        widget: "string"
+        required: false
+        hint: "Beschreibung des Vorschaubilds (wichtig für Barrierefreiheit)"
+
+      - label: "Bildergalerie"
+        name: "gallery"
+        widget: "list"
+        required: false
+        hint: "Optional: Mehrere Bilder für Nachberichte (können nachträglich hinzugefügt werden)"
+        fields:
+          - label: "Bild"
+            name: "image"
+            widget: "image"
+            media_library:
+              config:
+                max_file_size: 5242880
+          - label: "Bildunterschrift"
+            name: "caption"
+            widget: "string"
+            required: false
+            hint: "Beschreibung des Bildes"
+
+      # --- ANMELDUNG ---
+
+      - label: "Anmeldung erforderlich?"
+        name: "registration_required"
+        widget: "boolean"
+        default: false
+        hint: "Müssen sich Teilnehmer vorher anmelden? Bei Ferienpass-Aktionen ist dies standardmäßig aktiviert."
+
+      - label: "Anmelde-E-Mail"
+        name: "registration_email"
+        widget: "string"
+        required: false
+        hint: "E-Mail-Adresse für Anmeldungen info@mintarium-fv.de (nur ausfüllen, wenn Anmeldung erforderlich ist)"
+
+      - label: "Anmeldefrist"
+        name: "registration_deadline"
+        widget: "datetime"
+        format: "YYYY-MM-DD"
+        date_format: "DD.MM.YYYY"
+        time_format: false
+        picker_utc: false
+        required: false
+        hint: "Optional: Bis wann ist eine Anmeldung möglich?"
+
+      - label: "Maximale Teilnehmerzahl"
+        name: "max_participants"
+        widget: "number"
+        value_type: "int"
+        min: 1
+        required: false
+        hint: "Optional: Wie viele Personen können maximal teilnehmen?"
+
+      # --- ZUSATZINFORMATIONEN (primär für Ferienpass) ---
+
+      - label: "Altersgruppe"
+        name: "age_group"
+        widget: "string"
+        required: false
+        hint: "Optional: Für welches Alter ist die Veranstaltung geeignet? (z.B. '8-12 Jahre')"
+
+      - label: "Kosten"
+        name: "cost"
+        widget: "string"
+        required: false
+        hint: "Optional: Kosten pro Teilnehmer (z.B. '5 Euro', 'Kostenfrei', '10 Euro inkl. Material')"
+
+      - label: "Verantwortliche Personen"
+        name: "organizers"
+        widget: "list"
+        required: false
+        hint: "Optional: Wer organisiert/betreut die Veranstaltung?"
+        field:
+          label: "Name"
+          name: "name"
+          widget: "string"
+
+      - label: "Besondere Hinweise"
+        name: "notes"
+        widget: "text"
+        required: false
+        hint: "Optional: Zusätzliche Informationen (z.B. 'Bitte Verpflegung mitbringen', 'Wetterabhängig')"
+
+      - label: "Veranstaltung abgesagt?"
+        name: "cancelled"
+        widget: "boolean"
+        default: false
+        required: false
+        hint: "Aktivieren, wenn die Veranstaltung abgesagt wurde (wird prominent angezeigt)"
+
+  # Seitenverwaltung (behalten)
+  - name: "pages"
+    label: "Seiten"
+    files:
+      - file: "_pages/impressum.md" # Pfad zur Datei
+        label: "Impressum" # Angezeigter Name
+        name: "impressum"
+        fields:
+          - { label: "Titel", name: "title", widget: "string" }
+          - { label: "Inhalt", name: "body", widget: "markdown" }
+      - file: "_pages/datenschutz.md"
+        label: "Datenschutz"
+        name: "datenschutz"
+        fields:
+          - { label: "Titel", name: "title", widget: "string" }
+          - { label: "Inhalt", name: "body", widget: "markdown" }
+      - file: "_pages/mitgliedschaft.md"
+        label: "Mitgliedschaft"
+        name: "mitgliedschaft"
+        fields:
+          - { label: "Titel", name: "title", widget: "string" }
+          - { label: "Inhalt", name: "body", widget: "markdown" }
