@@ -16,7 +16,7 @@ site_url: https://www.mintarium-fv.de
 
 # Media-Verwaltung
 media_folder:  "assets/images/events"
-public_folder: "assets/images/events"
+public_folder: "/assets/images/events"
 
 # Deutsche Sprache
 locale: "de"
