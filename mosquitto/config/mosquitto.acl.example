@@ -193,6 +193,31 @@ topic readwrite umweltbox/de-hh-privat-peddy/#
 topic read $SYS/#
 
 # ============================================================================
+# Abschnitt für Privatpersonen
+#   damit der Zugriff einfach ist, sollen Privatpersonen auf ihren kompletten
+#   "Zweig" volle Berechtigung haben, Muster ist:
+#   umweltbox/{land}-{bundesland}-privat-{username of private person}
+# ============================================================================
+
+# peddy - Maintainer der MQTT-Umweltbox
+user de-hh-privat-peddy
+topic write umweltbox/de-hh-privat-peddy/#
+topic read  umweltbox/de-hh-privat-peddy/#
+topic read $SYS/broker/version
+
+# Julien - Mintarium offene Werkstatt
+user de-hh-privat-julien
+topic write umweltbox/de-hh-privat-julien/#
+topic read  umweltbox/de-hh-privat-julien/#
+topic read $SYS/broker/version
+
+# Sebastian - Mintarium offene Werkstatt
+user de-sh-privat-sebo
+topic write umweltbox/de-sh-privat-sebo/#
+topic read  umweltbox/de-sh-privat-sebo/#
+topic read $SYS/broker/version
+
+# ============================================================================
 # MONITORING USER (optional - read-only für Systemüberwachung)
 # ============================================================================
 user monitoring

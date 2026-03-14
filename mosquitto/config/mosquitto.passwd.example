@@ -11,5 +11,8 @@ tenant-c-admin:$7$101$3KF8gwAod2kB38LW$QQ7nub9xCdLMCaduXhHQFMHYGrCbIEM+g4prp6tTn
 tenant-c-sensor01:$7$101$PcGfyUyp0M1lwwlF$e8oLt767m5BfC+PwbC+2jYYQ3Vp3ydCtuE3paWcYCcF2R9cFSRokcKMoikijdMHcgXn+6od01cmFxSPN1hONRw==
 tenant-c-sensor02:$7$101$jtsZTxwBMIJ5OwWH$FeRhMld5tqT/wypMBvCy4/DUGyi0eSwg2UeYpZQA8XSHpbXGPpB2ecOKge6vRKMF8qbc85NdHnMrtb0stehf3Q==
 tenant-c-nodered:$7$101$5Y0Bw7cVMkRqHoqU$wsQBNXhgCAe8hkXeop4uI3HkqO5e64lcnS5xNjm8th0+qyQcMyK3y5/1PhXHYuyMGT2fJ+r9RbnEE2TVxhol1Q==
+de-hh-privat-peddy:$7$101$ABCDefghIJKLmnop$ExampleHashForPeddyPrivateUserChangeThisInProductionEnvironment1234567890ABCDEF==
+de-hh-privat-julien:$7$101$ABCDefghIJKLmnop$ExampleHashForJulienPrivateUserChangeThisInProductionEnvironment1234567890ABCDEF==
+de-sh-privat-sebo:$7$101$ABCDefghIJKLmnop$ExampleHashForSeboPrivateUserChangeThisInProductionEnvironment1234567890ABCDEF==
 monitoring:$7$101$3WeYq5zSAc7Y7bPp$Cd0qN+Xu+SllslaCAVNSIDTd8ZR6Z4Rxsl4RGUdpLFBaTBhNGjNfuXiDW8R2VdG92lzC8AyI0GcMIGmScY3eOQ==
 healthcheck:$7$101$wYfdrqvJ8DatWF9K$J3OFuDVSADRLxjoaktBV9aj5Yy3DFOx7AmHL3VOpWQP9tnIYpYoojqYtG7lnmKRlp1P5oX90bop6nJ/Eu8jRrA==

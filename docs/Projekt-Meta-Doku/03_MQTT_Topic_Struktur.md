@@ -26,7 +26,7 @@ umweltbox/{tenant-id}/{device-id}/{category}/{measurement}
 
 ## 📋 Tenant-ID Namenskonvention
 
-### Format (Empfohlen)
+### Format für Organisationen (Empfohlen)
 
 ```
 {land}-{bundesland}-{schultyp}-{schulname}[-{einheit}]
@@ -37,6 +37,22 @@ umweltbox/{tenant-id}/{device-id}/{category}/{measurement}
 - `de-by-gym-max-planck` (Gymnasium Max Planck, Bayern)
 - `de-nrw-rs-koeln-klasse10a` (Realschule Köln, Klasse 10a)
 - `de-be-ag-klima` (Arbeitsgruppe Klima, Berlin)
+
+### Format für Privatpersonen
+
+```
+{land}-{bundesland}-privat-{username}
+```
+
+**Beispiele**:
+- `de-hh-privat-peddy` (Privatperson Peddy, Hamburg)
+- `de-hh-privat-julien` (Privatperson Julien, Hamburg)
+- `de-sh-privat-sebo` (Privatperson Sebastian, Schleswig-Holstein)
+
+**Besonderheiten für Privatpersonen:**
+- Einfacheres ACL-Modell: Ein User = Volle Berechtigung auf eigenen Namespace
+- Keine Unterteilung in admin/sensor/nodered
+- Username ist gleichzeitig MQTT-Username (z.B. `de-hh-privat-peddy`)
 
 ### Komponenten
 
@@ -214,7 +230,9 @@ Folgende Informationen gehören **in den Payload**, nicht ins Topic:
 
 ## 📝 ACL-Mapping
 
-### Tenant-Admin (Lesezugriff auf alle Geräte des Tenants)
+### Organisationen (Multi-User-Modell)
+
+#### Tenant-Admin (Lesezugriff auf alle Geräte des Tenants)
 
 ```
 user de-hh-gs-altona-admin
@@ -222,7 +240,7 @@ topic readwrite umweltbox/de-hh-gs-altona/#
 topic read $SYS/#
 ```
 
-### Sensor (Schreibzugriff nur für eigene Topics)
+#### Sensor (Schreibzugriff nur für eigene Topics)
 
 ```
 user de-hh-gs-altona-esp01
@@ -230,13 +248,30 @@ topic write umweltbox/de-hh-gs-altona/esp01/#
 topic read umweltbox/de-hh-gs-altona/commands/esp01/#
 ```
 
-### Node-RED (Lesezugriff auf alles)
+#### Node-RED (Lesezugriff auf alles)
 
 ```
 user nodered-global
 topic read umweltbox/#
 topic read $SYS/#
 ```
+
+### Privatpersonen (Single-User-Modell)
+
+#### Privatperson (Voller Zugriff auf eigenen Namespace)
+
+```
+user de-hh-privat-peddy
+topic write umweltbox/de-hh-privat-peddy/#
+topic read  umweltbox/de-hh-privat-peddy/#
+topic read $SYS/broker/version
+```
+
+**Vorteile:**
+- Einfacher: Nur ein User-Account pro Person
+- Flexibler: Person kann beliebig viele Geräte hinzufügen
+- Keine Commands-Namespace-Einschränkung
+- Geeignet für private Umweltboxen und Hobby-Projekte
 
 ## 🔧 Validierung in Node-RED
 
