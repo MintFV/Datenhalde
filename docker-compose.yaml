@@ -22,17 +22,14 @@ services:
     # user: "2002:2100"
     group_add:
       - "2100"
-
     volumes:
       - ./certbot/conf:/etc/letsencrypt:rw
       - ./certbot/www:/var/www/certbot:rw
       - ./certbot/logs:/var/log/letsencrypt:rw
-
     environment:
       - DOMAIN=${DOMAIN:-mintfv.example.com}
       - EMAIL=${EMAIL:-admin@example.com}
       - TZ=${TZ:-Europe/Berlin}
-
     entrypoint: /bin/sh
     command: >
       -c '
@@ -55,27 +52,22 @@ services:
       fi &&
       echo "Init complete"
       '
-
     <<: *default-security
     cap_add:
       - CHOWN
       - DAC_OVERRIDE
       - SETGID
       - SETUID
-
     healthcheck:
       test: ["CMD", "test", "-f", "/etc/letsencrypt/.initialized"]
       interval: 5s
       timeout: 3s
       retries: 1
       start_period: 5s
-
     logging: *default-logging
-
     networks:
       - mintfv-network
 
-  # Nginx Webserver
   nginx:
     image: nginx:alpine
     restart: unless-stopped
@@ -110,14 +102,11 @@ services:
       - ./nginx/html:/usr/share/nginx/html:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
-
     tmpfs:
       - /var/cache/nginx:uid=2001,gid=2100,mode=0750
       - /var/run:uid=2001,gid=2100,mode=0750
       - /tmp:uid=2001,gid=2100,mode=1777
-
     read_only: true
-
     <<: *default-security
     logging: *default-logging
     cap_add:
@@ -125,7 +114,6 @@ services:
       - SETGID
       - SETUID
       - NET_BIND_SERVICE
-
     deploy:
       resources:
         limits:
@@ -135,20 +123,16 @@ services:
         reservations:
           cpus: '0.25'
           memory: 64M
-
     environment:
       - TZ=${TZ:-Europe/Berlin}
       - NGINX_HOST=${DOMAIN:-localhost}
       - NGINX_PORT=8080
-
     healthcheck:
       test: ["CMD", "curl", "-fsS4", "--max-time", "5", "http://localhost:8080/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-
     networks:
       - mintfv-network
 
@@ -202,16 +186,13 @@ services:
       timeout: 8s
       retries: 3
       start_period: 2s
-
     deploy:
       resources:
         limits:
           cpus: '0.25'
           memory: 64M
           pids: 50
-
     logging: *default-logging
-
     networks:
       - mintfv-network
 
@@ -291,17 +272,27 @@ services:
           cpus: '0.5'
           memory: 256M
           pids: 100
-
     logging: *default-logging
-
     networks:
       - mintfv-network
-
     depends_on:
       influxdb:
         condition: service_healthy
       smtp-relay:
         condition: service_healthy
+
+  mcp-grafana:
+    image: grafana/mcp-grafana:latest
+    restart: unless-stopped
+    environment:
+      - GRAFANA_URL=http://grafana:3000
+      - GRAFANA_SERVICE_ACCOUNT_TOKEN=${GRAFANA_SERVICE_ACCOUNT_TOKEN}
+    networks:
+      - mintfv-network
+    depends_on:
+      grafana:
+        condition: service_healthy
+    logging: *default-logging
 
   # =============================================================================
   # InfluxDB 3 Core Time Series Database
@@ -329,42 +320,35 @@ services:
       - --disable-authz=health,ping
       - --admin-token-file=/var/lib/influxdb3/tokens/admin.token
       - --disable-telemetry-upload
-
     volumes:
       - ./influxdb/data:/var/lib/influxdb3/data
       - ./influxdb/plugins:/var/lib/influxdb3/plugins
       - ./influxdb/tokens:/var/lib/influxdb3/tokens:ro
-
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS4 --max-time 2 http://localhost:8181/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-
     <<: *default-security
     cap_add:
       - CHOWN
       - SETGID
       - SETUID
       - DAC_OVERRIDE
-
     read_only: true
     tmpfs:
       - /tmp:uid=2005,gid=2100,mode=1700
-
     deploy:
       resources:
         limits:
-          cpus: '2.0'      # Statt 1.0
-          memory: 1024M    # Statt 512M
+          cpus: '2.0'
+          memory: 1024M
           pids: 200
         reservations:
           cpus: '1.0'
           memory: 512M
-
     logging: *default-logging
-
     networks:
       - mintfv-network
 
@@ -379,7 +363,6 @@ services:
     user: "2003:2100"
     group_add:
       - "2100"
-
     expose:
       - "9001"    # WebSocket nur intern, via nginx
       - "1883"    # MQTT nur intern, via nginx
@@ -387,7 +370,6 @@ services:
       - ./mosquitto/config:/mosquitto/config:rw
       - ./mosquitto/data:/mosquitto/data:rw
       - ./mosquitto/logs:/mosquitto/log:rw
-
     <<: *default-security
 
     stop_grace_period: 30s  # Gibt Mosquitto Zeit für sauberen Shutdown + DB-Flush
@@ -397,16 +379,13 @@ services:
         limits:
           cpus: '0.25'
           memory: 64M
-
     healthcheck:
       test: ["CMD-SHELL", "pidof mosquitto >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-
     logging: *default-logging
-
     networks:
       - mintfv-network
 
@@ -418,25 +397,18 @@ services:
     user: "2003:2100"
     group_add:
       - "2100"
-
     volumes:
       - ./mosquitto/config/mosquitto.passwd:/tmp/mosquitto.passwd:rw
-
     <<: *default-security
-
     entrypoint: sleep
     command: ["infinity"]
     stop_grace_period: 3s
-
-
     deploy:
       resources:
         limits:
           cpus: '0.1'
           memory: 32M
-
     logging: *default-logging
-
     network_mode: "none"
 
 
@@ -453,7 +425,6 @@ services:
     depends_on:
       influxdb:
         condition: service_healthy
-
     environment:
       - TZ=${TZ:-Europe/Berlin}
       - NODE_RED_ENABLE_SAFE_MODE=false
@@ -463,27 +434,21 @@ services:
       - NODE_RED_ADMIN_PASSWORD_HASH=${NODE_RED_ADMIN_PASSWORD_HASH}
       - NODE_RED_CREDENTIAL_SECRET=${NODE_RED_CREDENTIAL_SECRET}
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
-
     volumes:
       - ./nodered/data:/data:rw
-
     <<: *default-security
-
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS4 --max-time 5 http://localhost:1880/nodered/ > /dev/null"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-
     deploy:
       resources:
         limits:
           cpus: '0.5'
           memory: 256M
-
     logging: *default-logging
-
     networks:
       - mintfv-network
 
@@ -533,7 +498,6 @@ services:
       # TLS für Smarthost-Verbindung erzwingen
       USE_TLS: "yes"
       TLS_VERIFY: "may"
-
     healthcheck:
       # Exim-Prozess läuft als 'exim'; einfache Prüfung auf Port mit 2s Timeout
       test: ["CMD-SHELL", "nc -w 2 -z 127.0.0.1 8025 || exit 1"]
@@ -541,7 +505,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-
     deploy:
       resources:
         limits:
@@ -550,7 +513,6 @@ services:
           pids: 100
       # Logging wie bisher
     logging: *default-logging
-
     volumes:
       - ./smtp-relay/spool:/var/spool/exim
       # Logging geht per Default ins STDOUT/STDERR des Containers; kein Log-Volume nötig
