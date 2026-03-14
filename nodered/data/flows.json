@@ -10,9 +10,9 @@
     {
         "id": "8d81abb85d745a43",
         "type": "tab",
-        "label": "MQTT → InfluxDB (Multi-Tenant - 5 Ebenen)",
+        "label": "MQTT → InfluxDB (Multi-Tenant)",
         "disabled": false,
-        "info": "Empfängt MQTT-Nachrichten von allen Tenants und schreibt sie in InfluxDB.\n\nTopic-Format: umweltbox/{tenant-id}/{device-id}/{category}/{measurement}\nBeispiel: umweltbox/de-hh-privat-peddy/raspi4/environment/temperature"
+        "info": "Empfängt MQTT-Nachrichten von allen Tenants und schreibt sie in InfluxDB.\n\nTopic-Format: umweltbox/{tenant-id}/{device-id}/{category}/{measurement}"
     },
     {
         "id": "mqtt_broker",
@@ -45,8 +45,8 @@
         "id": "0d33399a63979fbc",
         "type": "mqtt in",
         "z": "8d81abb85d745a43",
-        "name": "MQTT Subscriber (5 Ebenen)",
-        "topic": "umweltbox/+/+/+/+",
+        "name": "MQTT Subscriber (Full Hierarchy)",
+        "topic": "umweltbox/#",
         "qos": "1",
         "datatype": "auto",
         "broker": "mqtt_broker",
@@ -54,7 +54,7 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 150,
+        "x": 110,
         "y": 100,
         "wires": [
             [
@@ -66,19 +66,18 @@
         "id": "c1dbd37781116964",
         "type": "function",
         "z": "8d81abb85d745a43",
-        "name": "Parse Topic & Create Line Protocol (5 Ebenen)",
-        "func": "// Topic: umweltbox/{tenant-id}/{device-id}/{category}/{measurement}\nconst parts = msg.topic.split('/');\n\nif (parts.length !== 5) {\n    node.error('Invalid topic (expected 5 levels): ' + msg.topic);\n    return null;\n}\n\nconst [namespace, tenant_id, device_id, category, measurement] = parts;\n\n// Validierung\nif (namespace !== 'umweltbox') {\n    node.error('Invalid namespace (expected \"umweltbox\"): ' + namespace);\n    return null;\n}\n\n// Parse Payload (String oder Object)\nlet payloadObj = msg.payload;\nif (typeof msg.payload === 'string') {\n    try {\n        payloadObj = JSON.parse(msg.payload);\n    } catch (e) {\n        // Kein JSON - behandle als einfachen Wert\n        payloadObj = { value: parseFloat(msg.payload) };\n    }\n} else if (typeof msg.payload === 'number') {\n    payloadObj = { value: msg.payload };\n}\n\n// Extrahiere Value\nlet value;\nif (payloadObj.value !== undefined) {\n    value = parseFloat(payloadObj.value);\n} else if (typeof payloadObj === 'number') {\n    value = payloadObj;\n} else {\n    node.error('No value found in payload: ' + JSON.stringify(msg.payload));\n    return null;\n}\n\nif (isNaN(value)) {\n    node.error('Invalid value: ' + JSON.stringify(msg.payload));\n    return null;\n}\n\n// Extrahiere GPS-Koordinaten (wenn vorhanden)\nlet geoFields = '';\nlet geoData = null;\n\nif (payloadObj.geo) {\n    const geo = payloadObj.geo;\n    \n    if (geo.lat !== undefined && geo.lon !== undefined) {\n        const lat = parseFloat(geo.lat);\n        const lon = parseFloat(geo.lon);\n        \n        if (!isNaN(lat) && !isNaN(lon)) {\n            geoFields = `,latitude=${lat},longitude=${lon}`;\n            geoData = { latitude: lat, longitude: lon };\n            \n            // Altitude (optional)\n            if (geo.alt !== undefined) {\n                const alt = parseFloat(geo.alt);\n                if (!isNaN(alt)) {\n                    geoFields += `,altitude=${alt}`;\n                    geoData.altitude = alt;\n                }\n            }\n        }\n    }\n}\n\n// Create InfluxDB Line Protocol\n// Format: measurement,tag1=value1,tag2=value2 field1=value1,field2=value2 timestamp\nconst timestamp = Date.now() * 1000000; // nanoseconds\nconst lineProtocol = `sensors,tenant_id=${tenant_id},device_id=${device_id},category=${category},sensor_type=${measurement} value=${value}${geoFields} ${timestamp}`;\n\n// Prepare message for HTTP request\nmsg.payload = lineProtocol;\nmsg.database = 'mintfv'; // Zentrale Datenbank für alle Tenants\nmsg.url = `http://influxdb:8181/api/v3/write_lp?db=mintfv&precision=ns`;\n\n// Token from environment variable (set in Node-RED settings)\nconst token = env.get('INFLUXDB_TOKEN');\nif (!token) {\n    node.error('INFLUXDB_TOKEN not set!');\n    return null;\n}\n\nmsg.headers = {\n    'Authorization': 'Bearer ' + token,\n    'Content-Type': 'text/plain'\n};\n\n// For debugging\nmsg.meta = {\n    tenant_id: tenant_id,\n    device_id: device_id,\n    category: category,\n    sensor_type: measurement,\n    value: value,\n    geo: geoData,\n    topic: msg.topic,\n    lineProtocol: lineProtocol\n};\n\nreturn msg;",
+        "name": "Parse Topic & Create Line Protocol",
+        "func": "// Topic: umweltbox/{tenant-id}/{device-id}/{category}/{measurement}\nconst parts = msg.topic.split(\"/\");\n\nif (parts.length < 2 || parts[0] !== \"umweltbox\") {\n    return null;\n}\n\nconst tenant_id = parts[1];\nlet device_id = parts[2] || \"unknown\";\nlet category = parts[3] || \"default\";\nlet measurement = parts[4] || \"value\";\n\n// Extrahiere Daten aus Payload\nlet payloadObj = msg.payload;\nif (typeof msg.payload === \"string\") {\n    try {\n        payloadObj = JSON.parse(msg.payload);\n    } catch (e) {\n        payloadObj = { value: parseFloat(msg.payload) };\n    }\n} else if (typeof msg.payload === \"number\") {\n    payloadObj = { value: msg.payload };\n}\n\n// Spezielle Logik für Tasmota SENSOR-Meldungen\nif (payloadObj.AM2301) {\n    const sensor = payloadObj.AM2301;\n    const timestamp = Date.now() * 1000000;\n    const baseTags = `tenant_id=${tenant_id},device_id=${device_id},category=environment`;\n    \n    let lp = [];\n    if (sensor.Temperature !== undefined) lp.push(`sensors,${baseTags},sensor_type=temperature value=${sensor.Temperature} ${timestamp}`);\n    if (sensor.Humidity !== undefined) lp.push(`sensors,${baseTags},sensor_type=humidity value=${sensor.Humidity} ${timestamp}`);\n    if (sensor.DewPoint !== undefined) lp.push(`sensors,${baseTags},sensor_type=dewpoint value=${sensor.DewPoint} ${timestamp}`);\n    \n    if (lp.length > 0) {\n        msg.payload = lp.join(\"\\n\");\n    } else {\n        return null;\n    }\n} else {\n    // Standardwert\n    let value;\n    if (payloadObj.value !== undefined) {\n        value = parseFloat(payloadObj.value);\n    } else if (typeof payloadObj === \"number\") {\n        value = payloadObj;\n    } else {\n        return null;\n    }\n    \n    if (isNaN(value)) return null;\n    \n    // Einheitlicher Sensor-Name\n    if (measurement === \"temp\") measurement = \"temperature\";\n\n    const timestamp = Date.now() * 1000000;\n    msg.payload = `sensors,tenant_id=${tenant_id},device_id=${device_id},category=${category},sensor_type=${measurement} value=${value} ${timestamp}`;\n}\n\nmsg.url = `http://influxdb:8181/api/v3/write_lp?db=mintfv&precision=ns`;\nconst token = env.get(\"INFLUXDB_TOKEN\");\nif (!token) {\n    node.error(\"INFLUXDB_TOKEN not set!\");\n    return null;\n}\n\nmsg.headers = {\n    \"Authorization\": \"Bearer \" + token,\n    \"Content-Type\": \"text/plain\"\n};\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 450,
+        "x": 410,
         "y": 100,
         "wires": [
             [
-                "586cbe6890132369",
-                "e55bc27cedbf566c"
+                "586cbe6890132369"
             ]
         ]
     },
@@ -96,7 +95,7 @@
         "proxy": "",
         "insecureHTTPParser": false,
         "authType": "",
-        "x": 760,
+        "x": 690,
         "y": 100,
         "wires": [
             [
@@ -108,53 +107,17 @@
         "id": "cf91fca9604de803",
         "type": "function",
         "z": "8d81abb85d745a43",
-        "name": "Handle Response",
-        "func": "if (msg.statusCode === 204 || msg.statusCode === 200) {\n    node.status({fill:'green',shape:'dot',text:'OK'});\n    msg.payload = {\n        status: 'success',\n        ...msg.meta\n    };\n} else {\n    node.status({fill:'red',shape:'dot',text:'Error ' + msg.statusCode});\n    node.error('InfluxDB Error: ' + msg.statusCode + ' - ' + msg.payload);\n    msg.payload = {\n        status: 'error',\n        code: msg.statusCode,\n        message: msg.payload\n    };\n}\n\nreturn msg;",
+        "name": "Status",
+        "func": "if (msg.statusCode === 204 || msg.statusCode === 200) {\n    node.status({fill:\"green\",shape:\"dot\",text:\"OK\"});\n} else {\n    node.status({fill:\"red\",shape:\"dot\",text:\"Error \" + msg.statusCode});\n    node.error(\"InfluxDB Error: \" + msg.statusCode + \" - \" + msg.payload);\n}\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1000,
+        "x": 890,
         "y": 100,
         "wires": [
-            [
-                "501113a5b52983ca"
-            ]
+            []
         ]
-    },
-    {
-        "id": "e55bc27cedbf566c",
-        "type": "debug",
-        "z": "8d81abb85d745a43",
-        "name": "Debug: Parsed",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 750,
-        "y": 180,
-        "wires": []
-    },
-    {
-        "id": "501113a5b52983ca",
-        "type": "debug",
-        "z": "8d81abb85d745a43",
-        "name": "Debug: Response",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1210,
-        "y": 100,
-        "wires": []
     }
 ]
