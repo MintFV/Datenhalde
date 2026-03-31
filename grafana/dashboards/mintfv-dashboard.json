@@ -1,0 +1,92 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": null,
+    "title": "mintfv - Umweltbox Übersicht",
+    "tags": ["mintfv","uwbox"],
+    "timezone": "browser",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "type": "timeseries",
+        "title": "Temperature",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "datasource": {"uid": "PF1260F9C1BE25B8C", "type": "influxdb"},
+        "fieldConfig": {"defaults": {"unit": "celsius"}},
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "flux",
+            "rawQuery": true,
+            "query": "from(bucket: \"sensors\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sensors\" and r[\"sensor_type\"] == \"temperature\" and exists r[\"tenant_id\"])\n  |> filter(fn: (r) => r[\"tenant_id\"] == v.tenant)\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "title": "Humidity",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "datasource": {"uid": "PF1260F9C1BE25B8C", "type": "influxdb"},
+        "fieldConfig": {"defaults": {"unit": "percent"}},
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "flux",
+            "rawQuery": true,
+            "query": "from(bucket: \"sensors\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sensors\" and r[\"sensor_type\"] == \"humidity\" and exists r[\"tenant_id\"])\n  |> filter(fn: (r) => r[\"tenant_id\"] == v.tenant)\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")"
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "title": "Dewpoint",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "datasource": {"uid": "PF1260F9C1BE25B8C", "type": "influxdb"},
+        "fieldConfig": {"defaults": {"unit": "celsius"}},
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "flux",
+            "rawQuery": true,
+            "query": "from(bucket: \"sensors\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sensors\" and r[\"sensor_type\"] == \"dewpoint\" and exists r[\"tenant_id\"])\n  |> filter(fn: (r) => r[\"tenant_id\"] == v.tenant)\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")"
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "title": "Latest values (per sensor)",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "datasource": {"uid": "PF1260F9C1BE25B8C", "type": "influxdb"},
+        "targets": [
+          {
+            "refId": "A",
+            "queryType": "flux",
+            "rawQuery": true,
+            "query": "from(bucket:\"sensors\")\n  |> range(start: -15m)\n  |> filter(fn: (r) => exists r[\"tenant_id\"] and r[\"_field\"] == \"value\")\n  |> group(columns: [\"tenant_id\", \"sensor_type\"])\n  |> last()\n  |> keep(columns: [\"_time\", \"tenant_id\", \"sensor_type\", \"_value\"])\n  |> rename(columns: {_value: \"value\", _time: \"time\"})"
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "type": "query",
+          "name": "tenant",
+          "label": "Tenant",
+          "hide": 0,
+          "datasource": {"uid": "PF1260F9C1BE25B8C", "type": "influxdb"},
+          "query": "from(bucket: \"sensors\")\n  |> range(start: -90d)\n  |> keep(columns: [\"tenant_id\"])\n  |> distinct(column: \"tenant_id\")\n  |> sort()\n  |> map(fn: (r) => ({_value: r.tenant_id}))\n  |> keep(columns: [\"_value\"])",
+          "refresh": 1,
+          "regex": "",
+          "includeAll": false,
+          "multi": false,
+          "options": []
+        }
+      ]
+    },
+    "time": {"from": "now-6h", "to": "now"}
+  },
+  "overwrite": false
+}
