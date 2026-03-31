@@ -117,4 +117,5 @@ tmp/
 *.md.[0-9]*
 
 ## Runtime Daten
-selfservice/data/
+selfservice/data/*
+*.db
