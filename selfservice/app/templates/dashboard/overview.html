@@ -2,16 +2,20 @@
 {% block title %}Dashboard – MintFV Selfservice{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Dashboard</h1>
+<div class="page-header">
+    <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+</div>
 
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card p-4">
-            <h5 class="card-title">Willkommen, {{ user.display_name }}!</h5>
-            <p class="text-muted">{{ user.email }}</p>
+<div class="row g-4">
+    <!-- Welcome card -->
+    <div class="col-lg-6">
+        <div class="card p-4 h-100">
+            <h5 class="card-title"><i class="bi bi-person-check text-success"></i> Willkommen, {{ user.display_name }}!
+            </h5>
+            <p class="text-muted mb-3">{{ user.email }}</p>
             {% if user.tenant %}
-            <p><strong>Tenant:</strong> <code>{{ user.tenant.tenant_id }}</code></p>
-            <p><strong>Status:</strong>
+            <p class="mb-1"><strong>Tenant:</strong> <code>{{ user.tenant.tenant_id }}</code></p>
+            <p class="mb-0"><strong>Status:</strong>
                 {% if user.tenant.status == 'active' %}
                 <span class="badge bg-success">Aktiv</span>
                 {% else %}
@@ -20,6 +24,7 @@
             </p>
             {% else %}
             <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle"></i>
                 Du hast noch keinen Tenant. Die Tenant-Verwaltung wird in einer zukünftigen Version verfügbar sein.
             </div>
             {% endif %}
@@ -27,44 +32,47 @@
     </div>
 
     {% if user.tenant %}
-    <div class="col-md-6 mb-4">
-        <div class="card p-4">
-            <h5 class="card-title">MQTT-Accounts</h5>
+    <!-- MQTT Accounts stat -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <i class="bi bi-broadcast" style="font-size: 1.5rem; color: var(--mintfv-green);"></i>
             {% set account_count = user.tenant.mqtt_accounts | length %}
-            <p class="display-6">{{ account_count }}</p>
-            <p class="text-muted">registrierte MQTT-Accounts</p>
-            <a href="{{ url_for('mqtt.overview') }}" class="btn btn-outline-primary btn-sm">Verwalten</a>
+            <div class="stat-number">{{ account_count }}</div>
+            <div class="stat-label">MQTT-Accounts</div>
+            <a href="{{ url_for('mqtt.overview') }}" class="btn btn-outline-primary btn-sm mt-auto">Verwalten</a>
         </div>
     </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card p-4">
-            <h5 class="card-title">Geräte</h5>
+    <!-- Devices stat -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <i class="bi bi-cpu" style="font-size: 1.5rem; color: var(--mintfv-green);"></i>
             {% set device_count = user.tenant.devices | length %}
-            <p class="display-6">{{ device_count }}</p>
-            <p class="text-muted">registrierte Geräte</p>
+            <div class="stat-number">{{ device_count }}</div>
+            <div class="stat-label">Geräte</div>
         </div>
     </div>
     {% endif %}
 
-    <div class="col-md-6 mb-4">
-        <div class="card p-4">
-            <h5 class="card-title">Verbindungsdaten</h5>
-            <table class="table table-sm mb-0">
+    <!-- Connection info -->
+    <div class="col-lg-6">
+        <div class="card p-4 h-100">
+            <h5 class="card-title"><i class="bi bi-plug text-success"></i> Verbindungsdaten</h5>
+            <table class="table table-sm connection-table mb-0">
                 <tr>
-                    <td><strong>MQTT Broker</strong></td>
+                    <td><i class="bi bi-globe2"></i> MQTT Broker</td>
                     <td><code>{{ config.DOMAIN }}</code></td>
                 </tr>
                 <tr>
-                    <td><strong>MQTTS Port</strong></td>
+                    <td><i class="bi bi-shield-lock"></i> MQTTS Port</td>
                     <td><code>8883</code></td>
                 </tr>
                 <tr>
-                    <td><strong>WebSocket Port</strong></td>
+                    <td><i class="bi bi-hdd-network"></i> WebSocket Port</td>
                     <td><code>443</code></td>
                 </tr>
                 <tr>
-                    <td><strong>TLS</strong></td>
+                    <td><i class="bi bi-lock-fill"></i> TLS</td>
                     <td><span class="badge bg-success">Erforderlich</span></td>
                 </tr>
             </table>

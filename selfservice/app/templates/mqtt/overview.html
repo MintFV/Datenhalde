@@ -2,57 +2,65 @@
 {% block title %}MQTT-Accounts – MintFV Selfservice{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>MQTT-Accounts</h1>
+<div class="page-header">
+    <h1><i class="bi bi-broadcast"></i> MQTT-Accounts</h1>
     <a href="{{ url_for('mqtt.create') }}" class="btn btn-primary">
-        + Neuer Account
+        <i class="bi bi-plus-lg"></i> Neuer Account
     </a>
 </div>
 
 <p class="text-muted">
-    Tenant: <code>{{ tenant.tenant_id }}</code> &mdash;
+    <i class="bi bi-building"></i> Tenant: <code>{{ tenant.tenant_id }}</code> &mdash;
     Topic-Namespace: <code>umweltbox/{{ tenant.tenant_id }}/#</code>
 </p>
 
 {% if accounts %}
-<div class="table-responsive">
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>Benutzername</th>
-                <th>Rolle</th>
-                <th>Erstellt</th>
-                <th>Aktionen</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for account in accounts %}
-            <tr>
-                <td><code>{{ account.username }}</code></td>
-                <td>
-                    {% if account.role == 'admin' %}
-                    <span class="badge bg-primary">Admin</span>
-                    {% elif account.role == 'sensor' %}
-                    <span class="badge bg-info">Sensor</span>
-                    {% else %}
-                    <span class="badge bg-secondary">{{ account.role }}</span>
-                    {% endif %}
-                </td>
-                <td>{{ account.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-                <td>
-                    <a href="{{ url_for('mqtt.change_password', account_id=account.id) }}"
-                       class="btn btn-sm btn-outline-secondary">Passwort ändern</a>
-                    <a href="{{ url_for('mqtt.delete', account_id=account.id) }}"
-                       class="btn btn-sm btn-outline-danger">Löschen</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Benutzername</th>
+                    <th>Rolle</th>
+                    <th class="d-none d-md-table-cell">Erstellt</th>
+                    <th>Aktionen</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in accounts %}
+                        <tr>
+                            <td><code>{{ account.username }}</code></td>
+                            <td>
+                                {% if account.role == 'admin' %}
+                                <span class="badge bg-primary">Admin</span>
+                                {% elif account.role == 'sensor' %}
+                                <span class="badge bg-info">Sensor</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ account.role }}</span>
+                                {% endif %}
+                            </td>
+                    <td class="d-none d-md-table-cell">{{ account.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('mqtt.change_password', account_id=account.id) }}"
+                           class="btn btn-sm btn-outline-secondary"><i class="bi bi-key"></i> Passwort</a>
+                        <a href="{{ url_for('mqtt.delete', account_id=account.id) }}"
+                           class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Löschen</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% else %}
-<div class="alert alert-info">
-    Noch keine MQTT-Accounts vorhanden. Erstelle einen neuen Account, um loszulegen.
+<div class="card p-4 text-center">
+    <i class="bi bi-broadcast" style="font-size: 3rem; color: #ccc;"></i>
+    <p class="text-muted mt-3 mb-3">Noch keine MQTT-Accounts vorhanden.</p>
+    <div>
+        <a href="{{ url_for('mqtt.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Ersten Account erstellen
+        </a>
+    </div>
 </div>
 {% endif %}
 {% endblock %}

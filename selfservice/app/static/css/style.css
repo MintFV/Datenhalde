@@ -1,0 +1,337 @@
+/* =============================================
+   MintFV Selfservice – Custom Styles
+   Ergänzt Bootstrap 5.3, green accent theme
+   ============================================= */
+
+:root {
+    --mintfv-green: #2e7d32;
+    --mintfv-green-dark: #1b5e20;
+    --mintfv-green-light: #4caf50;
+    --mintfv-green-bg: #e8f5e9;
+    --mintfv-bg: #f4f6f8;
+    --mintfv-card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    --mintfv-radius: 12px;
+}
+
+/* ---- Global ---- */
+body {
+    background-color: var(--mintfv-bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main.container {
+    flex: 1;
+}
+
+/* ---- Navbar ---- */
+.navbar {
+    background: linear-gradient(135deg, var(--mintfv-green) 0%, var(--mintfv-green-dark) 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.navbar-brand img {
+    height: 36px;
+    width: auto;
+}
+
+.navbar .nav-link {
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.navbar .nav-link:hover {
+    opacity: 0.85;
+}
+
+/* ---- Cards ---- */
+.card {
+    border: none;
+    border-radius: var(--mintfv-radius);
+    box-shadow: var(--mintfv-card-shadow);
+    transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ---- Buttons ---- */
+.btn-primary {
+    background-color: var(--mintfv-green);
+    border-color: var(--mintfv-green);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--mintfv-green-dark);
+    border-color: var(--mintfv-green-dark);
+}
+
+.btn-primary:active {
+    background-color: var(--mintfv-green-dark) !important;
+    border-color: var(--mintfv-green-dark) !important;
+}
+
+.btn-outline-primary {
+    color: var(--mintfv-green);
+    border-color: var(--mintfv-green);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--mintfv-green);
+    border-color: var(--mintfv-green);
+    color: #fff;
+}
+
+/* ---- Auth pages (login, register etc.) ---- */
+.auth-wrapper {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    border-radius: var(--mintfv-radius);
+    box-shadow: var(--mintfv-card-shadow);
+    border: none;
+    background: #fff;
+}
+
+.auth-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.auth-logo img {
+    height: 56px;
+    width: auto;
+}
+
+.auth-logo span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--mintfv-green);
+}
+
+/* ---- Flash messages ---- */
+.flash-container {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 400px;
+}
+
+.flash-container .alert {
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* ---- Dashboard stat cards ---- */
+.stat-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.stat-card .stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--mintfv-green);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card .stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* ---- Tables ---- */
+.table-responsive {
+    border-radius: var(--mintfv-radius);
+    overflow: hidden;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background-color: var(--mintfv-green-bg);
+    border-bottom: 2px solid var(--mintfv-green-light);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--mintfv-green-dark);
+}
+
+/* ---- Code blocks ---- */
+pre.bg-dark {
+    border-radius: 8px;
+}
+
+code {
+    color: var(--mintfv-green-dark);
+    background-color: var(--mintfv-green-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+pre code {
+    color: inherit;
+    background-color: transparent;
+    padding: 0;
+}
+
+/* ---- Footer ---- */
+.site-footer {
+    background-color: #fff;
+    border-top: 1px solid #e9ecef;
+    padding: 1.25rem 0;
+    margin-top: auto;
+}
+
+.site-footer a {
+    color: var(--mintfv-green);
+    text-decoration: none;
+}
+
+.site-footer a:hover {
+    text-decoration: underline;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* ---- Badges ---- */
+.badge.bg-primary {
+    background-color: var(--mintfv-green) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--mintfv-green) !important;
+}
+
+/* ---- Page header ---- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+    margin-bottom: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+/* ---- Connection info ---- */
+.connection-table td {
+    padding: 0.5rem 0.75rem;
+}
+
+.connection-table td:first-child {
+    white-space: nowrap;
+    font-weight: 600;
+    width: 40%;
+}
+
+/* ---- Responsive adjustments ---- */
+
+/* Small devices (phones, < 576px) */
+@media (max-width: 575.98px) {
+    .navbar-brand {
+        font-size: 1.05rem;
+    }
+
+    .navbar-brand img {
+        height: 28px;
+    }
+
+    main.container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .auth-card {
+        margin: 0 0.5rem;
+        box-shadow: none;
+        border: 1px solid #e9ecef;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .stat-card .stat-number {
+        font-size: 2rem;
+    }
+
+    /* Stack table action buttons vertically on mobile */
+    .table td .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+
+    .table td .btn:last-child {
+        margin-bottom: 0;
+    }
+
+    .footer-links {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+}
+
+/* Medium devices (tablets, 576-991px) */
+@media (min-width: 576px) and (max-width: 991.98px) {
+    .auth-card {
+        max-width: 480px;
+    }
+}
+
+/* Large devices (desktops, >= 992px) */
+@media (min-width: 992px) {
+    .navbar-brand img {
+        height: 40px;
+    }
+
+    main.container {
+        max-width: 1100px;
+    }
+}

@@ -8,20 +8,17 @@
           rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YcnS/1ljgCF8PcBnh7HDRZ48mLEd49M9Kcnz"
           crossorigin="anonymous">
-    <style>
-        body { background-color: #f8f9fa; }
-        .navbar-brand { font-weight: 700; }
-        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
-        .btn-primary { background-color: #2e7d32; border-color: #2e7d32; }
-        .btn-primary:hover { background-color: #1b5e20; border-color: #1b5e20; }
-        .flash-container { position: fixed; top: 70px; right: 20px; z-index: 1050; max-width: 400px; }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+          rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #2e7d32;">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('dashboard.overview') }}">
+                <img src="{{ url_for('static', filename='img/logo-small.webp') }}" alt="MintFV Logo"
+                     width="46" height="36">
                 MintFV Selfservice
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -33,20 +30,28 @@
                 {% if current_user.is_authenticated %}
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard.overview') }}">Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('dashboard.overview') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
                     </li>
                     {% if current_user.tenant %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('mqtt.overview') }}">MQTT-Accounts</a>
+                        <a class="nav-link" href="{{ url_for('mqtt.overview') }}">
+                            <i class="bi bi-broadcast"></i> MQTT-Accounts
+                        </a>
                     </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <span class="nav-link text-light">{{ current_user.display_name }}</span>
+                        <span class="nav-link text-light">
+                            <i class="bi bi-person-circle"></i> {{ current_user.display_name }}
+                        </span>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.logout') }}">Abmelden</a>
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="bi bi-box-arrow-right"></i> Abmelden
+                        </a>
                     </li>
                 </ul>
                 {% endif %}
@@ -71,8 +76,14 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="text-center text-muted py-3">
-        <small>MintFV Selfservice &mdash; <a href="https://{{ config.DOMAIN }}" class="text-muted">{{ config.DOMAIN }}</a></small>
+    <footer class="site-footer">
+        <div class="container text-center">
+            <div class="footer-links mb-2">
+                <a href="https://{{ config.DOMAIN }}">{{ config.DOMAIN }}</a>
+                <a href="https://www.mintarium-fv.de/" target="_blank" rel="noopener">Förderverein MINTarium</a>
+            </div>
+            <small class="text-muted">&copy; {{ config.DOMAIN }} &mdash; MintFV Selfservice</small>
+        </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

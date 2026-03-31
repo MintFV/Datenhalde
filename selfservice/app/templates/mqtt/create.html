@@ -3,10 +3,13 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <h2 class="mb-4">Neuen MQTT-Account erstellen</h2>
+    <div class="col-md-6 col-lg-5">
+        <div class="page-header justify-content-center">
+            <h2><i class="bi bi-plus-circle"></i> Neuen MQTT-Account erstellen</h2>
+        </div>
 
         <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
             <strong>Tenant:</strong> <code>{{ tenant.tenant_id }}</code><br>
             Der Account erhält automatisch Zugriff auf den Topic-Namespace
             <code>umweltbox/{{ tenant.tenant_id }}/#</code>
@@ -18,10 +21,14 @@
 
                 <div class="mb-3">
                     {{ form.username.label(class="form-label") }}
-                    {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="z.B. " + tenant.tenant_id + "-sensor01") }}
-                    {% for error in form.username.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-at"></i></span>
+                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="z.B. " +
+                        tenant.tenant_id + "-sensor01") }}
+                        {% for error in form.username.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
                     <div class="form-text">Erlaubt: Buchstaben, Zahlen, Punkt, Unterstrich, Bindestrich</div>
                 </div>
 
@@ -35,11 +42,15 @@
 
                 <div class="mb-3">
                     {{ form.password.label(class="form-label") }}
-                    {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
-                    {% for error in form.password.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                    <div class="form-text">Mindestens 8 Zeichen. Dieses Passwort wird nur einmalig angezeigt!</div>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                        {% for error in form.password.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="form-text"><i class="bi bi-exclamation-triangle"></i> Mindestens 8 Zeichen. Dieses Passwort wird nur
+                        einmalig angezeigt!</div>
                 </div>
 
                 <div class="d-flex gap-2">

@@ -1,0 +1,11 @@
+
+
+
+Backlog Topic uwbox23; FriendlyName uwbox23; DeviceName uwbox23; Hostname uwbox23; SSID1 NWZ-Mint; Password1 Hallenbad23; AP uwbox23; WifiConfig 4; SetOption55 1; SetOption56 1; WebPassword 0; MqttHost mintfv.peddy.net; MqttPort 8883;
+MqttUser de-hh-mintfv-uwbox23;
+MqttPassword uwbox23pw;
+MqttClient uwbox23_%06X;
+Topic de-hh-mintfv-uwbox23;
+FullTopic umweltbox/%topic%/%prefix%/;
+MqttTls 1; SaveData
+
