@@ -115,4 +115,6 @@ tmp/
 *.md.backup
 *.md.bak
 *.md.[0-9]*
-selfservice/data/selfservice.db
+
+## Runtime Daten
+selfservice/data/
