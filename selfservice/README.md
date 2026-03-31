@@ -47,18 +47,25 @@ selfservice/
     ├── config.py               # Konfiguration (Env-Variablen)
     ├── models.py               # SQLAlchemy Models (User, Tenant, MqttAccount, Device)
     ├── extensions.py           # Flask-Erweiterungen (db, login_manager)
-    ├── auth/                   # Authentifizierung (Registrierung, Login, E-Mail-Verifikation)
-    │   └── routes.py
+    ├── static/                 # Statische Dateien
+    │   ├── css/style.css       # Custom CSS (MintFV-Theme, responsive)
+    │   └── img/                # Logo-Dateien
+    │       ├── logo.png        # Logo (Vollgröße, für Auth-Seiten)
+    │       └── logo-small.webp # Logo (Thumbnail, für Navbar)
+    ├── auth/                   # Authentifizierung
+    │   ├── routes.py           # Login, Registrierung, Verifikation, Passwort
+    │   ├── forms.py            # WTForms-Formulare
+    │   └── email.py            # E-Mail-Versand (Verifikation, Reset)
     ├── dashboard/              # Benutzer-Dashboard
     │   └── routes.py
     ├── mqtt/                   # MQTT-Account-Verwaltung
     │   ├── routes.py
     │   └── service.py          # Python-Port von manage_mqtt_users.sh
-    └── templates/              # Jinja2-Templates (Bootstrap 5, deutsch)
-        ├── base.html
-        ├── auth/
-        ├── dashboard/
-        └── mqtt/
+    └── templates/              # Jinja2-Templates (Bootstrap 5 + Icons, deutsch)
+        ├── base.html           # Layout mit Navbar, Logo, Footer
+        ├── auth/               # Login, Register, Passwort, Resend
+        ├── dashboard/          # Dashboard-Übersicht
+        └── mqtt/               # MQTT-Account CRUD
 ```
 
 ---
@@ -73,7 +80,7 @@ selfservice/
 | `DOMAIN` | Domain für E-Mail-Links | `mintfv.example.com` |
 | `SMTP_HOST` | SMTP-Relay Hostname | `smtp-relay` |
 | `SMTP_PORT` | SMTP-Relay Port | `8025` |
-| `SMTP_FROM` | Absender-Adresse | `noreply@{DOMAIN}` |
+| `SMTP_FROM` | Absender-Adresse | `${SMTP_USER_PROVIDER}` (aus .env) |
 | `MOSQUITTO_PASSWD_FILE` | Pfad zur Passwort-Datei | `/mosquitto/config/mosquitto.passwd` |
 | `MOSQUITTO_ACL_FILE` | Pfad zur ACL-Datei | `/mosquitto/config/mosquitto.acl` |
 | `MOSQUITTO_RELOAD_DIR` | Verzeichnis für Reload-Trigger | `/app/reload` |
@@ -93,7 +100,9 @@ Den generierten Wert in `.env` als `SELFSERVICE_SECRET_KEY` setzen.
 ### Benutzer-Authentifizierung
 - **Registrierung** (`/selfservice/registrieren`) — E-Mail + Passwort
 - **E-Mail-Verifikation** — Token per E-Mail (gültig 24h)
+- **Bestätigung erneut senden** (`/selfservice/verifizierung-erneut-senden`) — Falls E-Mail nicht ankam
 - **Login** (`/selfservice/anmelden`)
+- **Passwort ändern** (`/selfservice/passwort-aendern`) — Für eingeloggte Benutzer (über Navbar-Dropdown)
 - **Passwort vergessen** (`/selfservice/passwort-vergessen`) — Reset-Link per E-Mail (gültig 1h)
 
 ### MQTT-Account-Verwaltung
@@ -106,7 +115,22 @@ Den generierten Wert in `.env` als `SELFSERVICE_SECRET_KEY` setzen.
 - Registrierung: 3/Stunde
 - Login: 5/Minute
 - Passwort-Reset: 3/Stunde
+- Bestätigung erneut senden: 3/Stunde
+- Passwort ändern: 5/Stunde
 - nginx: 5 req/s pro IP (Zone `selfservice_general`)
+
+---
+
+## 🎨 Frontend
+
+- **Bootstrap 5.3.3** (CDN) + **Bootstrap Icons 1.11.3** (CDN)
+- **Custom CSS** (`app/static/css/style.css`) mit MintFV-Farbschema (Grün #2e7d32)
+- **Logo** in Navbar (WebP-Thumbnail) und Auth-Seiten (PNG)
+- **Responsive Design** mit drei Breakpoints:
+  - `< 576px` — Mobile (kompakte Navbar, gestackte Buttons)
+  - `576–991px` — Tablet
+  - `>= 992px` — Desktop (max-width 1100px)
+- **Navbar-Dropdown** für Benutzerprofil (Passwort ändern, Abmelden)
 
 ---
 
@@ -143,6 +167,9 @@ docker compose logs -f mosquitto-reload
 
 # Health-Check
 curl -fsS https://mintfv.peddy.net/selfservice/health
+
+# Benutzer auflisten
+./list_selfservice_users.sh
 ```
 
 ---

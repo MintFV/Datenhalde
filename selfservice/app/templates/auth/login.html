@@ -41,8 +41,12 @@
                 <a href="{{ url_for('auth.forgot_password') }}">Passwort vergessen?</a>
             </div>
             <hr>
-            <div class="text-center">
+            <div class="text-center mb-2">
                 Noch kein Konto? <a href="{{ url_for('auth.register') }}">Registrieren</a>
+            </div>
+            <div class="text-center">
+                <small><a href="{{ url_for('auth.resend_verification') }}" class="text-muted">Bestätigungs-E-Mail erneut
+                        senden</a></small>
             </div>
             </form>
     </div>

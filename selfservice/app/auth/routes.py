@@ -13,7 +13,14 @@ from .email import (
     send_reset_email,
     send_verification_email,
 )
-from .forms import ForgotPasswordForm, LoginForm, RegistrationForm, ResetPasswordForm
+from .forms import (
+    ChangePasswordForm,
+    ForgotPasswordForm,
+    LoginForm,
+    RegistrationForm,
+    ResendVerificationForm,
+    ResetPasswordForm,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -170,3 +177,47 @@ def reset_password(token):
         return redirect(url_for("auth.login"))
 
     return render_template("auth/reset_password.html", form=form)
+
+
+@bp.route("/verifizierung-erneut-senden", methods=["GET", "POST"])
+@limiter.limit("3/hour")
+def resend_verification():
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard.overview"))
+
+    form = ResendVerificationForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data.lower().strip()).first()
+        # Immer gleiche Nachricht (Enumeration verhindern)
+        if user and not user.email_verified:
+            try:
+                send_verification_email(user)
+            except Exception:
+                logger.exception(
+                    "Verifikations-E-Mail konnte nicht erneut gesendet werden"
+                )
+        flash(
+            "Falls ein Konto mit dieser E-Mail existiert und noch nicht bestätigt wurde, "
+            "wurde eine neue Bestätigungs-E-Mail gesendet.",
+            "info",
+        )
+        return redirect(url_for("auth.login"))
+
+    return render_template("auth/resend_verification.html", form=form)
+
+
+@bp.route("/passwort-aendern", methods=["GET", "POST"])
+@login_required
+@limiter.limit("5/hour")
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if not current_user.check_password(form.current_password.data):
+            flash("Aktuelles Passwort ist falsch.", "danger")
+            return render_template("auth/change_password.html", form=form)
+        current_user.set_password(form.new_password.data)
+        db.session.commit()
+        flash("Passwort erfolgreich geändert.", "success")
+        return redirect(url_for("dashboard.overview"))
+
+    return render_template("auth/change_password.html", form=form)

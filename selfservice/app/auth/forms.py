@@ -83,3 +83,36 @@ class ResetPasswordForm(FlaskForm):
         ],
     )
     submit = SubmitField("Passwort setzen")
+
+
+class ResendVerificationForm(FlaskForm):
+    email = StringField(
+        "E-Mail-Adresse",
+        validators=[
+            DataRequired("E-Mail ist erforderlich."),
+            Email("Bitte eine gültige E-Mail-Adresse eingeben."),
+        ],
+    )
+    submit = SubmitField("Bestätigungs-E-Mail erneut senden")
+
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField(
+        "Aktuelles Passwort",
+        validators=[DataRequired("Aktuelles Passwort ist erforderlich.")],
+    )
+    new_password = PasswordField(
+        "Neues Passwort",
+        validators=[
+            DataRequired("Neues Passwort ist erforderlich."),
+            Length(min=8, message="Passwort muss mindestens 8 Zeichen lang sein."),
+        ],
+    )
+    new_password_confirm = PasswordField(
+        "Neues Passwort bestätigen",
+        validators=[
+            DataRequired("Bitte neues Passwort bestätigen."),
+            EqualTo("new_password", message="Passwörter stimmen nicht überein."),
+        ],
+    )
+    submit = SubmitField("Passwort ändern")
