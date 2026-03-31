@@ -550,7 +550,7 @@ services:
       - SELFSERVICE_SECRET_KEY=${SELFSERVICE_SECRET_KEY}
       - SMTP_HOST=smtp-relay
       - SMTP_PORT=8025
-      - SMTP_FROM=noreply@${DOMAIN:-mintfv.example.com}
+      - SMTP_FROM=${SMTP_USER_PROVIDER:-noreply@${DOMAIN:-mintfv.example.com}}
       - MOSQUITTO_PASSWD_FILE=/mosquitto/config/mosquitto.passwd
       - MOSQUITTO_ACL_FILE=/mosquitto/config/mosquitto.acl
       - MOSQUITTO_RELOAD_DIR=/app/reload
