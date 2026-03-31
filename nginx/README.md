@@ -13,10 +13,11 @@ HTTP/HTTPS Reverse Proxy & MQTT TLS Termination.
 ### HTTP/HTTPS (Ports 80/443)
 ```
 Client → nginx:443 (HTTPS) → Services
-  ├─ /grafana/    → grafana:3000
-  ├─ /nodered/    → nodered:1880
-  ├─ /influxdb/   → influxdb:8181
-  └─ /mqtt        → mosquitto:9001 (WebSocket)
+  ├─ /grafana/       → grafana:3000
+  ├─ /nodered/       → nodered:1880
+  ├─ /influxdb/      → influxdb:8181
+  ├─ /selfservice/   → selfservice:5000
+  └─ /mqtt           → mosquitto:9001 (WebSocket)
 
 Client → nginx:80 (HTTP) → Redirect 301 → HTTPS
 ```
@@ -97,6 +98,9 @@ limit_req_zone $binary_remote_addr zone=nodered_general:10m rate=10r/s;
 
 # MQTT WebSocket: 5 req/s
 limit_req_zone $binary_remote_addr zone=mqtt_general:10m rate=5r/s;
+
+# Selfservice: 5 req/s
+limit_req_zone $binary_remote_addr zone=selfservice_general:10m rate=5r/s;
 
 # Connection limit: 50 simultaneous connections per IP
 limit_conn_zone $binary_remote_addr zone=conn_limit:10m;
@@ -264,7 +268,7 @@ docker compose restart nginx
 ### Problem: 502 Bad Gateway
 ```bash
 # Backend-Service läuft?
-docker compose ps grafana nodered influxdb mosquitto
+docker compose ps grafana nodered influxdb mosquitto selfservice
 
 # Nginx kann Backend erreichen?
 docker compose exec nginx ping -c 1 grafana

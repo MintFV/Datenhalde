@@ -36,6 +36,7 @@ This document describes what data needs to be backed up and how to do it using r
    - `nodered/data/` - Node-RED flows and configurations
    - `grafana/data/` - Dashboards and settings
    - `mosquitto/data/` - MQTT persistence
+   - `selfservice/data/` - Selfservice-Portal Datenbank (Benutzer, MQTT-Accounts)
 
 ## Backup Schedule
 
@@ -144,6 +145,14 @@ backup_databases() {
             -e "ssh -i $SSH_KEY" \
             ./influxdb/data/ \
             $BACKUP_SERVER:$BACKUP_PATH/influxdb-data/
+    fi
+    
+    # Selfservice (SQLite DB + MQTT Credentials)
+    if [ -d "./selfservice/data" ]; then
+        rsync -avz --delete \
+            -e "ssh -i $SSH_KEY" \
+            ./selfservice/data/ \
+            $BACKUP_SERVER:$BACKUP_PATH/selfservice-data/
     fi
     
     log "Database backup complete"

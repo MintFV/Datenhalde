@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 100
+extend-ignore =
+    # E203: whitespace before ':' (Black/ruff-kompatibel)
+    E203,
+    # W503: line break before binary operator (veraltet, PEP8-konform)
+    W503,
+exclude =
+    __pycache__,
+    .mypy_cache,
+    .git,

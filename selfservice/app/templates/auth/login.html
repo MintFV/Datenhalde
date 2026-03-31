@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Anmelden – MintFV Selfservice{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card p-4 mt-5">
+            <h2 class="text-center mb-4">Anmelden</h2>
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="mb-3">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="name@beispiel.de") }}
+                    {% for error in form.email.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                    {% for error in form.password.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-grid mb-3">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+
+                <div class="text-center">
+                    <a href="{{ url_for('auth.forgot_password') }}">Passwort vergessen?</a>
+                </div>
+                <hr>
+                <div class="text-center">
+                    Noch kein Konto? <a href="{{ url_for('auth.register') }}">Registrieren</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

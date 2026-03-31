@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}MQTT-Account erstellen – MintFV Selfservice{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mb-4">Neuen MQTT-Account erstellen</h2>
+
+        <div class="alert alert-info">
+            <strong>Tenant:</strong> <code>{{ tenant.tenant_id }}</code><br>
+            Der Account erhält automatisch Zugriff auf den Topic-Namespace
+            <code>umweltbox/{{ tenant.tenant_id }}/#</code>
+        </div>
+
+        <div class="card p-4">
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="mb-3">
+                    {{ form.username.label(class="form-label") }}
+                    {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="z.B. " + tenant.tenant_id + "-sensor01") }}
+                    {% for error in form.username.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                    <div class="form-text">Erlaubt: Buchstaben, Zahlen, Punkt, Unterstrich, Bindestrich</div>
+                </div>
+
+                <div class="mb-3">
+                    {{ form.role.label(class="form-label") }}
+                    {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else "")) }}
+                    {% for error in form.role.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                    {% for error in form.password.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                    <div class="form-text">Mindestens 8 Zeichen. Dieses Passwort wird nur einmalig angezeigt!</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('mqtt.overview') }}" class="btn btn-outline-secondary">Abbrechen</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

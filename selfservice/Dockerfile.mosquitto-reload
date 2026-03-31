@@ -1,0 +1,15 @@
+FROM alpine:latest
+
+RUN apk add --no-cache inotify-tools procps
+
+RUN addgroup -g 2100 ssl-certs && \
+    adduser -u 2003 -G ssl-certs -D -s /bin/sh mosquitto-reload
+
+RUN mkdir -p /watch && chown 2003:2100 /watch && chmod 770 /watch
+
+COPY mosquitto-reload.sh /usr/local/bin/mosquitto-reload.sh
+RUN chmod +x /usr/local/bin/mosquitto-reload.sh
+
+USER 2003:2100
+
+ENTRYPOINT ["/usr/local/bin/mosquitto-reload.sh"]

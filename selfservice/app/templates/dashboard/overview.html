@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – MintFV Selfservice{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Dashboard</h1>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card p-4">
+            <h5 class="card-title">Willkommen, {{ user.display_name }}!</h5>
+            <p class="text-muted">{{ user.email }}</p>
+            {% if user.tenant %}
+            <p><strong>Tenant:</strong> <code>{{ user.tenant.tenant_id }}</code></p>
+            <p><strong>Status:</strong>
+                {% if user.tenant.status == 'active' %}
+                <span class="badge bg-success">Aktiv</span>
+                {% else %}
+                <span class="badge bg-warning">{{ user.tenant.status }}</span>
+                {% endif %}
+            </p>
+            {% else %}
+            <div class="alert alert-info mb-0">
+                Du hast noch keinen Tenant. Die Tenant-Verwaltung wird in einer zukünftigen Version verfügbar sein.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if user.tenant %}
+    <div class="col-md-6 mb-4">
+        <div class="card p-4">
+            <h5 class="card-title">MQTT-Accounts</h5>
+            {% set account_count = user.tenant.mqtt_accounts | length %}
+            <p class="display-6">{{ account_count }}</p>
+            <p class="text-muted">registrierte MQTT-Accounts</p>
+            <a href="{{ url_for('mqtt.overview') }}" class="btn btn-outline-primary btn-sm">Verwalten</a>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card p-4">
+            <h5 class="card-title">Geräte</h5>
+            {% set device_count = user.tenant.devices | length %}
+            <p class="display-6">{{ device_count }}</p>
+            <p class="text-muted">registrierte Geräte</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="col-md-6 mb-4">
+        <div class="card p-4">
+            <h5 class="card-title">Verbindungsdaten</h5>
+            <table class="table table-sm mb-0">
+                <tr>
+                    <td><strong>MQTT Broker</strong></td>
+                    <td><code>{{ config.DOMAIN }}</code></td>
+                </tr>
+                <tr>
+                    <td><strong>MQTTS Port</strong></td>
+                    <td><code>8883</code></td>
+                </tr>
+                <tr>
+                    <td><strong>WebSocket Port</strong></td>
+                    <td><code>443</code></td>
+                </tr>
+                <tr>
+                    <td><strong>TLS</strong></td>
+                    <td><span class="badge bg-success">Erforderlich</span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -87,7 +87,27 @@ mosquitto_pub -h mintfv.peddy.net -p 1883 \
 
 ---
 
-## 📚 Weitere Informationen
+## � Selfservice-Integration
+
+MQTT-Accounts können auch über das **Selfservice-Portal** (`/selfservice/`) verwaltet werden. Benutzer registrieren sich selbst und können eigene MQTT-Accounts erstellen, Passwörter ändern und Accounts löschen.
+
+### Mosquitto-Reload Sidecar
+
+Der Container `mosquitto-reload` (UID 2003:2100) überwacht ein Shared Volume und sendet `SIGHUP` an den Mosquitto-Broker, wenn das Selfservice-Portal Änderungen an `mosquitto.passwd` oder `mosquitto.acl` vornimmt.
+
+```bash
+# Sidecar-Status prüfen
+docker compose logs mosquitto-reload --tail=10
+
+# Manuellen Reload auslösen
+docker compose exec selfservice sh -c 'echo "manual" > /app/reload/reload.trigger'
+```
+
+Weitere Details: [selfservice/README.md](../selfservice/README.md)
+
+---
+
+## �📚 Weitere Informationen
 
 - **Setup & Credentials:** [mosquitto/README.md](mosquitto/README.md)
 - **ACL Troubleshooting:** [mosquitto/README.md#-troubleshooting](mosquitto/README.md#-troubleshooting)

@@ -522,6 +522,112 @@ services:
 
 
   # =============================================================================
+  # Selfservice-Portal (Flask)
+  # =============================================================================
+
+  selfservice:
+    build:
+      context: ./selfservice
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    user: "2007:2100"
+    group_add:
+      - "2100"
+
+    stop_grace_period: 10s
+
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      smtp-relay:
+        condition: service_healthy
+
+    expose:
+      - "5000"
+
+    environment:
+      - DOMAIN=${DOMAIN:-mintfv.example.com}
+      - SELFSERVICE_SECRET_KEY=${SELFSERVICE_SECRET_KEY}
+      - SMTP_HOST=smtp-relay
+      - SMTP_PORT=8025
+      - SMTP_FROM=noreply@${DOMAIN:-mintfv.example.com}
+      - MOSQUITTO_PASSWD_FILE=/mosquitto/config/mosquitto.passwd
+      - MOSQUITTO_ACL_FILE=/mosquitto/config/mosquitto.acl
+      - MOSQUITTO_RELOAD_DIR=/app/reload
+      - TZ=${TZ:-Europe/Berlin}
+
+    volumes:
+      - ./selfservice/data:/app/data:rw
+      - ./mosquitto/config:/mosquitto/config:rw
+      - selfservice-reload:/app/reload:rw
+
+    <<: *default-security
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    read_only: true
+    tmpfs:
+      - /tmp:uid=2007,gid=2100,mode=1700
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS4", "--max-time", "5", "http://localhost:5000/selfservice/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+          pids: 100
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+    logging: *default-logging
+    networks:
+      - mintfv-network
+
+  # Mosquitto Reload Sidecar: Überwacht Signal-Datei und sendet SIGHUP
+  mosquitto-reload:
+    build:
+      context: ./selfservice
+      dockerfile: Dockerfile.mosquitto-reload
+    restart: unless-stopped
+    user: "2003:2100"
+    pid: "service:mosquitto"
+
+    volumes:
+      - selfservice-reload:/watch:rw
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - KILL
+    privileged: false
+    ipc: private
+
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 32M
+          pids: 20
+
+    logging: *default-logging
+    networks:
+      - mintfv-network
+
+  # =============================================================================
   # Decap CMS (itsmejoeeey/docker-decap-cms-standalone)
   # - https://github.com/itsmejoeeey/docker-decap-cms-standalone/
   # =============================================================================
@@ -551,6 +657,11 @@ services:
       retries: 3
       start_period: 10s
 
+
+# Volumes
+volumes:
+  selfservice-reload:
+    driver: local
 
 # Networks
 networks:

@@ -42,7 +42,7 @@
 ## Current Project State
 
 ### Last Updated
-Project state as of: **December 27, 2025**
+Project state as of: **March 31, 2026**
 
 ### Active Domain
 - Domain: mintfv.peddy.net
@@ -68,6 +68,17 @@ Project state as of: **December 27, 2025**
   - **InfluxDB Integration**: Via node-red-contrib-influxdb
 - mosquitto: ⏳ Planned (not yet implemented)
 
+### Selfservice-Portal & Mosquitto-Reload
+- selfservice: ✅ Running (Flask, accessible at /selfservice/)
+  - **Framework**: Flask 3.1 + SQLAlchemy + gunicorn
+  - **Port**: 5000 (internal)
+  - **Features**: Benutzer-Registrierung, E-Mail-Verifikation, MQTT-Account-Verwaltung
+  - **Datenbank**: SQLite in `./selfservice/data/selfservice.db`
+- mosquitto-reload: ✅ Running (Sidecar für Mosquitto-Reload via SIGHUP)
+  - **Image**: Eigenes Dockerfile (alpine + inotify-tools)
+  - **Shared PID-Namespace**: `pid: "service:mosquitto"`
+  - **Trigger**: Shared Volume `selfservice-reload`
+
 ### Service UIDs/GIDs
 - nginx: 2001:2100
 - certbot: 2002:2100
@@ -75,6 +86,8 @@ Project state as of: **December 27, 2025**
 - nodered: 2004:2100 ✅
 - influxdb: 2005:2100 ✅
 - grafana: 2006:2100 ✅
+- selfservice: 2007:2100 ✅
+- mosquitto-reload: 2003:2100 ✅ (shared with mosquitto)
 - Shared GID: 2100 (ssl-certs)
 
 ## Workflow Commands
@@ -99,10 +112,15 @@ rm -rf ./certbot/conf/* ./certbot/logs/* ./nginx/logs/*
 ```
 
 ## Documentation Structure
-- README.md - Quick start, main documentation, and Docker security best practices
 - certbot/SSL-SETUP.md - SSL/HTTPS setup process
 - BACKUP.md - Backup strategy and locations
 - config.yaml - Main configuration (see config-example.yaml)
+- selfservice/README.md - Selfservice-Portal Dokumentation
+- nginx/README.md - Reverse Proxy & Rate Limiting
+- mosquitto/README.md - MQTT Broker & ACL
+- grafana/README.md - Grafana Dashboards
+- influxdb/README.md - InfluxDB 3 Core
+- nodered/README.md - Node-RED Flows
 
 ## Common Pitfalls
 1. Don't create scripts on host - use container entrypoints/commands

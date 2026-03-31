@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}MQTT-Accounts – MintFV Selfservice{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>MQTT-Accounts</h1>
+    <a href="{{ url_for('mqtt.create') }}" class="btn btn-primary">
+        + Neuer Account
+    </a>
+</div>
+
+<p class="text-muted">
+    Tenant: <code>{{ tenant.tenant_id }}</code> &mdash;
+    Topic-Namespace: <code>umweltbox/{{ tenant.tenant_id }}/#</code>
+</p>
+
+{% if accounts %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Benutzername</th>
+                <th>Rolle</th>
+                <th>Erstellt</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for account in accounts %}
+            <tr>
+                <td><code>{{ account.username }}</code></td>
+                <td>
+                    {% if account.role == 'admin' %}
+                    <span class="badge bg-primary">Admin</span>
+                    {% elif account.role == 'sensor' %}
+                    <span class="badge bg-info">Sensor</span>
+                    {% else %}
+                    <span class="badge bg-secondary">{{ account.role }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ account.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td>
+                    <a href="{{ url_for('mqtt.change_password', account_id=account.id) }}"
+                       class="btn btn-sm btn-outline-secondary">Passwort ändern</a>
+                    <a href="{{ url_for('mqtt.delete', account_id=account.id) }}"
+                       class="btn btn-sm btn-outline-danger">Löschen</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+    Noch keine MQTT-Accounts vorhanden. Erstelle einen neuen Account, um loszulegen.
+</div>
+{% endif %}
+{% endblock %}
