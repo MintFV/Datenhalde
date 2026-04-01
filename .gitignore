@@ -1,4 +1,3 @@
-
 .vscode
 
 ## always keep these files and folders
@@ -119,3 +118,6 @@ tmp/
 ## Runtime Daten
 selfservice/data/*
 *.db
+
+## playwright
+tests/report/
