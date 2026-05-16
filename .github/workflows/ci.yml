@@ -34,6 +34,15 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+      - name: Create missing env files for compose
+        run: |
+          # Some services expect local env files (not checked into repo).
+          # Create minimal placeholders so `docker compose up` doesn't fail.
+          if [ ! -f .env.smtp.password ]; then
+            echo "# SMTP password for CI (placeholder)" > .env.smtp.password
+            echo "SMTP_PASSWORD=" >> .env.smtp.password
+          fi
+
       - name: Start docker-compose services
         run: |
           docker compose up -d --build
