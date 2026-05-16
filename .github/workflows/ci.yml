@@ -25,7 +25,8 @@ jobs:
           ruff check selfservice
       - name: Mypy
         run: |
-          mypy selfservice
+          # Use the selfservice pyproject.toml so mypy picks up ignore_missing_imports
+          mypy --config-file selfservice/pyproject.toml selfservice
 
   node-smoke:
     name: Playwright smoke tests
