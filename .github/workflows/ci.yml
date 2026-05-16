@@ -40,7 +40,8 @@ jobs:
           node-version: '18'
       - name: Install dependencies
         working-directory: tests
-        run: npm ci
+        # Use `npm install` because there is no package-lock.json in the tests/ dir
+        run: npm install
       - name: Install Playwright browsers
         working-directory: tests
         run: npx playwright install --with-deps
