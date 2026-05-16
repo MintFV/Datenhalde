@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    expose:
+      - "8080"
+      - "8443"
+    command: /bin/sh -c "mkdir -p /usr/share/nginx/html && echo '<html><body>CI nginx</body></html>' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8080/ || exit 1"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+    networks:
+      - mintfv-ci-network
+
+networks:
+  mintfv-ci-network:
+    name: mintfv_ci_network
+    driver: bridge
