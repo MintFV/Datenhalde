@@ -4,8 +4,8 @@ import sys
 # Ensure the `selfservice` package is importable when tests run from repo root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app import create_app
 import app.config as appcfg
+from app import create_app
 
 
 def test_health_endpoint():
