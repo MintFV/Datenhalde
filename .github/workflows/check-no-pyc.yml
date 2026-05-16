@@ -1,0 +1,27 @@
+name: Prevent Python cache artifacts
+
+on:
+  pull_request:
+  push:
+    branches: [ '**' ]
+
+jobs:
+  no-python-cache:
+    name: No Python cache artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for tracked Python cache files
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Checking repository for tracked Python cache files..."
+          matches=$(git ls-files | grep -E '(^|/)__pycache__/|\.py[cod]$|\.pytest_cache/' || true)
+          if [ -n "${matches}" ]; then
+            echo "ERROR: Found tracked Python cache artifacts:"
+            echo "${matches}"
+            echo "\nPlease remove these files and ensure .gitignore contains the proper patterns (e.g. __pycache__/ and *.pyc)."
+            exit 1
+          fi
+          echo "OK: no tracked Python cache files found."
