@@ -34,17 +34,13 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-      - name: Install dependencies
-        working-directory: tests
-        # Use `npm install` because there is no package-lock.json in the tests/ dir
-        run: npm install
-      - name: Install Playwright browsers
-        working-directory: tests
-        run: npx playwright install --with-deps
-      - name: Run smoke test
-        working-directory: tests
-        run: npx playwright test specs/smoke.spec.ts --project=chromium --reporter=github --timeout=60000
+      - name: Start docker-compose services
+        run: |
+          docker compose up -d --build
+      - name: Wait for services
+        run: |
+          docker compose ps
+      - name: Run Playwright smoke tests in Docker network
+        run: |
+          chmod +x ./tests/run-tests.sh
+          ./tests/run-tests.sh smoke
