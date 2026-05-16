@@ -121,8 +121,9 @@ selfservice/data/*
 
 ## playwright
 tests/report/
-selfservice/app/__pycache__/__init__.cpython-312.pyc
-selfservice/app/__pycache__/config.cpython-312.pyc
-selfservice/app/__pycache__/extensions.cpython-312.pyc
-selfservice/app/__pycache__/models.cpython-312.pyc
-.gitignore
+ 
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyc
+.pytest_cache/
