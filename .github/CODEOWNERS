@@ -1,0 +1,23 @@
+# CODEOWNERS
+#
+# Please replace the placeholder owners below with real GitHub usernames or
+# teams for your organization (example: `@mintfv/engineering` or `@username`).
+# When configured, GitHub will request reviews from these owners automatically
+# for changes that affect the matching paths.
+#
+# Example patterns (edit as needed):
+
+# Default owner for everything — REPLACE me
+* @REPLACE_WITH_GITHUB_USERNAME
+
+# Owners for repository configuration and CI
+/.github/ @REPLACE_WITH_GITHUB_USERNAME
+
+# Owners for infrastructure / nginx
+/nginx/ @REPLACE_WITH_GITHUB_USERNAME
+
+# Owners for the selfservice Flask app
+/selfservice/ @REPLACE_WITH_GITHUB_USERNAME
+
+# Owners for tests and Playwright specs
+/tests/ @REPLACE_WITH_GITHUB_USERNAME
