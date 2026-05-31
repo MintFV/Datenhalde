@@ -4,6 +4,7 @@ ruff==0.15.*
 pytest==9.*
 pytest-flask==1.3.*
 types-passlib
+types-WTForms
 flake8==7.*
 flake8-bugbear
 pylint==3.*

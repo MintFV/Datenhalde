@@ -4,7 +4,7 @@ from .config import Config
 from .extensions import csrf, db, limiter, login_manager
 
 
-def create_app():
+def create_app() -> Flask:
     app = Flask(__name__, static_url_path="/selfservice/static")
     app.config.from_object(Config)
 
@@ -15,14 +15,21 @@ def create_app():
     limiter.init_app(app)
 
     login_manager.login_view = "auth.login"
-    login_manager.login_message = "Bitte melde dich an, um auf diese Seite zuzugreifen."
+    login_manager.login_message = (
+        "Bitte melde dich an, um auf diese Seite zuzugreifen."
+    )
     login_manager.login_message_category = "warning"
 
     from .models import User
 
     @login_manager.user_loader
-    def load_user(user_id):
-        return db.session.get(User, int(user_id))
+    def load_user(user_id: str) -> User | None:
+        try:
+            parsed_user_id = int(user_id)
+        except (TypeError, ValueError):
+            return None
+
+        return db.session.get(User, parsed_user_id)
 
     # Blueprints registrieren
     from .auth import bp as auth_bp

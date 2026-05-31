@@ -1,5 +1,5 @@
 # ── Stage 1: Lint & Test ─────────────────────────────────────────────
-FROM python:3.12.13-slim AS lint
+FROM python:3.12-alpine AS lint
 
 WORKDIR /app
 
@@ -17,16 +17,15 @@ RUN ruff check app/ && \
     bandit -r app/ -ll -q
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────
-FROM python:3.12.13-slim AS runtime
+FROM python:3.12-alpine AS runtime
 
 # Sicherheit: Keine Root-Rechte im Container
-RUN groupadd -g 2100 ssl-certs && \
-    useradd -u 2007 -g 2100 -m -s /bin/bash selfservice
+RUN addgroup -g 2100 ssl-certs && \
+    adduser -u 2007 -G ssl-certs -D -s /bin/sh selfservice
 
 # curl für Healthcheck
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
+# hadolint ignore=DL3018
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
