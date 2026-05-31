@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from flask_wtf import FlaskForm  # type: ignore[import-untyped]
+from flask_wtf import FlaskForm
 from wtforms import PasswordField, StringField, SubmitField
 from wtforms.validators import (
     DataRequired,

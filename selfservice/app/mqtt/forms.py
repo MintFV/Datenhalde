@@ -1,4 +1,4 @@
-from flask_wtf import FlaskForm  # type: ignore[import-untyped]
+from flask_wtf import FlaskForm
 from wtforms import PasswordField, SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired, Length, Regexp
 

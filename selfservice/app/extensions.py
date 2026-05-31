@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Protocol, cast
+from typing import Protocol, TypeAlias, cast
 
 from flask import Flask
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_login import LoginManager  # type: ignore[import-untyped]
+from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf.csrf import CSRFProtect  # type: ignore[import-untyped]
+from flask_wtf.csrf import CSRFProtect
 
-type UserLoaderCallback = Callable[[str], object | None]
+UserLoaderCallback: TypeAlias = Callable[[str], object | None]  # noqa: UP040
 
 
 class LoginManagerProtocol(Protocol):
