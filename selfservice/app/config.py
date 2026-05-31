@@ -9,7 +9,16 @@ class Config:
     # Domain
     DOMAIN = os.environ.get("DOMAIN", "localhost")
 
-    # SMTP (interner smtp-relay Container)
+    # E-Mail (Flask-Mailman, interner smtp-relay Container)
+    MAIL_SERVER = os.environ.get("SMTP_HOST", "smtp-relay")
+    MAIL_PORT = int(os.environ.get("SMTP_PORT", "8025"))
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = False
+    MAIL_DEFAULT_SENDER = os.environ.get(
+        "SMTP_FROM", f"noreply@{os.environ.get('DOMAIN', 'localhost')}"
+    )
+
+    # Legacy-Zugriff (für Abwärtskompatibilität)
     SMTP_HOST = os.environ.get("SMTP_HOST", "smtp-relay")
     SMTP_PORT = int(os.environ.get("SMTP_PORT", "8025"))
     SMTP_FROM = os.environ.get("SMTP_FROM", f"noreply@{os.environ.get('DOMAIN', 'localhost')}")

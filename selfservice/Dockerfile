@@ -23,9 +23,9 @@ FROM python:3.12-alpine AS runtime
 RUN addgroup -g 2100 ssl-certs && \
     adduser -u 2007 -G ssl-certs -D -s /bin/sh selfservice
 
-# curl für Healthcheck
+# curl für Healthcheck, sqlite für Migration-Erkennung
 # hadolint ignore=DL3018
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl sqlite
 
 WORKDIR /app
 
@@ -33,6 +33,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ app/
+COPY migrations/ migrations/
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 

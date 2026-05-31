@@ -4,7 +4,7 @@ Self-Service-Webportal für MintFV — Benutzer registrieren sich, verifizieren 
 
 **Container:** mintfv-selfservice (UID 2007:2100)  
 **Image:** python:3.12-slim (eigenes Dockerfile)  
-**Framework:** Flask 3.1 + SQLAlchemy + gunicorn  
+**Framework:** Flask 3.1 + SQLAlchemy + Flask-Migrate + Flask-Mailman + gunicorn  
 **URL:** https://mintfv.peddy.net/selfservice/
 
 ---
@@ -37,11 +37,17 @@ Separater Container (`mosquitto-reload`, UID 2003:2100), der per Shared PID-Name
 selfservice/
 ├── Dockerfile                  # Selfservice-Container (python:3.12-slim)
 ├── Dockerfile.mosquitto-reload # Sidecar-Container (alpine)
-├── entrypoint.sh               # gunicorn Startup
+├── entrypoint.sh               # gunicorn Startup (inkl. DB-Migration)
 ├── mosquitto-reload.sh         # Sidecar Watch-Script
 ├── requirements.txt            # Python-Abhängigkeiten
 ├── data/                       # SQLite-Datenbank (Volume)
 │   └── selfservice.db
+├── migrations/                 # Alembic/Flask-Migrate
+│   ├── alembic.ini             # Alembic-Konfiguration
+│   ├── env.py                  # Migration-Environment
+│   ├── script.py.mako          # Template für neue Migrationen
+│   └── versions/               # Migrations-Dateien
+│       └── 001_initial.py      # Initiales Schema
 └── app/
     ├── __init__.py             # Flask App Factory
     ├── config.py               # Konfiguration (Env-Variablen)
@@ -55,7 +61,7 @@ selfservice/
     ├── auth/                   # Authentifizierung
     │   ├── routes.py           # Login, Registrierung, Verifikation, Passwort
     │   ├── forms.py            # WTForms-Formulare
-    │   └── email.py            # E-Mail-Versand (Verifikation, Reset)
+    │   └── email.py           # E-Mail-Versand (Flask-Mailman)
     ├── dashboard/              # Benutzer-Dashboard
     │   └── routes.py
     ├── mqtt/                   # MQTT-Account-Verwaltung
@@ -78,9 +84,9 @@ selfservice/
 |----------|-------------|---------|
 | `SELFSERVICE_SECRET_KEY` | Geheimer Schlüssel für Sessions/Token | `change-me-in-production` |
 | `DOMAIN` | Domain für E-Mail-Links | `mintfv.example.com` |
-| `SMTP_HOST` | SMTP-Relay Hostname | `smtp-relay` |
-| `SMTP_PORT` | SMTP-Relay Port | `8025` |
-| `SMTP_FROM` | Absender-Adresse | `${SMTP_USER_PROVIDER}` (aus .env) |
+| `SMTP_HOST` | SMTP-Relay Hostname (→ `MAIL_SERVER`) | `smtp-relay` |
+| `SMTP_PORT` | SMTP-Relay Port (→ `MAIL_PORT`) | `8025` |
+| `SMTP_FROM` | Absender-Adresse (→ `MAIL_DEFAULT_SENDER`) | `${SMTP_USER_PROVIDER}` (aus .env) |
 | `MOSQUITTO_PASSWD_FILE` | Pfad zur Passwort-Datei | `/mosquitto/config/mosquitto.passwd` |
 | `MOSQUITTO_ACL_FILE` | Pfad zur ACL-Datei | `/mosquitto/config/mosquitto.acl` |
 | `MOSQUITTO_RELOAD_DIR` | Verzeichnis für Reload-Trigger | `/app/reload` |
@@ -213,4 +219,41 @@ docker compose exec selfservice ls -la /app/data/
 
 # Datenbank muss UID 2007:2100 gehören
 docker compose exec -u root selfservice chown 2007:2100 /app/data/selfservice.db
+```
+
+---
+
+## 🔄 Datenbank-Migrationen
+
+Schema-Änderungen werden über **Flask-Migrate** (Alembic) verwaltet.
+
+### Automatischer Ablauf
+
+Beim Containerstart führt `entrypoint.sh` automatisch `flask db upgrade` aus — neue Migrationen werden ohne manuellen Eingriff angewandt.
+
+### Neue Migration erstellen (Entwicklung)
+
+```bash
+# Im Container:
+docker compose exec selfservice flask --app 'app:create_app()' db migrate -m "Beschreibung"
+
+# Migration prüfen:
+docker compose exec selfservice cat migrations/versions/<revision>.py
+
+# Anwenden:
+docker compose exec selfservice flask --app 'app:create_app()' db upgrade
+```
+
+### Bestehende DB auf Migrationen umstellen
+
+Falls die DB bereits existiert (vor Flask-Migrate), einmalig stampen:
+
+```bash
+docker compose exec selfservice flask --app 'app:create_app()' db stamp head
+```
+
+### Migration rückgängig machen
+
+```bash
+docker compose exec selfservice flask --app 'app:create_app()' db downgrade -1
 ```

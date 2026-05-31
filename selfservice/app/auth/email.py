@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from typing import Protocol, cast
 
 from flask import current_app, url_for
+from flask_mailman import EmailMessage
 from itsdangerous import URLSafeTimedSerializer
 
 
@@ -64,19 +62,14 @@ def confirm_reset_token(token: str) -> str:
 
 
 def _send_email(to: str, subject: str, html_body: str) -> None:
-    """Sendet eine E-Mail über den internen smtp-relay Container."""
-    smtp_host = _cfg_str("SMTP_HOST")
-    smtp_port = _cfg_int("SMTP_PORT", 25)
-    smtp_from = _cfg_str("SMTP_FROM")
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = smtp_from
-    msg["To"] = to
-    msg.attach(MIMEText(html_body, "html"))
-
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.sendmail(smtp_from, [to], msg.as_string())
+    """Sendet eine E-Mail über Flask-Mailman (interner smtp-relay Container)."""
+    msg = EmailMessage(
+        subject=subject,
+        body=html_body,
+        to=[to],
+    )
+    msg.content_subtype = "html"
+    msg.send()
 
 
 def send_verification_email(user: EmailUser) -> None:
