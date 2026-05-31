@@ -1,5 +1,5 @@
 # ── Stage 1: Lint & Test ─────────────────────────────────────────────
-FROM python:3.12-slim AS lint
+FROM python:3.12.13-slim AS lint
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN ruff check app/ && \
     bandit -r app/ -ll -q
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────
-FROM python:3.12-slim AS runtime
+FROM python:3.12.13-slim AS runtime
 
 # Sicherheit: Keine Root-Rechte im Container
 RUN groupadd -g 2100 ssl-certs && \

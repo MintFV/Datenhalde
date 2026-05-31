@@ -17,7 +17,7 @@ x-security: &default-security
 services:
   # Init Container: Creates initial dummy SSL certificates
   certbot-init:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v5.2.2
     # Run as root initially to create directories, then chown
     # user: "2002:2100"
     group_add:
@@ -69,7 +69,7 @@ services:
       - mintfv-network
 
   nginx:
-    image: nginx:alpine
+    image: nginx:1.29.4-alpine
     restart: unless-stopped
     user: "2001:2100"
     group_add:
@@ -138,7 +138,7 @@ services:
 
   # Certbot: Automatic SSL certificate renewal
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v5.2.2
     restart: unless-stopped
     user: "2002:2100"
     group_add:
@@ -201,7 +201,7 @@ services:
   # =============================================================================
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:12.3.1
     restart: unless-stopped
     user: "2006:2100"
     group_add:
@@ -282,7 +282,7 @@ services:
         condition: service_healthy
 
   mcp-grafana:
-    image: grafana/mcp-grafana:latest
+    image: grafana/mcp-grafana:0.14.0
     restart: unless-stopped
     environment:
       - GRAFANA_URL=http://grafana:3000
@@ -299,7 +299,7 @@ services:
   # =============================================================================
 
   influxdb:
-    image: influxdb:3-core
+    image: influxdb:3.8.0-core
     restart: unless-stopped
     user: "2005:2100"
     group_add:
@@ -358,7 +358,7 @@ services:
 
   # Mosquitto MQTT Broker
   mosquitto:
-    image: eclipse-mosquitto:latest
+    image: eclipse-mosquitto:2.0.22
     restart: unless-stopped
     user: "2003:2100"
     group_add:
@@ -392,7 +392,7 @@ services:
   # Mosquitto Admin: Management container for user administration
   # Used for password management without restarting main broker
   mosquitto-admin:
-    image: eclipse-mosquitto:latest
+    image: eclipse-mosquitto:2.0.22
     restart: "no"
     user: "2003:2100"
     group_add:
@@ -414,7 +414,7 @@ services:
 
   # Node-RED: Flow-based development tool for IoT and automation
   nodered:
-    image: nodered/node-red:latest
+    image: nodered/node-red:4.1.2
     restart: unless-stopped
     user: "2004:2100"
     group_add:
@@ -454,7 +454,7 @@ services:
 
   smtp-relay:
     # https://github.com/devture/exim-relay/blob/main/Dockerfile
-    image: ghcr.io/devture/exim-relay:latest
+    image: ghcr.io/devture/exim-relay:4.99.1-r0-2
     # Container läuft im Image selbst als User "exim" (UID 100, GID 101),
     # optional kannst du das explizit setzen:
     user: "100:101"
@@ -632,7 +632,7 @@ services:
   # - https://github.com/itsmejoeeey/docker-decap-cms-standalone/
   # =============================================================================
   decap-cms:
-    image: itsmejoeeey/docker-decap-cms-standalone:latest
+    image: itsmejoeeey/docker-decap-cms-standalone:3.0.9
     restart: unless-stopped
     <<: *default-security
     logging: *default-logging
