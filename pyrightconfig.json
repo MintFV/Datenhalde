@@ -1,5 +1,10 @@
 {
   "include": ["selfservice/app"],
-  "exclude": ["selfservice/tests"],
+  "exclude": [
+    "selfservice/tests",
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*"
+  ],
   "stubPath": "./selfservice/typings"
 }
