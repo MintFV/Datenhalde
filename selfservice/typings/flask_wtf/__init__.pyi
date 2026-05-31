@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 class FlaskForm:
     def validate_on_submit(
         self,

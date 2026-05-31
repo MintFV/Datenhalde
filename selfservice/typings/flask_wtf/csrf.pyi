@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from flask import Flask
 
-
 class CSRFProtect:
     def __init__(self) -> None: ...
 

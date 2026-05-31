@@ -35,7 +35,9 @@ class LoginManager:
     ) -> Callable[[str], Any | None]: ...
 
 
-def login_required(_func: Callable[_P, _R]) -> Callable[_P, _R]: ...
+def login_required(  # noqa: UP047
+    _func: Callable[_P, _R],
+) -> Callable[_P, _R]: ...
 
 
 def login_user(

@@ -1,5 +1,5 @@
-import logging
 import importlib
+import logging
 import smtplib
 from collections.abc import Callable
 from typing import Any, ParamSpec, Protocol, TypeVar, cast
@@ -48,7 +48,9 @@ current_user: CurrentUserProtocol = cast(
 )
 
 
-def login_required(view_func: Callable[P, R]) -> Callable[P, R]:
+def login_required(  # noqa: UP047
+    view_func: Callable[P, R],
+) -> Callable[P, R]:
     return cast(Callable[P, R], _flask_login.login_required(view_func))
 
 
