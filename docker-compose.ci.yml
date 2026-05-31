@@ -8,7 +8,7 @@ services:
       - "8443"
     command: /bin/sh -c "mkdir -p /usr/share/nginx/html && echo '<html><body>CI nginx</body></html>' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8080/ || exit 1"]
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:80/ || exit 1"]
       interval: 10s
       timeout: 2s
       retries: 3

@@ -103,3 +103,8 @@ jobs:
         with:
           name: compose-logs
           path: ci-logs
+
+      - name: Cleanup docker-compose
+        if: always()
+        run: |
+          docker compose -f docker-compose.ci.yml down -v || true
