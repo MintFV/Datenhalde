@@ -8,16 +8,16 @@
 # Example patterns (edit as needed):
 
 # Default owner for everything — REPLACE me
-* @REPLACE_WITH_GITHUB_USERNAME
+* @peddyhh
 
 # Owners for repository configuration and CI
-/.github/ @REPLACE_WITH_GITHUB_USERNAME
+/.github/ @peddyhh
 
 # Owners for infrastructure / nginx
-/nginx/ @REPLACE_WITH_GITHUB_USERNAME
+/nginx/ @peddyhh
 
 # Owners for the selfservice Flask app
-/selfservice/ @REPLACE_WITH_GITHUB_USERNAME
+/selfservice/ @peddyhh
 
 # Owners for tests and Playwright specs
-/tests/ @REPLACE_WITH_GITHUB_USERNAME
+/tests/ @peddyhh
