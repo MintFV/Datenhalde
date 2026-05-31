@@ -121,3 +121,9 @@ selfservice/data/*
 
 ## playwright
 tests/report/
+ 
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyc
+.pytest_cache/

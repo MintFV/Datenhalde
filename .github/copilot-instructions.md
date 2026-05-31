@@ -3,7 +3,7 @@
 ## Current Session Info
 
 ### Date
-**Current date: December 27, 2025**
+**Current date: May 16, 2026**
 
 *Important: Always ask for the current date at the start of each session and update this section. Use this date for any date-dependent operations or documentation.*
 
@@ -42,7 +42,7 @@
 ## Current Project State
 
 ### Last Updated
-Project state as of: **March 31, 2026**
+Project state as of: **May 16, 2026**
 
 ### Active Domain
 - Domain: mintfv.peddy.net
@@ -126,3 +126,12 @@ rm -rf ./certbot/conf/* ./certbot/logs/* ./nginx/logs/*
 1. Don't create scripts on host - use container entrypoints/commands
 2. Don't assume default permissions work - always set explicit user:group
 3. Don't use --privileged unless absolutely necessary
+
+## CI & Tests
+
+- **CI status**: Derzeit sind keine GitHub Actions Workflows im Repo konfiguriert. Ich habe eine minimale CI-Vorlage geplant/anglegt unter `.github/workflows/ci.yml`, die auf Pull Requests und Pushes läuft und folgende Jobs ausführt:
+  - Python Lint & Type-Check (`ruff`, `mypy`) gegen `selfservice/` (GitHub-hosted Runner `ubuntu-latest`).
+  - Playwright Smoke Tests in `tests/` (self-contained smoke test, benötigt keine laufenden Services).
+
+- **Dependabot**: Empfohlen wird Dependabot für `pip` (Verzeichnis `/selfservice`) und `npm` (Verzeichnis `/tests`) via `.github/dependabot.yml` (wöchentlich). Docker-Updates sollten erst aktiviert werden, nachdem Images in `docker-compose.yaml` gepinnt wurden.
+
