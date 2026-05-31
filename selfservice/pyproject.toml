@@ -22,12 +22,21 @@ exclude = ["tests/"]
 
 [[tool.mypy.overrides]]
 module = [
+    "flask_sqlalchemy",
     "flask_sqlalchemy.*",
+    "flask_login",
     "flask_login.*",
+    "flask_wtf",
     "flask_wtf.*",
+    "flask_wtf.csrf",
+    "flask_limiter",
     "flask_limiter.*",
+    "wtforms",
     "wtforms.*",
+    "wtforms.validators",
+    "itsdangerous",
     "itsdangerous.*",
+    "passlib",
     "passlib.*",
 ]
 ignore_missing_imports = true

@@ -1,4 +1,4 @@
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm  # type: ignore[import-untyped]
 from wtforms import PasswordField, SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired, Length, Regexp
 
@@ -8,10 +8,19 @@ class CreateMqttAccountForm(FlaskForm):
         "Benutzername",
         validators=[
             DataRequired("Benutzername ist erforderlich."),
-            Length(min=3, max=80, message="Benutzername muss zwischen 3 und 80 Zeichen lang sein."),
+            Length(
+                min=3,
+                max=80,
+                message=(
+                    "Benutzername muss zwischen 3 und 80 Zeichen lang sein."
+                ),
+            ),
             Regexp(
                 r"^[a-zA-Z0-9._-]+$",
-                message="Nur Buchstaben, Zahlen, Punkt, Unterstrich und Bindestrich erlaubt.",
+                message=(
+                    "Nur Buchstaben, Zahlen, Punkt, Unterstrich "
+                    "und Bindestrich erlaubt."
+                ),
             ),
         ],
     )
@@ -27,7 +36,10 @@ class CreateMqttAccountForm(FlaskForm):
         "Passwort",
         validators=[
             DataRequired("Passwort ist erforderlich."),
-            Length(min=8, message="Passwort muss mindestens 8 Zeichen lang sein."),
+            Length(
+                min=8,
+                message="Passwort muss mindestens 8 Zeichen lang sein.",
+            ),
         ],
     )
     submit = SubmitField("MQTT-Account erstellen")
@@ -38,7 +50,10 @@ class ChangeMqttPasswordForm(FlaskForm):
         "Neues Passwort",
         validators=[
             DataRequired("Passwort ist erforderlich."),
-            Length(min=8, message="Passwort muss mindestens 8 Zeichen lang sein."),
+            Length(
+                min=8,
+                message="Passwort muss mindestens 8 Zeichen lang sein.",
+            ),
         ],
     )
     submit = SubmitField("Passwort ändern")

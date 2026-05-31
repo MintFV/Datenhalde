@@ -1,7 +1,10 @@
 import logging
+import importlib
+import smtplib
+from collections.abc import Callable
+from typing import Any, ParamSpec, Protocol, TypeVar, cast
 
 from flask import flash, redirect, render_template, request, url_for
-from flask_login import current_user, login_required, login_user, logout_user
 from itsdangerous import BadSignature, SignatureExpired
 
 from ..extensions import db, limiter
@@ -24,6 +27,50 @@ from .forms import (
 
 logger = logging.getLogger(__name__)
 
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+class CurrentUserProtocol(Protocol):
+    is_authenticated: bool
+
+    def check_password(self, password: str) -> bool:
+        ...
+
+    def set_password(self, password: str) -> None:
+        ...
+
+
+flask_login_module: Any = importlib.import_module("flask_login")
+_flask_login: Any = flask_login_module
+current_user: CurrentUserProtocol = cast(
+    CurrentUserProtocol, _flask_login.current_user
+)
+
+
+def login_required(view_func: Callable[P, R]) -> Callable[P, R]:
+    return cast(Callable[P, R], _flask_login.login_required(view_func))
+
+
+def login_user(user: User) -> bool:
+    return cast(bool, _flask_login.login_user(user))
+
+
+def logout_user() -> None:
+    _flask_login.logout_user()
+
+
+def _as_str(value: object | None) -> str:
+    return value if isinstance(value, str) else ""
+
+
+def _normalized_email(value: object | None) -> str:
+    return _as_str(value).lower().strip()
+
+
+def _find_user_by_email(email: str) -> User | None:
+    return cast(User | None, User.query.filter_by(email=email).first())
+
 
 @bp.route("/")
 def index():
@@ -40,25 +87,35 @@ def register():
 
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(
-            email=form.email.data.lower().strip(),
-            display_name=form.display_name.data.strip(),
-        )
-        user.set_password(form.password.data)
+        email = _normalized_email(form.email.data)
+        display_name = _as_str(form.display_name.data).strip()
+        password = _as_str(form.password.data)
+
+        user_model = cast(Any, User)
+        user = cast(User, user_model(email=email, display_name=display_name))
+        user.set_password(password)
         db.session.add(user)
         db.session.commit()
 
         try:
             send_verification_email(user)
             flash(
-                "Registrierung erfolgreich! Bitte prüfe deine E-Mails und bestätige deine Adresse.",
+                (
+                    "Registrierung erfolgreich! Bitte prüfe deine E-Mails "
+                    "und bestätige deine Adresse."
+                ),
                 "success",
             )
-        except Exception:
-            logger.exception("Verifikations-E-Mail konnte nicht gesendet werden")
+        except (smtplib.SMTPException, OSError):
+            logger.exception(
+                "Verifikations-E-Mail konnte nicht gesendet werden"
+            )
             flash(
-                "Registrierung erfolgreich, aber die Verifikations-E-Mail "
-                "konnte nicht gesendet werden. Bitte kontaktiere den Administrator.",
+                (
+                    "Registrierung erfolgreich, aber die Verifikations-E-Mail "
+                    "konnte nicht gesendet werden. "
+                    "Bitte kontaktiere den Administrator."
+                ),
                 "warning",
             )
 
@@ -75,10 +132,16 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data.lower().strip()).first()
-        if user and user.check_password(form.password.data):
+        email = _normalized_email(form.email.data)
+        password = _as_str(form.password.data)
+        user = _find_user_by_email(email)
+
+        if user and user.check_password(password):
             if not user.email_verified:
-                flash("Bitte bestätige zuerst deine E-Mail-Adresse.", "warning")
+                flash(
+                    "Bitte bestätige zuerst deine E-Mail-Adresse.",
+                    "warning",
+                )
                 return render_template("auth/login.html", form=form)
             login_user(user)
             next_page = request.args.get("next")
@@ -100,17 +163,21 @@ def logout():
 
 
 @bp.route("/email-bestaetigen/<token>")
-def verify_email(token):
+def verify_email(token: str):
     try:
         email = confirm_verification_token(token)
     except SignatureExpired:
-        flash("Der Bestätigungslink ist abgelaufen. Bitte registriere dich erneut.", "danger")
+        flash(
+            "Der Bestätigungslink ist abgelaufen. "
+            "Bitte registriere dich erneut.",
+            "danger",
+        )
         return redirect(url_for("auth.login"))
     except BadSignature:
         flash("Ungültiger Bestätigungslink.", "danger")
         return redirect(url_for("auth.login"))
 
-    user = User.query.filter_by(email=email).first()
+    user = _find_user_by_email(email)
     if not user:
         flash("Benutzer nicht gefunden.", "danger")
         return redirect(url_for("auth.login"))
@@ -120,7 +187,11 @@ def verify_email(token):
     else:
         user.email_verified = True
         db.session.commit()
-        flash("E-Mail-Adresse erfolgreich bestätigt! Du kannst dich jetzt anmelden.", "success")
+        flash(
+            "E-Mail-Adresse erfolgreich bestätigt! "
+            "Du kannst dich jetzt anmelden.",
+            "success",
+        )
 
     return redirect(url_for("auth.login"))
 
@@ -133,12 +204,12 @@ def forgot_password():
 
     form = ForgotPasswordForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data.lower().strip()).first()
+        user = _find_user_by_email(_normalized_email(form.email.data))
         # Immer gleiche Nachricht anzeigen (Enumeration verhindern)
         if user and user.email_verified:
             try:
                 send_reset_email(user)
-            except Exception:
+            except (smtplib.SMTPException, OSError):
                 logger.exception("Reset-E-Mail konnte nicht gesendet werden")
         flash(
             "Falls ein Konto mit dieser E-Mail existiert, "
@@ -151,29 +222,37 @@ def forgot_password():
 
 
 @bp.route("/passwort-zuruecksetzen/<token>", methods=["GET", "POST"])
-def reset_password(token):
+def reset_password(token: str):
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.overview"))
 
     try:
         email = confirm_reset_token(token)
     except SignatureExpired:
-        flash("Der Reset-Link ist abgelaufen. Bitte fordere einen neuen an.", "danger")
+        flash(
+            "Der Reset-Link ist abgelaufen. "
+            "Bitte fordere einen neuen an.",
+            "danger",
+        )
         return redirect(url_for("auth.forgot_password"))
     except BadSignature:
         flash("Ungültiger Reset-Link.", "danger")
         return redirect(url_for("auth.login"))
 
-    user = User.query.filter_by(email=email).first()
+    user = _find_user_by_email(email)
     if not user:
         flash("Benutzer nicht gefunden.", "danger")
         return redirect(url_for("auth.login"))
 
     form = ResetPasswordForm()
     if form.validate_on_submit():
-        user.set_password(form.password.data)
+        user.set_password(_as_str(form.password.data))
         db.session.commit()
-        flash("Passwort erfolgreich geändert! Du kannst dich jetzt anmelden.", "success")
+        flash(
+            "Passwort erfolgreich geändert! "
+            "Du kannst dich jetzt anmelden.",
+            "success",
+        )
         return redirect(url_for("auth.login"))
 
     return render_template("auth/reset_password.html", form=form)
@@ -187,17 +266,18 @@ def resend_verification():
 
     form = ResendVerificationForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data.lower().strip()).first()
+        user = _find_user_by_email(_normalized_email(form.email.data))
         # Immer gleiche Nachricht (Enumeration verhindern)
         if user and not user.email_verified:
             try:
                 send_verification_email(user)
-            except Exception:
+            except (smtplib.SMTPException, OSError):
                 logger.exception(
                     "Verifikations-E-Mail konnte nicht erneut gesendet werden"
                 )
         flash(
-            "Falls ein Konto mit dieser E-Mail existiert und noch nicht bestätigt wurde, "
+            "Falls ein Konto mit dieser E-Mail existiert "
+            "und noch nicht bestätigt wurde, "
             "wurde eine neue Bestätigungs-E-Mail gesendet.",
             "info",
         )
@@ -212,10 +292,13 @@ def resend_verification():
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
-        if not current_user.check_password(form.current_password.data):
+        current_password = _as_str(form.current_password.data)
+        new_password = _as_str(form.new_password.data)
+
+        if not current_user.check_password(current_password):
             flash("Aktuelles Passwort ist falsch.", "danger")
             return render_template("auth/change_password.html", form=form)
-        current_user.set_password(form.new_password.data)
+        current_user.set_password(new_password)
         db.session.commit()
         flash("Passwort erfolgreich geändert.", "success")
         return redirect(url_for("dashboard.overview"))

@@ -1,5 +1,6 @@
-FROM alpine:3.23.3
+FROM alpine:3.23
 
+# hadolint ignore=DL3018
 RUN apk add --no-cache inotify-tools procps
 
 RUN addgroup -g 2100 ssl-certs && \

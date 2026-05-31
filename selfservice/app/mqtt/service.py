@@ -36,7 +36,13 @@ def _generate_mosquitto_hash(password: str) -> str:
     """
     iterations = 101
     salt = secrets.token_bytes(12)
-    dk = hashlib.pbkdf2_hmac("sha512", password.encode("utf-8"), salt, iterations, dklen=64)
+    dk = hashlib.pbkdf2_hmac(
+        "sha512",
+        password.encode("utf-8"),
+        salt,
+        iterations,
+        dklen=64,
+    )
     salt_b64 = base64.b64encode(salt).decode("ascii")
     hash_b64 = base64.b64encode(dk).decode("ascii")
     return f"$7${iterations}${salt_b64}${hash_b64}"
@@ -148,7 +154,9 @@ def mqtt_user_exists(username: str) -> bool:
     """Prüft ob ein MQTT-Benutzer existiert."""
     _ensure_files_exist()
     content = _read_file_locked(_get_passwd_path())
-    return any(line.startswith(f"{username}:") for line in content.splitlines())
+    return any(
+        line.startswith(f"{username}:") for line in content.splitlines()
+    )
 
 
 def list_mqtt_users() -> list[str]:
@@ -163,7 +171,12 @@ def list_mqtt_users() -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def add_acl_rules(username: str, tenant_id: str, role: str = "admin", device_id: str | None = None):
+def add_acl_rules(
+    username: str,
+    tenant_id: str,
+    role: str = "admin",
+    device_id: str | None = None,
+):
     """Fügt ACL-Regeln für einen Benutzer hinzu.
 
     Rollen:
@@ -239,7 +252,11 @@ def remove_acl_rules(username: str):
 
 
 def provision_mqtt_account(
-    username: str, password: str, tenant_id: str, role: str = "admin", device_id: str | None = None
+    username: str,
+    password: str,
+    tenant_id: str,
+    role: str = "admin",
+    device_id: str | None = None,
 ) -> bool:
     """Erstellt MQTT-User + ACL-Regeln + signalisiert Reload."""
     create_mqtt_user(username, password)

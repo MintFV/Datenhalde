@@ -1,11 +1,35 @@
-from flask_wtf import FlaskForm
+from __future__ import annotations
+
+from typing import Any, cast
+
+from flask_wtf import FlaskForm  # type: ignore[import-untyped]
 from wtforms import PasswordField, StringField, SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms.validators import (
+    DataRequired,
+    Email,
+    EqualTo,
+    Length,
+    ValidationError,
+)
 
 from ..models import User
 
 
-class RegistrationForm(FlaskForm):
+class TypedFlaskForm(FlaskForm):
+    def validate_on_submit(
+        self, extra_validators: object | None = None
+    ) -> bool:
+        base_form = cast(Any, super())
+        return bool(
+            base_form.validate_on_submit(extra_validators=extra_validators)
+        )
+
+
+def _field_str(value: object | None) -> str:
+    return value if isinstance(value, str) else ""
+
+
+class RegistrationForm(TypedFlaskForm):
     email = StringField(
         "E-Mail-Adresse",
         validators=[
@@ -19,7 +43,11 @@ class RegistrationForm(FlaskForm):
         validators=[
             DataRequired("Anzeigename ist erforderlich."),
             Length(
-                min=2, max=100, message="Anzeigename muss zwischen 2 und 100 Zeichen lang sein."
+                min=2,
+                max=100,
+                message=(
+                    "Anzeigename muss zwischen 2 und 100 Zeichen lang sein."
+                ),
             ),
         ],
     )
@@ -27,7 +55,10 @@ class RegistrationForm(FlaskForm):
         "Passwort",
         validators=[
             DataRequired("Passwort ist erforderlich."),
-            Length(min=8, message="Passwort muss mindestens 8 Zeichen lang sein."),
+            Length(
+                min=8,
+                message="Passwort muss mindestens 8 Zeichen lang sein.",
+            ),
         ],
     )
     password_confirm = PasswordField(
@@ -39,12 +70,15 @@ class RegistrationForm(FlaskForm):
     )
     submit = SubmitField("Registrieren")
 
-    def validate_email(self, field):
-        if User.query.filter_by(email=field.data.lower()).first():
-            raise ValidationError("Diese E-Mail-Adresse ist bereits registriert.")
+    def validate_email(self, field: StringField) -> None:
+        email = _field_str(field.data).lower()
+        if User.query.filter_by(email=email).first():
+            raise ValidationError(
+                "Diese E-Mail-Adresse ist bereits registriert."
+            )
 
 
-class LoginForm(FlaskForm):
+class LoginForm(TypedFlaskForm):
     email = StringField(
         "E-Mail-Adresse",
         validators=[
@@ -52,11 +86,14 @@ class LoginForm(FlaskForm):
             Email("Bitte eine gültige E-Mail-Adresse eingeben."),
         ],
     )
-    password = PasswordField("Passwort", validators=[DataRequired("Passwort ist erforderlich.")])
+    password = PasswordField(
+        "Passwort",
+        validators=[DataRequired("Passwort ist erforderlich.")],
+    )
     submit = SubmitField("Anmelden")
 
 
-class ForgotPasswordForm(FlaskForm):
+class ForgotPasswordForm(TypedFlaskForm):
     email = StringField(
         "E-Mail-Adresse",
         validators=[
@@ -67,12 +104,15 @@ class ForgotPasswordForm(FlaskForm):
     submit = SubmitField("Passwort zurücksetzen")
 
 
-class ResetPasswordForm(FlaskForm):
+class ResetPasswordForm(TypedFlaskForm):
     password = PasswordField(
         "Neues Passwort",
         validators=[
             DataRequired("Passwort ist erforderlich."),
-            Length(min=8, message="Passwort muss mindestens 8 Zeichen lang sein."),
+            Length(
+                min=8,
+                message="Passwort muss mindestens 8 Zeichen lang sein.",
+            ),
         ],
     )
     password_confirm = PasswordField(
@@ -85,7 +125,7 @@ class ResetPasswordForm(FlaskForm):
     submit = SubmitField("Passwort setzen")
 
 
-class ResendVerificationForm(FlaskForm):
+class ResendVerificationForm(TypedFlaskForm):
     email = StringField(
         "E-Mail-Adresse",
         validators=[
@@ -96,7 +136,7 @@ class ResendVerificationForm(FlaskForm):
     submit = SubmitField("Bestätigungs-E-Mail erneut senden")
 
 
-class ChangePasswordForm(FlaskForm):
+class ChangePasswordForm(TypedFlaskForm):
     current_password = PasswordField(
         "Aktuelles Passwort",
         validators=[DataRequired("Aktuelles Passwort ist erforderlich.")],
@@ -105,14 +145,20 @@ class ChangePasswordForm(FlaskForm):
         "Neues Passwort",
         validators=[
             DataRequired("Neues Passwort ist erforderlich."),
-            Length(min=8, message="Passwort muss mindestens 8 Zeichen lang sein."),
+            Length(
+                min=8,
+                message="Passwort muss mindestens 8 Zeichen lang sein.",
+            ),
         ],
     )
     new_password_confirm = PasswordField(
         "Neues Passwort bestätigen",
         validators=[
             DataRequired("Bitte neues Passwort bestätigen."),
-            EqualTo("new_password", message="Passwörter stimmen nicht überein."),
+            EqualTo(
+                "new_password",
+                message="Passwörter stimmen nicht überein.",
+            ),
         ],
     )
     submit = SubmitField("Passwort ändern")
