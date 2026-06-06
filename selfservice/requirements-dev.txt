@@ -8,4 +8,4 @@ types-WTForms
 flake8==7.*
 flake8-bugbear
 pylint==3.*
-bandit==1.8.*
+bandit==1.9.*
