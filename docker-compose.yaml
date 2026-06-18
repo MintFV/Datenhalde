@@ -65,6 +65,13 @@ services:
       retries: 1
       start_period: 5s
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 128
+        hard: 256
+      nproc:
+        soft: 32
+        hard: 64
     networks:
       - mintfv-network
 
@@ -109,6 +116,13 @@ services:
     read_only: true
     <<: *default-security
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 256
+        hard: 512
+      nproc:
+        soft: 64
+        hard: 128
     cap_add:
       - CHOWN
       - SETGID
@@ -193,6 +207,13 @@ services:
           memory: 64M
           pids: 50
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 128
+        hard: 256
+      nproc:
+        soft: 32
+        hard: 64
     networks:
       - mintfv-network
 
@@ -273,6 +294,13 @@ services:
           memory: 256M
           pids: 100
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 256
+        hard: 512
+      nproc:
+        soft: 128
+        hard: 256
     networks:
       - mintfv-network
     depends_on:
@@ -293,6 +321,13 @@ services:
       grafana:
         condition: service_healthy
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 128
+        hard: 256
+      nproc:
+        soft: 32
+        hard: 64
 
   # =============================================================================
   # InfluxDB 3 Core Time Series Database
@@ -349,6 +384,13 @@ services:
           cpus: '1.0'
           memory: 512M
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 512
+        hard: 1024
+      nproc:
+        soft: 128
+        hard: 256
     networks:
       - mintfv-network
 
@@ -386,6 +428,13 @@ services:
       retries: 3
       start_period: 10s
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 512
+        hard: 1024
+      nproc:
+        soft: 64
+        hard: 128
     networks:
       - mintfv-network
 
@@ -409,6 +458,13 @@ services:
           cpus: '0.1'
           memory: 32M
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 128
+        hard: 256
+      nproc:
+        soft: 32
+        hard: 64
     network_mode: "none"
 
 
@@ -449,6 +505,13 @@ services:
           cpus: '0.5'
           memory: 256M
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 256
+        hard: 512
+      nproc:
+        soft: 128
+        hard: 256
     networks:
       - mintfv-network
 
@@ -513,6 +576,13 @@ services:
           pids: 100
       # Logging wie bisher
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 128
+        hard: 256
+      nproc:
+        soft: 32
+        hard: 64
     volumes:
       - ./smtp-relay/spool:/var/spool/exim
       # Logging geht per Default ins STDOUT/STDERR des Containers; kein Log-Volume nötig
@@ -588,6 +658,13 @@ services:
           memory: 128M
 
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 256
+        hard: 512
+      nproc:
+        soft: 64
+        hard: 128
     networks:
       - mintfv-network
 
@@ -624,6 +701,13 @@ services:
           pids: 20
 
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 128
+        hard: 256
+      nproc:
+        soft: 32
+        hard: 64
     networks:
       - mintfv-network
 
@@ -636,6 +720,13 @@ services:
     restart: unless-stopped
     <<: *default-security
     logging: *default-logging
+    ulimits:
+      nofile:
+        soft: 256
+        hard: 512
+      nproc:
+        soft: 64
+        hard: 128
     networks:
       - mintfv-network
     expose:
