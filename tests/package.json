@@ -13,6 +13,6 @@
     "test:nginx": "npx playwright test specs/nginx-security.spec.ts"
   },
   "devDependencies": {
-    "@playwright/test": "1.60.0"
+    "@playwright/test": "1.62.1"
   }
 }
