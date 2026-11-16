@@ -115,6 +115,9 @@ tmp/
 *.md.bak
 *.md.[0-9]*
 
+## Security audit (local analysis only)
+blue-team-audit/
+
 ## Runtime Daten
 selfservice/data/*
 *.db
