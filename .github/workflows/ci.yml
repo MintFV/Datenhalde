@@ -27,6 +27,21 @@ jobs:
         run: |
           # Use the selfservice pyproject.toml so mypy picks up ignore_missing_imports
           mypy --config-file selfservice/pyproject.toml selfservice
+      - name: Check Node-RED lodash pin
+        run: |
+          python - <<'PY'
+          import json
+          with open("nodered/data/package-lock.json", encoding="utf-8") as f:
+              lock = json.load(f)
+          versions = [
+              pkg["version"]
+              for path, pkg in lock["packages"].items()
+              if path.endswith("node_modules/lodash")
+          ]
+          if versions != ["4.18.1"]:
+              raise SystemExit(f"Expected only lodash 4.18.1, found {versions}")
+          print("lodash versions:", versions)
+          PY
 
   node-smoke:
     name: Playwright smoke tests
