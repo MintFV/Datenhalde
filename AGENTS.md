@@ -10,7 +10,7 @@ Self-hosted IoT platform ("MintFV") defined almost entirely by `docker-compose.y
 - `check-no-pyc.yml` runs on **all** pushes and PRs and fails on tracked `__pycache__/`, `*.pyc`, `.pytest_cache/`. Never commit those.
 - Branch protection is a recommendation, not enforced: `.github/BRANCH_PROTECTION.md`. Commit messages: single line, abstract summary, no body (team convention).
 - Use `git mv`, not `mv`.
-- Dependabot runs weekly for `pip` (`/selfservice`) and `npm` (`/tests`). Secrets needed for full integration: `INFLUXDB_TOKEN`, `SELFSERVICE_SECRET_KEY`, `SMTP_USER_PROVIDER`, `SMTP_PASS_PROVIDER` (see `.github/README-CI.md`).
+- Dependabot runs weekly for `pip` (`/selfservice`) and `npm` (`/tests`). Secrets: `INFLUXDB_TOKEN`, `SELFSERVICE_SECRET_KEY`, `SMTP_USER_PROVIDER` and `SMTP_PASS_PROVIDER` in `.env`, plus `SMTP_PASSWORD` in `.env.smtp.password` (see `.github/README-CI.md`).
 
 ## Commands
 
@@ -28,7 +28,7 @@ Note: CI runs Python 3.11 while `selfservice/pyproject.toml` targets py312 — d
 - Playwright E2E: `./tests/run-tests.sh [suite]` — builds a test image and runs inside Docker attached to the compose network, so the stack must be up. Suites: `landing`, `selfservice`, `grafana`, `nodered`, `influxdb`, `mosquitto`, `nginx`; `smoke` works via the wildcard fallback (`tests/run-tests.sh:39`) and is what CI calls. Each suite gets a sensible default `PW_BASE_URL` (internal service URLs).
 - Full-stack E2E is manual only: `.github/workflows/e2e.yml` (workflow_dispatch).
 - Stack management: `./mintfv.sh {init|start|stop|restart|status|logs [svc]|version|test-email|request-cert|force-renewal|enable-ssl|disable-ssl|cleanup}`. Post-setup validation: `./validate.sh`.
-- Local stack needs `.env` (copy from `env.example`) and `.env.smtp.password` (separate file, `SMTP_PASS_PROVIDER=`). `env.example` and the compose comment use `SMTP_PASS_PROVIDER`; `README.md` and `ci.yml` currently say `SMTP_PASSWORD` — treat that as a known inconsistency. Neither file is committed; CI creates a placeholder for the latter.
+- Local stack needs `.env` (copy from `env.example`: `SMTP_USER_PROVIDER`, `SMTP_PASS_PROVIDER`, …) and a separate `.env.smtp.password` containing `SMTP_PASSWORD=` for the SMTP relay, as documented in `README.md` and created by `ci.yml`. Keep those documented credential entries unchanged. Neither file is committed; CI creates a placeholder for the latter.
 
 ## Security & operations
 
