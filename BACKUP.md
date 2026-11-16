@@ -13,9 +13,11 @@ This document describes what data needs to be backed up and how to do it using r
    - **Important**: Without backup, you'll need to request new certificates
 
 2. **Configuration Files**
-   - `config.yaml` - Your configuration
+   - `.env` - Main configuration (contains secrets, never commit)
+   - `.env.smtp.password` - SMTP password (separate file)
    - `docker-compose.yaml` - Service definitions (if customized)
-   - `nginx/conf/*.conf` - Custom nginx configurations
+   - `nginx/nginx.conf`, `nginx/conf.d/`, `nginx/stream.d/`, `nginx/include.d/` - nginx configurations
+   - `mosquitto/config/` - Mosquitto configuration, passwd and ACL files
 
 ### Important Data (Should Backup)
 
@@ -26,16 +28,17 @@ This document describes what data needs to be backed up and how to do it using r
 4. **Web Content**
    - `nginx/html/` - Custom website files
 
-### Future Data (When Services Active)
+### Database/Application Data (all services active)
 
-5. **Database Data** (future)
-   - `influxdb/data/` - Time series data
-   - `influxdb/config/` - InfluxDB configuration
+5. **Database Data**
+   - `influxdb/data/` - Time series data (InfluxDB 3 Core)
+   - `influxdb/tokens/` - Admin token
 
-6. **Application Data** (future)
+6. **Application Data**
    - `nodered/data/` - Node-RED flows and configurations
    - `grafana/data/` - Dashboards and settings
    - `mosquitto/data/` - MQTT persistence
+   - `mosquitto/config/` - Passwd/ACL files (also under Configuration Files)
    - `selfservice/data/` - Selfservice-Portal Datenbank (Benutzer, MQTT-Accounts)
 
 ## Backup Schedule
@@ -108,11 +111,18 @@ backup_critical() {
     # Configuration files
     rsync -avz \
         -e "ssh -i $SSH_KEY" \
-        --include="*.yaml" \
-        --include="*.conf" \
-        --exclude="*" \
-        ./ \
+        .env .env.smtp.password docker-compose.yaml \
         $BACKUP_SERVER:$BACKUP_PATH/config/
+    
+    rsync -avz \
+        -e "ssh -i $SSH_KEY" \
+        nginx/nginx.conf nginx/conf.d nginx/stream.d nginx/include.d \
+        $BACKUP_SERVER:$BACKUP_PATH/config/nginx/
+    
+    rsync -avz \
+        -e "ssh -i $SSH_KEY" \
+        mosquitto/config/ \
+        $BACKUP_SERVER:$BACKUP_PATH/config/mosquitto/
     
     log "Critical data backup complete"
 }
@@ -135,7 +145,7 @@ backup_logs() {
     log "Log backup complete"
 }
 
-# Future: Database backup
+# Database backup
 backup_databases() {
     log "Backing up databases..."
     
@@ -164,7 +174,7 @@ main() {
     
     backup_critical
     backup_logs
-    # backup_databases  # Uncomment when databases are active
+    backup_databases
     
     log "=== MintFV Backup Complete ==="
 }
@@ -205,8 +215,9 @@ mkdir -p "$BACKUP_DIR/$TIMESTAMP"
 
 # Backup critical data
 rsync -av certbot/conf/ "$BACKUP_DIR/$TIMESTAMP/certbot-conf/"
-rsync -av config.yaml docker-compose.yaml "$BACKUP_DIR/$TIMESTAMP/"
-rsync -av nginx/conf/ "$BACKUP_DIR/$TIMESTAMP/nginx-conf/"
+rsync -av .env .env.smtp.password docker-compose.yaml "$BACKUP_DIR/$TIMESTAMP/"
+rsync -av nginx/nginx.conf nginx/conf.d nginx/stream.d nginx/include.d "$BACKUP_DIR/$TIMESTAMP/nginx/"
+rsync -av mosquitto/config/ "$BACKUP_DIR/$TIMESTAMP/mosquitto-config/"
 
 # Create compressed archive
 tar -czf "$BACKUP_DIR/mintfv-$TIMESTAMP.tar.gz" -C "$BACKUP_DIR" "$TIMESTAMP"
@@ -253,8 +264,8 @@ rsync -av backup@backup-server:/backup/mintfv/config/ ./
 # 3. Restore all data
 
 rsync -av backup@backup-server:/backup/mintfv/certbot-conf/ ./certbot/conf/
-rsync -av backup@backup-server:/backup/mintfv/config/ ./
-rsync -av backup@backup-server:/backup/mintfv/nginx-conf/ ./nginx/conf/
+rsync -av backup@backup-server:/backup/mintfv/ ./
+rsync -av backup@backup-server:/backup/mintfv/nginx/ ./nginx/
 
 # 4. Fix permissions
 chmod 770 nginx/logs certbot/logs
@@ -279,7 +290,7 @@ rsync -av backup@backup-server:/backup/mintfv/ ./
 
 # Verify critical files exist
 test -f certbot-conf/live/your-domain/fullchain.pem && echo "Certificates OK"
-test -f config/config.yaml && echo "Config OK"
+test -f .env && echo "Config OK"
 ```
 
 ### Monitor Backup Size
@@ -388,7 +399,6 @@ fi
 - Temporary files in `certbot/www/`
 - Docker volumes (recreated automatically)
 - Log rotated files (`*.gz`)
-- `.env.generated` (regenerated from config.yaml)
 
 ## Retention Policy
 

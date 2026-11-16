@@ -2,11 +2,11 @@
 
 Visualization & Monitoring Platform für InfluxDB-Daten.
 
-**Version:** Latest (grafana/grafana)  
+**Version:** 12.3.1 (grafana/grafana)  
 **Container:** mintfv-grafana (UID 2006:2100)  
 **URL:** https://mintfv.peddy.net/grafana/  
 **Port:** 3000 (intern)  
-**Demo-Login:** admin / admin
+**Login:** Via `.env` (`GRAFANA_ADMIN_USER`, Default: `admingrafana`; `GRAFANA_ADMIN_PASSWORD`)
 
 ---
 
@@ -42,7 +42,7 @@ grafana/
 ### 1. Login & Passwort ändern
 ```
 1. Öffne https://mintfv.peddy.net/grafana/
-2. Login: admin / admin
+2. Login: Benutzername + Passwort aus `.env` (GRAFANA_ADMIN_USER / GRAFANA_ADMIN_PASSWORD)
 3. User Icon (unten links) → Profile → Change Password
 ```
 

@@ -16,6 +16,8 @@ RUN ruff check app/ && \
     pylint app/ && \
     bandit -r app/ -ll -q
 
+USER 2007:2100
+
 # ── Stage 2: Runtime ─────────────────────────────────────────────────
 FROM python:3.12-alpine AS runtime
 

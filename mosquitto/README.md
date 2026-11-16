@@ -1,8 +1,8 @@
 # Mosquitto MQTT Broker
 
-**Version:** Eclipse Mosquitto 2.x (Latest)  
+**Version:** Eclipse Mosquitto 2.0.22  
 **Container:** mintfv-mosquitto (UID 2003:2100)  
-**Ports:** 1883 (MQTT), 9001 (WebSocket), 8883 (MQTT TLS via nginx)
+**Ports:** 1883 (MQTT, intern), 9001 (WebSocket, intern), 8883 (MQTT TLS via nginx)
 
 ---
 
@@ -54,8 +54,15 @@ docker compose exec mosquitto mosquitto_passwd -b /mosquitto/config/mosquitto.pa
 
 # User löschen
 docker compose exec mosquitto mosquitto_passwd -D /mosquitto/config/mosquitto.passwd username
+```
 
-# Container neu laden (Passwörter anwenden)
+**Wichtig:** Mosquitto lädt Passwort/ACL-Dateien erst nach einem `SIGHUP`. Der Sidecar `mosquitto-reload` übernimmt das automatisch, wenn das Selfservice-Portal Änderungen macht. Bei manuellen Änderungen einen Reload auslösen:
+
+```bash
+# Reload via Sidecar-Trigger (bevorzugt, wie im Selfservice-Portal)
+docker compose exec selfservice sh -c 'echo "manual" > /app/reload/reload.trigger'
+
+# Alternativ: Container-Neustart (kurze Unterbrechung)
 docker compose restart mosquitto
 ```
 
@@ -87,7 +94,7 @@ mosquitto_pub -h mintfv.peddy.net -p 1883 \
 
 ---
 
-## � Selfservice-Integration
+## 🔄 Selfservice-Integration
 
 MQTT-Accounts können auch über das **Selfservice-Portal** (`/selfservice/`) verwaltet werden. Benutzer registrieren sich selbst und können eigene MQTT-Accounts erstellen, Passwörter ändern und Accounts löschen.
 
@@ -107,7 +114,7 @@ Weitere Details: [selfservice/README.md](../selfservice/README.md)
 
 ---
 
-## �📚 Weitere Informationen
+## 📚 Weitere Informationen
 
 - **Setup & Credentials:** [mosquitto/README.md](mosquitto/README.md)
 - **ACL Troubleshooting:** [mosquitto/README.md#-troubleshooting](mosquitto/README.md#-troubleshooting)

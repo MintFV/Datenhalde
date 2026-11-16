@@ -15,6 +15,16 @@ Self-hosted IoT-Plattform auf Basis von Docker Compose. Bietet MQTT-Messaging, Z
 | **Selfservice-Portal** | Benutzer-Registrierung & MQTT-Account-Verwaltung | 5000 |
 | **SMTP Relay** | Ausgehender Mailversand (Exim → Smarthost) | 8025 |
 
+Hilfs-Services (nur intern, kein externer Zugriff):
+
+| Service | Beschreibung | Interner Port |
+|---------|-------------|---------------|
+| **certbot-init** | One-Shot Init-Container (Dummy-Zertifikat + Verzeichnisse) | – |
+| **mosquitto-admin** | Management-Container für `mosquitto_passwd`-Operationen | – |
+| **mosquitto-reload** | Sidecar: SIGHUP an Mosquitto bei ACL/Passwort-Änderungen | – |
+| **mcp-grafana** | Grafana MCP-Server (Model Context Protocol) | – |
+| **decap-cms** | Decap CMS (Git-basiertes Content-Management, GitHub-OAuth) | 80 |
+
 ## Architektur
 
 ```
@@ -63,7 +73,7 @@ Beim ersten Start erstellt `certbot-init` ein selbstsigniertes Zertifikat. Sobal
 
 ## Sicherheitskonzept
 
-- Alle Container laufen als **nicht-root** (dedizierte UIDs ab 2001)
+- Alle Container laufen als **nicht-root** (dedizierte UIDs ab 2001; Ausnahme: smtp-relay nutzt den Image-eigenen `exim`-User 100:101)
 - Gemeinsame GID 2100 für Shared-Volume-Zugriff (z. B. TLS-Zertifikate)
 - `read_only: true` + `tmpfs` für beschreibbare Verzeichnisse
 - `no-new-privileges`, `cap_drop: ALL` + minimale `cap_add`
@@ -80,7 +90,7 @@ Beim ersten Start erstellt `certbot-init` ein selbstsigniertes Zertifikat. Sobal
 ├── nginx/            # Reverse Proxy Konfiguration
 ├── nodered/          # Node-RED Flows & Packages
 ├── selfservice/      # Flask-Portal (Dockerfile, App, Migrations)
-├── smtp-relay/       # Exim Spool
+├── smtp-relay/       # Exim Spool (wird beim ersten Start erstellt)
 ├── tests/            # Playwright Smoke Tests
 └── docker-compose.yaml
 ```

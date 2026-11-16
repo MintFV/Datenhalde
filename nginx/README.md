@@ -3,8 +3,8 @@
 HTTP/HTTPS Reverse Proxy & MQTT TLS Termination.
 
 **Container:** mintfv-nginx (UID 2001:2100)  
-**Image:** nginx:alpine  
-**Ports:** 80 (HTTP→HTTPS), 443 (HTTPS), 8883 (MQTT over TLS)
+**Image:** nginx:1.29.4-alpine  
+**Ports:** 80 → 8080 (HTTP→HTTPS), 443 → 8443 (HTTPS), 8883 (MQTT over TLS) – Host-Ports → interner Container-Port
 
 ---
 
@@ -212,7 +212,7 @@ curl -I http://mintfv.peddy.net/
 # Expected: 301 Moved Permanently
 
 # Grafana Proxy
-curl -u admin:admin https://mintfv.peddy.net/grafana/api/health
+curl -fsS https://mintfv.peddy.net/grafana/api/health
 ```
 
 ### MQTT TLS Test

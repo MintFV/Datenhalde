@@ -54,7 +54,7 @@ echo | openssl s_client -showcerts -servername your-domain.com \
 ### Automatic Renewal
 
 Certbot automatically renews certificates:
-- Checks every 12 hours (configurable in config.yaml)
+- Checks every 12 hours by default (configurable via `RENEWAL_INTERVAL` in `.env`)
 - Renews when less than 30 days remaining
 - Uses webroot method (no downtime)
 - Logs to `certbot/logs/`
@@ -116,7 +116,7 @@ server {
 }
 ```
 
-### HTTPS Mode (ssl.conf)
+### HTTPS Mode (02-ssl.conf)
 
 ```nginx
 # HTTP - Redirect to HTTPS (except ACME challenge)
@@ -252,7 +252,7 @@ Certificates are protected by GID 2100:
 
 ### Custom Certificate Path
 
-Edit `nginx/conf/ssl.conf`:
+Edit `nginx/conf.d/02-ssl.conf`:
 ```nginx
 ssl_certificate /path/to/custom/cert.pem;
 ssl_certificate_key /path/to/custom/key.pem;
@@ -261,7 +261,7 @@ ssl_certificate_key /path/to/custom/key.pem;
 ### Multiple Domains
 
 Currently supports single domain. For multiple domains:
-1. Edit config.yaml (future feature)
+1. Edit `docker-compose.yaml` / nginx config (multi-domain is not yet parameterized via `.env`)
 2. Request multi-domain certificate:
 ```bash
 docker compose run --rm certbot certonly \

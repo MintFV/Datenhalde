@@ -228,45 +228,55 @@ graph LR
 
 ## 🔧 Deployment
 
-### Docker-Compose Stack
+Der produktive Stack ist in [`docker-compose.yaml`](../../docker-compose.yaml) definiert (Quelle der Wahrheit, inkl. Security-Hardening: non-root UIDs, `read_only`, `cap_drop: ALL`, Healthchecks). Kernservices im Überblick:
 
 ```yaml
-version: '3.8'
-
 services:
   mosquitto:
-    image: eclipse-mosquitto:2
-    ports:
-      - "8883:8883"
+    image: eclipse-mosquitto:2.0.22
+    user: "2003:2100"
+    expose:
+      - "1883"   # nur intern, extern via nginx:8883 (TLS Stream)
+      - "9001"   # WebSocket, nur intern via nginx
     volumes:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/log:/mosquitto/log
+      - ./mosquitto/logs:/mosquitto/log
 
   nodered:
-    image: nodered/node-red:latest
-    ports:
-      - "1880:1880"
+    image: nodered/node-red:4.1.2
+    user: "2004:2100"
+    expose:
+      - "1880"   # nur intern, extern via /nodered/
     volumes:
       - ./nodered/data:/data
 
   influxdb:
-    image: influxdb:2
-    ports:
-      - "8086:8086"
+    image: influxdb:3.8.0-core
+    user: "2005:2100"
+    expose:
+      - "8181"   # nur intern, extern via /influxdb/ (InfluxDB 3 Core, kein 8086)
+    command:
+      - influxdb3
+      - serve
+      - --node-id=mintfv-node-0
+      - --object-store=file
+      - --data-dir=/var/lib/influxdb3/data
+      - --admin-token-file=/var/lib/influxdb3/tokens/admin.token
     volumes:
-      - ./influxdb/data:/var/lib/influxdb2
-    environment:
-      - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_ORG=umweltbox
+      - ./influxdb/data:/var/lib/influxdb3/data
+      - ./influxdb/tokens:/var/lib/influxdb3/tokens:ro
 
   grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
+    image: grafana/grafana:12.3.1
+    user: "2006:2100"
+    expose:
+      - "3000"   # nur intern, extern via /grafana/
     volumes:
       - ./grafana/data:/var/lib/grafana
 ```
+
+Externe Erreichbarkeit läuft ausschließlich über nginx (Host-Ports 80/443/8883 → intern 8080/8443/8883).
 
 ---
 

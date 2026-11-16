@@ -2,10 +2,11 @@
 
 Flow-basierte Programmierung für IoT Automation & Datenverarbeitung.
 
-**Version:** Latest (nodered/node-red)  
+**Version:** 4.1.2 (nodered/node-red)  
 **Container:** mintfv-nodered (UID 2004:2100)  
 **URL:** https://mintfv.peddy.net/nodered/  
-**Port:** 1880 (intern)
+**Port:** 1880 (intern)  
+**Login:** Via `.env` (`NODE_RED_ADMIN_USER`, `NODE_RED_ADMIN_PASSWORD_HASH`)
 
 ---
 
@@ -44,45 +45,31 @@ docker compose logs -f nodered
 
 ---
 
-## 🔐 Authentifizierung aktivieren
+## 🔐 Authentifizierung
 
-⚠️ **WICHTIG**: Passwort-Schutz sollte in Produktion aktiviert werden!
+✅ **Status**: Admin-Auth ist in `settings.js` aktiv und liest die Credentials aus Umgebungsvariablen (siehe `docker-compose.yaml`).
 
-### 1. Passwort-Hash generieren
+### Passwort ändern
+
+1. **Passwort-Hash generieren**
 ```bash
 docker compose exec nodered npx node-red admin hash-pw
 # Gib dein Passwort ein, kopiere den Hash
 ```
 
-### 2. In .env eintragen
+2. **In .env eintragen**
 ```bash
 vi .env
 ```
 
-Füge hinzu:
+Werte setzen:
 ```bash
-NODE_RED_ADMIN_USER=admin
+NODE_RED_ADMIN_USER=adminnodered
 NODE_RED_ADMIN_PASSWORD_HASH='$2y$08$...'  # Dein generierter Hash
+NODE_RED_CREDENTIAL_SECRET='...'  # 32-Byte-Hex für Flow-Credentials
 ```
 
-### 3. Settings aktivieren
-```bash
-vi ./nodered/data/settings.js
-```
-
-Aktiviere (ca. Zeile 100):
-```javascript
-adminAuth: {
-    type: "credentials",
-    users: [{
-        username: process.env.NODE_RED_ADMIN_USER || "admin",
-        password: process.env.NODE_RED_ADMIN_PASSWORD_HASH,
-        permissions: "*"
-    }]
-}
-```
-
-### 4. Container neu starten
+3. **Container neu starten**
 ```bash
 docker compose restart nodered
 ```
