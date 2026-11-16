@@ -625,6 +625,7 @@ services:
       - MOSQUITTO_ACL_FILE=/mosquitto/config/mosquitto.acl
       - MOSQUITTO_RELOAD_DIR=/app/reload
       - TZ=${TZ:-Europe/Berlin}
+      - GUNICORN_CMD_ARGS=--no-control-socket
 
     volumes:
       - ./selfservice/data:/app/data:rw
