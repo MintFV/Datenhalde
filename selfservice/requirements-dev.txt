@@ -1,5 +1,5 @@
 -r requirements.txt
-mypy==2.1.*
+mypy==2.2.*
 ruff==0.15.*
 pytest==9.*
 pytest-flask==1.3.*
