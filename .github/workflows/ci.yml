@@ -53,7 +53,7 @@ jobs:
           # Create minimal placeholders so `docker compose up` doesn't fail.
           if [ ! -f .env.smtp.password ]; then
             echo "# SMTP password for CI (placeholder)" > .env.smtp.password
-            echo "SMTP_PASSWORD=" >> .env.smtp.password
+            echo "SMTP_PASSWORD=''" >> .env.smtp.password
           fi
 
       - name: Start docker-compose services (CI override)

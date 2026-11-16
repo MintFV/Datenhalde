@@ -28,7 +28,7 @@ Note: CI runs Python 3.11 while `selfservice/pyproject.toml` targets py312 — d
 - Playwright E2E: `./tests/run-tests.sh [suite]` — builds a test image and runs inside Docker attached to the compose network, so the stack must be up. Suites: `landing`, `selfservice`, `grafana`, `nodered`, `influxdb`, `mosquitto`, `nginx`; `smoke` works via the wildcard fallback (`tests/run-tests.sh:39`) and is what CI calls. Each suite gets a sensible default `PW_BASE_URL` (internal service URLs).
 - Full-stack E2E is manual only: `.github/workflows/e2e.yml` (workflow_dispatch).
 - Stack management: `./mintfv.sh {init|start|stop|restart|status|logs [svc]|version|test-email|request-cert|force-renewal|enable-ssl|disable-ssl|cleanup}`. Post-setup validation: `./validate.sh`.
-- Local stack needs `.env` (copy from `env.example`: `SMTP_USER_PROVIDER`, `SMTP_PASS_PROVIDER`, …) and a separate `.env.smtp.password` containing `SMTP_PASSWORD=` for the SMTP relay, as documented in `README.md` and created by `ci.yml`. Keep those documented credential entries unchanged. Neither file is committed; CI creates a placeholder for the latter.
+- Local stack needs `.env` (copy from `env.example`: `SMTP_USER_PROVIDER`, `SMTP_PASS_PROVIDER`, …) and a separate `.env.smtp.password`. `docker-compose.yaml` loads the latter into `smtp-relay` via `env_file:`; after installation it must contain exactly `SMTP_PASSWORD='…'` (single quotes around the smarthost password, matching `SMTP_USER_PROVIDER` in `.env`). This is documented in `README.md` and a placeholder is created by `ci.yml`. Keep those documented credential entries unchanged. Neither file is committed.
 
 ## Security & operations
 

@@ -39,11 +39,19 @@ cp env.example .env
 # .env editieren: DOMAIN, EMAIL, Passwörter setzen
 
 # 3. SMTP-Passwort separat anlegen
-echo "SMTP_PASSWORD=dein-smtp-passwort" > .env.smtp.password
+echo "SMTP_PASSWORD='dein-smtp-passwort'" > .env.smtp.password
 
 # 4. Stack starten
 docker compose up -d
 ```
+
+Die Datei `.env.smtp.password` wird in `docker-compose.yaml` über `env_file:` in den Container `smtp-relay` geladen. Sie muss nach der Installation folgende Zeile enthalten:
+
+```
+SMTP_PASSWORD='XXXXXXXXXXXXXXXXXXXXXXX'
+```
+
+Der Wert ist das Passwort für den externen Smarthost (zugehöriger User: `SMTP_USER_PROVIDER` in `.env`). Die Datei wird nicht committet.
 
 Beim ersten Start erstellt `certbot-init` ein selbstsigniertes Zertifikat. Sobald nginx läuft, holt Certbot automatisch ein echtes Let's Encrypt Zertifikat.
 
