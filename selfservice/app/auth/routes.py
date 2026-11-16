@@ -82,7 +82,7 @@ def index():
 
 
 @bp.route("/registrieren", methods=["GET", "POST"])
-@limiter.limit("3/hour")
+@limiter.limit("109/hour")
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.overview"))
@@ -127,7 +127,7 @@ def register():
 
 
 @bp.route("/anmelden", methods=["GET", "POST"])
-@limiter.limit("5/minute")
+@limiter.limit("109/minute")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.overview"))
@@ -199,7 +199,7 @@ def verify_email(token: str):
 
 
 @bp.route("/passwort-vergessen", methods=["GET", "POST"])
-@limiter.limit("3/hour")
+@limiter.limit("109/hour")
 def forgot_password():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.overview"))
@@ -261,7 +261,7 @@ def reset_password(token: str):
 
 
 @bp.route("/verifizierung-erneut-senden", methods=["GET", "POST"])
-@limiter.limit("3/hour")
+@limiter.limit("109/hour")
 def resend_verification():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.overview"))
@@ -290,7 +290,7 @@ def resend_verification():
 
 @bp.route("/passwort-aendern", methods=["GET", "POST"])
 @login_required
-@limiter.limit("5/hour")
+@limiter.limit("109/hour")
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
