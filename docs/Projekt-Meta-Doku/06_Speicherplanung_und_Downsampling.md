@@ -207,6 +207,8 @@ Legende:
 
 ## 🔄 InfluxDB Downsampling-Tasks (Flux)
 
+> **Hinweis:** InfluxDB 3 Core unterstützt kein Flux und keine Flux-Tasks – historisches Beispiel, für die Umsetzung das Downsampler-Plugin/Trigger und SQL verwenden.
+
 ### Task 1: 15-Minuten-Aggregation
 
 ```flux
@@ -311,7 +313,7 @@ influx bucket create   --name umweltbox_daily   --org umweltbox   --retention 0 
 ### 2. Tasks anlegen (via InfluxDB UI)
 
 1. **Navigation**: Settings → Tasks → Create Task
-2. **Flux-Code einfügen** (siehe oben)
+2. **Flux-Code einfügen** (siehe oben) — veraltet: InfluxDB 3 Core nutzt das Downsampler-Plugin/Trigger statt Flux-Tasks
 3. **Schedule konfigurieren** (every/cron)
 4. **Speichern & Aktivieren**
 

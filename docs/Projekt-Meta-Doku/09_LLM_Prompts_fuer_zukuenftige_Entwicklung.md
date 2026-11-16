@@ -11,6 +11,8 @@ Diese Datei enthält **fertige Prompts für Large Language Models (LLMs)**, um d
 
 **Zielgruppe**: Entwickler*innen, DevOps-Engineers, Lehrkräfte
 
+> **⚠️ Stack-Realität (Stand 2026-11):** Diese Plattform nutzt **InfluxDB 3 Core 3.8.0** (Port 8181, kein Web-UI, Admin-Token in `influxdb/tokens/admin.token`). InfluxDB 3 unterstützt **kein Flux** – Abfragen erfolgen in **SQL** oder **InfluxQL** (HTTP-API oder `influxdb3` CLI), Downsampling über das Downsampler-Plugin/Trigger statt Flux-Tasks, Backup über die `influxdb3`-CLI. Die unten stehenden Flux-Beispiele sind historisch und vor Verwendung entsprechend zu übersetzen. Maßgeblich sind `04_InfluxDB_Schema.md`, `06_Speicherplanung_und_Downsampling.md` und `docker-compose.yaml`.
+
 ---
 
 ## 📋 Prompt-Kategorien
@@ -195,7 +197,11 @@ Bitte liefere:
 
 ## 3. InfluxDB & Datenmodellierung
 
+> **Hinweis:** Die Prompts 3.1–3.2 nutzen veraltete Flux-/Task-Konzepte. Für InfluxDB 3 Core SQL/InfluxQL und das Downsampler-Plugin verwenden.
+
 ### 3.1 Downsampling-Task erstellen
+
+> **Veraltet:** Flux-Task → Downsampler-Plugin / SQL.
 
 **Prompt**:
 ```
@@ -220,6 +226,8 @@ Bitte liefere:
 ---
 
 ### 3.2 Datenqualitäts-Check
+
+> **Veraltet:** Flux-Query → SQL/InfluxQL.
 
 **Prompt**:
 ```
@@ -261,6 +269,8 @@ Bitte liefere:
 ## 4. Grafana Dashboards
 
 ### 4.1 Dashboard für Schul-Übersicht
+
+> **Veraltet:** `from(bucket: ...)` → SQL/InfluxQL.
 
 **Prompt**:
 ```
@@ -371,6 +381,8 @@ Bitte liefere:
 ---
 
 ### 5.3 Backup-Strategie für InfluxDB
+
+> **Veraltet:** `influx backup` → `influxdb3`-CLI.
 
 **Prompt**:
 ```
@@ -483,6 +495,8 @@ Bitte liefere:
 
 ### 7.2 InfluxDB Performance-Analyse
 
+> **Veraltet:** Flux-Query → SQL/InfluxQL.
+
 **Prompt**:
 ```
 Ich arbeite am Umweltbox-Projekt. InfluxDB-Queries sind langsam (>10 Sekunden).
@@ -501,6 +515,8 @@ Bitte liefere:
 ---
 
 ### 7.3 Grafana-Dashboard lädt nicht
+
+> **Veraltet:** `influx`-CLI → `influxdb3`-CLI.
 
 **Prompt**:
 ```
@@ -546,6 +562,8 @@ Bitte liefere vollständige Konfiguration.
 
 ### Template 2: Neue Downsampling-Regel
 
+> **Veraltet:** Flux-Task → Downsampler-Plugin / SQL.
+
 ```
 Ich arbeite am Umweltbox-Projekt. Wir wollen eine neue Downsampling-Regel für [SENSOR-TYP] erstellen.
 
@@ -564,6 +582,8 @@ Bitte erstelle:
 ---
 
 ### Template 3: Neues Grafana-Panel
+
+> **Veraltet:** Flux-Query → SQL/InfluxQL.
 
 ```
 Ich arbeite am Umweltbox-Projekt. Wir wollen ein neues Grafana-Panel erstellen.
@@ -663,7 +683,7 @@ src/
 ### ✅ DO
 
 1. **Kontext geben**: "Ich arbeite am Umweltbox-Projekt..."
-2. **Spezifisch sein**: "Erstelle eine Flux-Query für..." statt "Wie mache ich...?"
+2. **Spezifisch sein**: "Erstelle eine SQL-Query für..." statt "Wie mache ich...?"
 3. **Format vorgeben**: "Bitte liefere: 1. Code, 2. Erklärung, 3. Beispiel"
 4. **Constraints nennen**: "Nutze nur Python 3.9+, keine externen Libraries außer..."
 5. **Beispiele geben**: "Ähnlich wie in Dokument 05, aber für..."
@@ -673,7 +693,7 @@ src/
 1. **Vage Fragen**: "Wie funktioniert MQTT?" → Zu allgemein
 2. **Ohne Kontext**: "Erstelle ein Dashboard" → Welche Daten? Welches Tool?
 3. **Zu komplex**: "Erstelle die gesamte Infrastruktur" → In Teilaufgaben splitten
-4. **Veraltete Infos**: "Nutze InfluxDB 1.x" → Wir nutzen 2.x
+4. **Veraltete Infos**: "Nutze InfluxDB 1.x/2.x oder Flux" → Wir nutzen InfluxDB 3 Core (SQL/InfluxQL, `influxdb3`-CLI, Port 8181)
 
 ---
 

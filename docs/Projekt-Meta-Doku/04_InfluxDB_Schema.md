@@ -264,7 +264,7 @@ timestamp: 2025-01-03T14:30:00Z
 
 **Inhalt**: Mittelwerte, Min, Max über 15 Minuten
 
-**Erzeugung**: Via InfluxDB Task (Flux)
+**Erzeugung**: Via InfluxDB Task (Flux) — *veraltet; in InfluxDB 3 Core über das Downsampler-Plugin/Trigger umsetzen*
 
 **Schema**:
 ```
@@ -301,6 +301,8 @@ timestamp: (aggregierter Zeitpunkt)
 **Größe**: ~0.03 GB/Jahr (kumulativ)
 
 ## 📋 Flux Task: Downsampling (Beispiel)
+
+> **Hinweis:** InfluxDB 3 Core unterstützt kein Flux und keine Flux-Tasks – historisches Beispiel, für die Umsetzung das Downsampler-Plugin/Trigger und SQL verwenden.
 
 ### 15-Minuten-Aggregation
 
@@ -377,6 +379,8 @@ REAL:            ~50.000 (da nicht alle Kombinationen existieren)
 - UUIDs oder Session-IDs als Tags
 
 ## 🔍 Query-Beispiele (Flux)
+
+> **Hinweis:** InfluxDB 3 Core unterstützt kein Flux – diese Beispiele sind historisch; äquivalente Abfragen in SQL oder InfluxQL formulieren.
 
 ### Alle Temperaturen der letzten Stunde
 
