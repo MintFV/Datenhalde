@@ -57,6 +57,13 @@ def _generate_password(length: int = 16) -> str:
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
+def _mqtt_topic(tenant_id: str, username: str, role: str) -> str:
+    """Topic-Wert passend zur erteilten ACL (siehe service.add_acl_rules)."""
+    if role == "admin":
+        return tenant_id
+    return f"{tenant_id}/{username}"
+
+
 @bp.route("/")
 @login_required
 def overview():
@@ -138,6 +145,7 @@ def create():
                 username=username,
                 password=password,
                 tenant=tenant,
+                topic=_mqtt_topic(tenant.tenant_id, username, role),
             )
         except (OSError, ValueError, RuntimeError):
             logger.exception(
@@ -174,6 +182,9 @@ def change_password(account_id: int):
                 username=account.username,
                 password=new_password,
                 tenant=current_user.tenant,
+                topic=_mqtt_topic(
+                    current_user.tenant.tenant_id, account.username, account.role
+                ),
             )
         except (OSError, ValueError, RuntimeError):
             logger.exception(
