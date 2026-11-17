@@ -264,18 +264,31 @@ pre code {
     width: 40%;
 }
 
-/* ---- Tasmota MQTT parameters display ---- */
+/* ---- Tasmota MQTT parameters (Look & Feel von /mq) ---- */
 .tasmota-panel {
-    background-color: #4a4a4a;
-    border-radius: 4px;
-    padding: 1.1rem;
-    color: #f2f2f2;
+    --c_frm: #4f4f4f;
+    --c_ttl: #eaeaea;
+    --c_btn: #1fa3ec;
+    --c_btntxt: #faffff;
+    --c_btnhvr: #0e70a4;
+    --c_btnsv: #47c266;
+    --c_btnsvhvr: #5aaf6f;
+    --c_in: #dddddd;
+    --c_intxt: #000000;
+    background-color: var(--c_frm);
+    color: var(--c_ttl);
+    font-family: verdana, sans-serif;
+    font-size: 1em;
+    text-align: left;
+    padding: 5px;
+    border-radius: 3px;
 }
 
 .tasmota-panel fieldset {
-    border: 2px solid #d0d0d0;
+    background: var(--c_frm);
+    border: 2px solid #cfcfcf;
     border-radius: 3px;
-    padding: 0.5rem 1rem 1rem;
+    padding: 5px;
     margin: 0;
     min-width: 0;
 }
@@ -284,63 +297,70 @@ pre code {
     float: none;
     width: auto;
     margin: 0;
-    padding: 0 0.4rem;
-    font-size: 1.1rem;
+    padding: 0 4px;
+    font-size: 1em;
     font-weight: 700;
-    color: #fff;
+    color: var(--c_ttl);
 }
 
-.tasmota-field {
-    margin-bottom: 0.8rem;
+.tasmota-panel p {
+    margin: 0.5em 0;
 }
 
-.tasmota-field label {
-    display: block;
-    font-size: 0.95rem;
+.tasmota-label {
     font-weight: 700;
-    margin-bottom: 0.2rem;
 }
 
-.tasmota-hint {
-    font-weight: 400;
-}
-
-.tasmota-field input {
+.tasmota-panel input[type="text"],
+.tasmota-panel input[type="password"] {
     width: 100%;
-    background-color: #d9d9d9;
-    color: #000;
-    border: 1px solid #8a8a8a;
+    box-sizing: border-box;
+    background: var(--c_in);
+    color: var(--c_intxt);
+    border: 1px solid #9a9a9a;
     border-radius: 2px;
-    padding: 0.35rem 0.5rem;
-    font-family: SFMono-Regular, Consolas, 'Liberation Mono', monospace;
-    font-size: 0.95rem;
+    padding: 5px;
+    font-family: inherit;
+    font-size: 1em;
 }
 
-.tasmota-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 0.8rem;
+.tasmota-panel input[type="checkbox"] {
+    width: 1em;
+    height: 1em;
+    margin: 0 6px 0 0;
+    vertical-align: -1px;
+    accent-color: var(--c_btn);
 }
 
-.tasmota-checkbox input {
-    width: 1.1rem;
-    height: 1.1rem;
-    margin: 0;
-    accent-color: #1a73e8;
+.tasmota-panel button,
+.tasmota-panel .tasmota-btn {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 0.3rem;
+    background: var(--c_btn);
+    color: var(--c_btntxt);
+    line-height: 2.4rem;
+    font-size: 1.2rem;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.4s;
 }
 
-.tasmota-note {
-    margin: 1rem 0 0;
-    font-size: 0.85rem;
-    color: #dadada;
+.tasmota-panel button:hover,
+.tasmota-panel .tasmota-btn:hover {
+    background: var(--c_btnhvr);
+    color: var(--c_btntxt);
+    text-decoration: none;
 }
 
-.tasmota-note code {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: #fff;
+.tasmota-panel .tasmota-btn-save {
+    background: var(--c_btnsv);
+}
+
+.tasmota-panel .tasmota-btn-save:hover {
+    background: var(--c_btnsvhvr);
 }
 
 /* ---- Responsive adjustments ---- */

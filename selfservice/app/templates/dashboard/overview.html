@@ -60,51 +60,36 @@
             <h5 class="card-title mb-3"><i class="bi bi-plug text-success"></i> Verbindungsdaten</h5>
             <div class="tasmota-panel">
                 <fieldset>
-                    <legend>MQTT parameters</legend>
+                    <legend><b>&nbsp;MQTT parameters&nbsp;</b></legend>
 
-                    <div class="tasmota-field">
-                        <label>Host <span class="tasmota-hint">()</span></label>
-                        <input type="text" value="{{ config.DOMAIN }}" readonly aria-label="Host">
-                    </div>
+                    <p><b class="tasmota-label">Host</b> ()<br>
+                        <input type="text" value="{{ config.DOMAIN }}" readonly aria-label="Host"></p>
 
-                    <div class="tasmota-field">
-                        <label>Port <span class="tasmota-hint">(1883)</span></label>
-                        <input type="text" value="8883" readonly aria-label="Port">
-                    </div>
+                    <p><b class="tasmota-label">Port</b> (1883)<br>
+                        <input type="text" value="8883" readonly aria-label="Port"></p>
 
-                    <div class="tasmota-checkbox">
-                        <input type="checkbox" checked disabled aria-label="MQTT TLS">
-                        <span>MQTT TLS</span>
-                    </div>
+                    <p><label><input type="checkbox" checked disabled aria-label="MQTT TLS"><b class="tasmota-label">MQTT TLS</b></label></p>
 
-                    <div class="tasmota-field">
-                        <label>Client <span class="tasmota-hint">(DVES_E9738C)</span></label>
-                        <input type="text" value="{{ mqtt_client }}" readonly aria-label="Client">
-                    </div>
+                    <p><b class="tasmota-label">Client</b> (DVES_E9738C)<br>
+                        <input type="text" value="{{ mqtt_client }}" readonly aria-label="Client"></p>
 
-                    <div class="tasmota-field">
-                        <label>User <span class="tasmota-hint">(DVES_USER)</span></label>
-                        <input type="text" value="{{ mqtt_username or '—' }}" readonly aria-label="User">
-                    </div>
+                    <p><b class="tasmota-label">User</b> (DVES_USER)<br>
+                        <input type="text" value="{{ mqtt_username or '—' }}" readonly aria-label="User"></p>
 
-                    <div class="tasmota-field">
-                        <div class="tasmota-checkbox mb-1">
-                            <input type="checkbox" checked disabled aria-label="Password gesetzt">
-                            <span>Password</span>
-                        </div>
-                        <input type="password" value="*****" readonly aria-label="Password">
-                    </div>
+                    <p><label><b class="tasmota-label">Password</b><input type="checkbox" checked disabled aria-label="Password-Feld" title="Passwortfeld"></label><br>
+                        <input type="password" value="*****" readonly aria-label="Password"></p>
 
-                    <div class="tasmota-field">
-                        <label>Topic = %topic% <span class="tasmota-hint">(tasmota_E9738C)</span></label>
-                        <input type="text" value="{{ mqtt_topic or '—' }}" readonly aria-label="Topic">
-                    </div>
+                    <p><b class="tasmota-label">Topic</b> = %topic% (tasmota_E9738C)<br>
+                        <input type="text" value="{{ mqtt_topic or '—' }}" readonly aria-label="Topic"></p>
 
-                    <div class="tasmota-field">
-                        <label>Full Topic <span class="tasmota-hint">(%prefix%/%topic%/)</span></label>
-                        <input type="text" value="umweltbox/%topic%/%prefix%/" readonly aria-label="Full Topic">
-                    </div>
+                    <p><b class="tasmota-label">Full Topic</b> (%prefix%/%topic%/)<br>
+                        <input type="text" value="umweltbox/%topic%/%prefix%/" readonly aria-label="Full Topic"></p>
+
+                    <br>
+                    <button type="button" class="tasmota-btn-save" id="tasmota-copy" title="Werte in die Zwischenablage kopieren">Save</button>
                 </fieldset>
+                <p></p>
+                <a href="{{ url_for('mqtt.overview') }}" class="tasmota-btn">Configuration</a>
             </div>
             {% if not mqtt_username %}
             <p class="text-muted small mt-2 mb-0">
@@ -114,4 +99,25 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    var button = document.getElementById('tasmota-copy');
+    if (!button || !navigator.clipboard) { return; }
+    button.addEventListener('click', function () {
+        var values = [];
+        document.querySelectorAll('.tasmota-panel input[type="text"], .tasmota-panel input[type="password"]').forEach(function (input) {
+            if (input.value) {
+                values.push(input.getAttribute('aria-label') + ': ' + input.value);
+            }
+        });
+        navigator.clipboard.writeText(values.join('\n')).then(function () {
+            button.textContent = 'Kopiert!';
+            setTimeout(function () { button.textContent = 'Save'; }, 1500);
+        });
+    });
+})();
+</script>
 {% endblock %}
