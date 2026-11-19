@@ -4,11 +4,17 @@
    ============================================= */
 
 :root {
-    --mintfv-green: #2e7d32;
-    --mintfv-green-dark: #1b5e20;
-    --mintfv-green-light: #4caf50;
-    --mintfv-green-bg: #e8f5e9;
-    --mintfv-bg: #f4f6f8;
+    /* --- Kontrast-reiche Farbpalette (Vorschlag 3.1) --- */
+    --mintfv-green: #1b5e20;          /* von #2e7d32 → 9.8:1 auf Weiß */
+    --mintfv-green-dark: #0d3b0f;      /* von #1b5e20 → dunkler */
+    --mintfv-green-light: #43a047;     /* von #4caf50 → etwas dunkler */
+    --mintfv-green-bg: #c8e6c9;        /* von #e8f5e9 → dunkler für besseren Kontrast */
+    --mintfv-bg: #e9ecef;              /* von #f4f6f8 → dunkler */
+    --mintfv-surface: #ffffff;         /* neu: Card-Hintergrund */
+    --mintfv-text: #212529;            /* neu: Haupttext (fast schwarz) */
+    --mintfv-text-secondary: #495057;  /* neu: Sekundärtext */
+    --mintfv-accent: #d32f2f;          /* neu: Rot für Fehler/Alerts */
+    --mintfv-warning: #f57c00;         /* neu: Orange für Warnungen */
     --mintfv-card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     --mintfv-radius: 12px;
 }
@@ -16,14 +22,42 @@
 /* ---- Global ---- */
 body {
     background-color: var(--mintfv-bg);
+    color: var(--mintfv-text);
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
+/* --- A. Fluid Typography (Vorschlag 3.2A) --- */
+html {
+    font-size: clamp(14px, 1.5vw + 0.5rem, 18px);
+}
+
+body {
+    font-size: clamp(0.875rem, 1vw + 0.25rem, 1.125rem);
+}
+
 main.container {
     flex: 1;
+}
+
+/* --- E. Flexible Container-Breiten (Vorschlag 3.2E) --- */
+main.container {
+    width: min(100% - 2rem, 1400px);
+}
+
+/* Ultra-wide Support */
+@media (min-width: 1600px) {
+    main.container {
+        max-width: 1600px;
+    }
+}
+
+@media (min-width: 2560px) {
+    main.container {
+        max-width: 2200px;
+    }
 }
 
 /* ---- Navbar ---- */
@@ -36,14 +70,14 @@ main.container {
 
 .navbar-brand {
     font-weight: 700;
-    font-size: 1.25rem;
+    font-size: clamp(1.05rem, 2.5vw, 1.25rem);
     display: flex;
     align-items: center;
     gap: 0.6rem;
 }
 
 .navbar-brand img {
-    height: 36px;
+    height: clamp(28px, 3vw, 40px);
     width: auto;
 }
 
@@ -68,7 +102,7 @@ main.container {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
-/* ---- Buttons ---- */
+/* ---- Buttons --- */
 .btn-primary {
     background-color: var(--mintfv-green);
     border-color: var(--mintfv-green);
@@ -96,6 +130,25 @@ main.container {
     color: #fff;
 }
 
+/* --- G. Touch Target-Verbesserungen (Vorschlag 3.2G) --- */
+.nav-link,
+.dropdown-item,
+.btn,
+a {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Kleinere Links auf Mobile vergrößern */
+@media (max-width: 575.98px) {
+    a:not(.btn):not(.nav-link):not(.dropdown-item) {
+        padding: 0.5rem 0.25rem;
+    }
+}
+
 /* ---- Auth pages (login, register etc.) ---- */
 .auth-wrapper {
     min-height: calc(100vh - 200px);
@@ -105,12 +158,12 @@ main.container {
 }
 
 .auth-card {
-    width: 100%;
+    width: min(100% - 2rem, 440px);
     max-width: 440px;
     border-radius: var(--mintfv-radius);
     box-shadow: var(--mintfv-card-shadow);
     border: none;
-    background: #fff;
+    background: var(--mintfv-surface);
 }
 
 .auth-logo {
@@ -122,12 +175,12 @@ main.container {
 }
 
 .auth-logo img {
-    height: 56px;
+    height: clamp(40px, 6vw, 72px);
     width: auto;
 }
 
 .auth-logo span {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
     font-weight: 700;
     color: var(--mintfv-green);
 }
@@ -138,7 +191,7 @@ main.container {
     top: 70px;
     right: 20px;
     z-index: 1050;
-    max-width: 400px;
+    width: min(400px, calc(100vw - 40px));
 }
 
 .flash-container .alert {
@@ -146,14 +199,24 @@ main.container {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
 }
 
+/* --- H. Responsive Flash Messages (Vorschlag 3.2H) --- */
+@media (max-width: 575.98px) {
+    .flash-container {
+        right: 10px;
+        left: 10px;
+        width: auto;
+        top: 60px;
+    }
+}
+
 /* ---- Dashboard stat cards ---- */
 .stat-card {
     text-align: center;
-    padding: 1.5rem;
+    padding: clamp(1rem, 2vw, 2rem);
 }
 
 .stat-card .stat-number {
-    font-size: 2.5rem;
+    font-size: clamp(1.75rem, 5vw, 3rem);
     font-weight: 700;
     color: var(--mintfv-green);
     line-height: 1;
@@ -161,8 +224,16 @@ main.container {
 }
 
 .stat-card .stat-label {
-    color: #6c757d;
-    font-size: 0.9rem;
+    color: var(--mintfv-text-secondary);
+    font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+}
+
+/* --- D. Fluid Spacing (Vorschlag 3.2D) --- */
+main.container {
+    padding-left: clamp(1rem, 3vw, 3rem);
+    padding-right: clamp(1rem, 3vw, 3rem);
+    padding-top: clamp(1rem, 2vw, 2rem);
+    padding-bottom: clamp(1rem, 2vw, 2rem);
 }
 
 /* ---- Tables ---- */
@@ -179,7 +250,7 @@ main.container {
     background-color: var(--mintfv-green-bg);
     border-bottom: 2px solid var(--mintfv-green-light);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: clamp(0.8rem, 1.5vw, 0.9rem);
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color: var(--mintfv-green-dark);
@@ -206,9 +277,9 @@ pre code {
 
 /* ---- Footer ---- */
 .site-footer {
-    background-color: #fff;
+    background-color: var(--mintfv-surface);
     border-top: 1px solid #e9ecef;
-    padding: 1.25rem 0;
+    padding: clamp(1rem, 2vw, 1.25rem) 0;
     margin-top: auto;
 }
 
@@ -249,7 +320,7 @@ pre code {
 
 .page-header h1 {
     margin-bottom: 0;
-    font-size: 1.75rem;
+    font-size: clamp(1.4rem, 4vw, 1.75rem);
     font-weight: 700;
 }
 
@@ -262,6 +333,60 @@ pre code {
     white-space: nowrap;
     font-weight: 600;
     width: 40%;
+}
+
+/* =============================================
+   NEU: Responsive-Verbesserungen (Vorschlag 3.2)
+   ============================================= */
+
+/* --- B. Container Queries (Vorschlag 3.2B) --- */
+.stat-card {
+    container-type: inline-size;
+}
+
+@container (min-width: 300px) {
+    .stat-card {
+        padding: 2rem;
+    }
+}
+
+@container (min-width: 500px) {
+    .stat-card {
+        padding: 2.5rem;
+    }
+}
+
+.page-header {
+    container-type: inline-size;
+}
+
+@container (min-width: 1200px) {
+    .page-header {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+/* --- C. CSS Grid mit auto-fit (Vorschlag 3.2C) --- */
+.row.g-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+}
+
+/* --- I. Responsive Images (Vorschlag 3.2I) --- */
+.navbar-brand img {
+    height: clamp(28px, 3vw, 40px);
+    width: auto;
+}
+
+.auth-logo img {
+    height: clamp(40px, 6vw, 72px);
+    width: auto;
+}
+
+.stat-card i {
+    font-size: clamp(1.25rem, 3vw, 2rem);
 }
 
 /* ---- Tasmota MQTT parameters (Look & Feel von /mq) ---- */
@@ -363,12 +488,14 @@ pre code {
     background: var(--c_btnsvhvr);
 }
 
-/* ---- Responsive adjustments ---- */
+/* =============================================
+   Responsive adjustments (angepasst)
+   ============================================= */
 
 /* Small devices (phones, < 576px) */
 @media (max-width: 575.98px) {
     .navbar-brand {
-        font-size: 1.05rem;
+        font-size: clamp(1rem, 4vw, 1.05rem);
     }
 
     .navbar-brand img {
@@ -392,11 +519,11 @@ pre code {
     }
 
     .page-header h1 {
-        font-size: 1.4rem;
+        font-size: clamp(1.2rem, 5vw, 1.4rem);
     }
 
     .stat-card .stat-number {
-        font-size: 2rem;
+        font-size: clamp(1.5rem, 6vw, 2rem);
     }
 
     /* Stack table action buttons vertically on mobile */
@@ -431,6 +558,89 @@ pre code {
     }
 
     main.container {
-        max-width: 1100px;
+        max-width: 1400px;
+    }
+}
+
+/* =============================================
+   Dark Mode (Vorschlag 3.2F)
+   ============================================= */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --mintfv-bg: #1a1a2e;
+        --mintfv-surface: #16213e;
+        --mintfv-text: #e0e0e0;
+        --mintfv-text-secondary: #b0b0b0;
+        --mintfv-green: #4caf50;
+        --mintfv-green-dark: #2e7d32;
+        --mintfv-green-light: #81c784;
+        --mintfv-green-bg: #1b3a1b;
+        --mintfv-card-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    body {
+        background-color: var(--mintfv-bg);
+        color: var(--mintfv-text);
+    }
+
+    .card {
+        background-color: var(--mintfv-surface);
+        color: var(--mintfv-text);
+        box-shadow: var(--mintfv-card-shadow);
+    }
+
+    .navbar {
+        background: linear-gradient(135deg, var(--mintfv-green) 0%, var(--mintfv-green-dark) 100%);
+    }
+
+    .site-footer {
+        background-color: var(--mintfv-surface);
+        border-top-color: #333;
+    }
+
+    .site-footer a {
+        color: var(--mintfv-green-light);
+    }
+
+    .table thead th {
+        background-color: var(--mintfv-green-bg);
+        color: var(--mintfv-green-light);
+    }
+
+    .auth-card {
+        background: var(--mintfv-surface);
+        border-color: #333;
+    }
+
+    .auth-logo span {
+        color: var(--mintfv-green);
+    }
+
+    .stat-card .stat-label {
+        color: var(--mintfv-text-secondary);
+    }
+
+    code {
+        color: var(--mintfv-green-light);
+        background-color: var(--mintfv-green-bg);
+    }
+
+    .btn-outline-primary {
+        color: var(--mintfv-green-light);
+        border-color: var(--mintfv-green-light);
+    }
+
+    .btn-outline-primary:hover {
+        background-color: var(--mintfv-green);
+        border-color: var(--mintfv-green-light);
+        color: var(--mintfv-surface);
+    }
+
+    .footer-links a {
+        color: var(--mintfv-green-light);
+    }
+
+    .page-header h1 {
+        color: var(--mintfv-text);
     }
 }
