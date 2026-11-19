@@ -1,5 +1,7 @@
 # Umweltbox - Architektur-Übersicht
 
+> **⚠️ Status: teils ZIELBILD (Januar 2026).** Die Komponenten „Onboarding-Portal", „Admin-Interface" und „REST API Public Data Access" (Z. 28–31, 44–47, 164–172) sind **nicht implementiert**. Produktiv existiert nur `selfservice/` (Auth + MQTT-Account-CRUD). Die „Query (Flux)" in Z. 73 ist historisch – InfluxDB 3 Core nutzt SQL/InfluxQL. Maßgeblich für den Ist-Stand: `docker-compose.yaml`, `selfservice/README.md` und [`10_Doku_Code_Abgleich_2026-11.md`](10_Doku_Code_Abgleich_2026-11.md).
+
 ## 🏗️ System-Architektur
 
 Die Umweltbox nutzt eine bewährte IoT-Architektur mit MQTT als zentralem Message Broker, Node-RED für die Datenverarbeitung und InfluxDB für die Zeitreihenspeicherung.

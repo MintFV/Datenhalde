@@ -3,7 +3,7 @@
 Self-Service-Webportal für MintFV — Benutzer registrieren sich, verifizieren ihre E-Mail und verwalten eigenständig MQTT-Accounts.
 
 **Container:** mintfv-selfservice (UID 2007:2100)  
-**Image:** python:3.12-slim (eigenes Dockerfile)  
+**Image:** python:3.12-alpine (eigenes Dockerfile, Build- und Runtime-Stage)  
 **Framework:** Flask 3.1 + SQLAlchemy + Flask-Migrate + Flask-Mailman + gunicorn  
 **URL:** https://mintfv.peddy.net/selfservice/
 
@@ -35,7 +35,7 @@ Separater Container (`mosquitto-reload`, UID 2003:2100), der per Shared PID-Name
 
 ```
 selfservice/
-├── Dockerfile                  # Selfservice-Container (python:3.12-slim)
+├── Dockerfile                  # Selfservice-Container (python:3.12-alpine)
 ├── Dockerfile.mosquitto-reload # Sidecar-Container (alpine)
 ├── entrypoint.sh               # gunicorn Startup (inkl. DB-Migration)
 ├── mosquitto-reload.sh         # Sidecar Watch-Script
@@ -83,10 +83,10 @@ selfservice/
 | Variable | Beschreibung | Default |
 |----------|-------------|---------|
 | `SELFSERVICE_SECRET_KEY` | Geheimer Schlüssel für Sessions/Token | `change-me-in-production` |
-| `DOMAIN` | Domain für E-Mail-Links | `mintfv.example.com` |
+| `DOMAIN` | Domain für E-Mail-Links | `localhost` |
 | `SMTP_HOST` | SMTP-Relay Hostname (→ `MAIL_SERVER`) | `smtp-relay` |
 | `SMTP_PORT` | SMTP-Relay Port (→ `MAIL_PORT`) | `8025` |
-| `SMTP_FROM` | Absender-Adresse (→ `MAIL_DEFAULT_SENDER`) | `${SMTP_USER_PROVIDER}` (aus .env) |
+| `SMTP_FROM` | Absender-Adresse (→ `MAIL_DEFAULT_SENDER`) | `noreply@{DOMAIN}` |
 | `MOSQUITTO_PASSWD_FILE` | Pfad zur Passwort-Datei | `/mosquitto/config/mosquitto.passwd` |
 | `MOSQUITTO_ACL_FILE` | Pfad zur ACL-Datei | `/mosquitto/config/mosquitto.acl` |
 | `MOSQUITTO_RELOAD_DIR` | Verzeichnis für Reload-Trigger | `/app/reload` |
@@ -111,32 +111,41 @@ Den generierten Wert in `.env` als `SELFSERVICE_SECRET_KEY` setzen.
 - **Passwort ändern** (`/selfservice/passwort-aendern`) — Für eingeloggte Benutzer (über Navbar-Dropdown)
 - **Passwort vergessen** (`/selfservice/passwort-vergessen`) — Reset-Link per E-Mail (gültig 1h)
 
+### Tenant- & Geräteverwaltung
+- **Tenant beantragen** (`/selfservice/tenant/beantragen`) — Name, Schultyp, Bundesland, Ort, Kontakt, GPS; Tenant-ID wird nach `03_MQTT_Topic_Struktur.md` erzeugt (`de-{bundesland}-{schultyp}-{name}`)
+- **Freigabe** (`/selfservice/admin/tenants`, nur `role=admin`) — Tenants freigeben oder suspendieren; neue Tenants starten mit Status `pending`
+- **Übersicht** (`/selfservice/tenant/uebersicht`) — eigener Tenant und Geräte
+- **Geräte** — anlegen/bearbeiten/löschen (`/selfservice/tenant/<id>/geraete/neu`, `/selfservice/tenant/geraete/<id>/bearbeiten|loeschen`) inkl. Verknüpfung mit einem MQTT-Account
+
 ### MQTT-Account-Verwaltung
-- **Übersicht** (`/selfservice/mqtt/`) — Alle eigenen MQTT-Accounts
-- **Account erstellen** (`/selfservice/mqtt/erstellen`) — Username + Passwort, ACL-Regeln
-- **Passwort ändern** (`/selfservice/mqtt/<id>/passwort-aendern`)
+- **Übersicht** (`/selfservice/mqtt/`) — Alle eigenen MQTT-Accounts des Tenants inkl. effektivem Topic
+- **Account erstellen** (`/selfservice/mqtt/erstellen`) — Username + Passwort, Rolle (`admin` / `sensor` / `nodered`) und optionales Gerät; Zugangsdaten werden **einmalig** angezeigt
+- **Passwort ändern** (`/selfservice/mqtt/<id>/passwort`) — ebenfalls einmalige Anzeige der neuen Zugangsdaten
 - **Account löschen** (`/selfservice/mqtt/<id>/loeschen`)
 
+> **Hinweis:** MQTT-Accounts setzen einen **freigegebenen** Tenant (`status=active`) voraus. Die Rollen bestimmen die ACL: `admin` → `readwrite umweltbox/{tenant}/#`, `sensor` → `write umweltbox/{tenant}/{gerät}/#` + `read .../cmnd/{gerät}/#`, `nodered` → `read umweltbox/{tenant}/#`. Unbekannte Rollen und Sensoren ohne Gerät werden abgewiesen (fail-closed). Siehe `docs/Projekt-Meta-Doku/10_Doku_Code_Abgleich_2026-11.md`.
+
+### Dashboard / Verbindungsdaten
+- **Dashboard** (`/selfservice/dashboard`) — Tenant-Status, Anzahl MQTT-Accounts/Geräte sowie ein Tasmota-artiges Panel mit Host, Port 8883, TLS, Client, User, maskiertem Passwort, Topic und Full Topic inkl. Copy-Button.
+
 ### Rate Limiting
-- Registrierung: 3/Stunde
-- Login: 5/Minute
-- Passwort-Reset: 3/Stunde
-- Bestätigung erneut senden: 3/Stunde
-- Passwort ändern: 5/Stunde
-- nginx: 5 req/s pro IP (Zone `selfservice_general`)
+- Global: 60/Minute pro IP (Flask-Limiter-Default)
+- Registrierung: 109/Stunde
+- Login: 109/Minute
+- Passwort vergessen: 109/Stunde
+- Bestätigung erneut senden: 109/Stunde
+- Passwort ändern (Portal): 109/Stunde
+- nginx: 5 req/s pro IP (Zone `selfservice_general`, burst 30)
 
 ---
 
 ## 🎨 Frontend
 
 - **Bootstrap 5.3.3** (CDN) + **Bootstrap Icons 1.11.3** (CDN)
-- **Custom CSS** (`app/static/css/style.css`) mit MintFV-Farbschema (Grün #2e7d32)
+- **Custom CSS** (`app/static/css/style.css`) mit kontrastreichem MintFV-Farbschema (`#1b5e20`) und Dark Mode
 - **Logo** in Navbar (WebP-Thumbnail) und Auth-Seiten (PNG)
-- **Responsive Design** mit drei Breakpoints:
-  - `< 576px` — Mobile (kompakte Navbar, gestackte Buttons)
-  - `576–991px` — Tablet
-  - `>= 992px` — Desktop (max-width 1100px)
-- **Navbar-Dropdown** für Benutzerprofil (Passwort ändern, Abmelden)
+- **Responsive Design**: Fluid Typography/Spacing, Container Queries, CSS-Grid-Auto-Fit, Touch-Targets (≥ 44 px), Breiten bis 2200 px
+- **Navbar-Dropdown** für Benutzerprofil (Passwort ändern, Abmelden); Navigation für Dashboard, MQTT, Tenant und (nur Admin) Freigaben
 
 ---
 
@@ -150,7 +159,7 @@ Den generierten Wert in `.env` als `SELFSERVICE_SECRET_KEY` setzen.
 
 ### Passwort-Hashing
 - MQTT: Mosquitto PBKDF2-SHA512 (`$7$101$<salt>$<hash>`)
-- Benutzer: Werkzeug (pbkdf2:sha256)
+- Benutzer: Werkzeug-Default (`generate_password_hash()` ohne Verfahrensangabe, derzeit scrypt)
 
 ### Datei-Locking
 - `fcntl.flock()` für gleichzeitige Zugriffe auf `mosquitto.passwd` und `mosquitto.acl`

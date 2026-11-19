@@ -1,0 +1,177 @@
+# Doku–Code-Abgleich & Selfservice-Fachlichkeiten (Stand 2026-11-19)
+
+## 0. Methode und Scope
+
+Verglichen wurden:
+
+- **Code:** kompletter `selfservice/`-App (Routes, Forms, Models, Service, Templates, Migration, Tests), `docker-compose.yaml`, nginx-/mosquitto-Configs, Helper-Skripte, CI-Workflows.
+- **Doku:** `README.md`, `AGENTS.md`, `BACKUP.md`, `selfservice/README.md`, `docs/Projekt-Meta-Doku/01–09`, `docs/TASMOTA_SETUP.md`, Service-READMEs, `.github/*.md`, `env.example`, `blue-team-audit/` (lokal, gitignoriert).
+- **Produktive Laufzeit:** `mintfv.peddy.net` (read-only via `mintfv.peddy.net`-Zugang), `docker ps`, Git-Status, SQLite-DB, mosquitto.acl, nginx-Config, laufender Container.
+
+**Quelle der Wahrheit ist der Code bzw. die produktive Laufzeit, nicht die Doku.** Die Meta-Doku (01–09) ist überwiegend ein *Zielbild* aus Januar 2026 und wurde seither nur punktuell (InfluxDB-3-Hinweise) nachgezogen.
+
+---
+
+## 1. Gesamturteil
+
+| Bereich | Bewertung |
+|---|---|
+| Infrastruktur-Doku (README, compose, UIDs, Ports, Security) | **weitgehend konsistent** |
+| Selfservice-README | **teilweise veraltet** (Rate-Limits, Image, Routen, Defaults, Frontend) |
+| MQTT-ACL-/Topic-Doku (03) vs. Implementierung | **deutliche Drift** (Rollen, Topic-Namen, $SYS) |
+| Onboarding-/Architektur-Doku (02, 05, 09) vs. Code | **Zielbild, nicht Realität** – große Lücke |
+| Produktive Laufzeit vs. Git | CSS-Stand war uncommitted und live → **inzwischen nachgezogen** (Commit `16a4b9b`); Produktion liegt damit einen Commit zurück |
+
+**Kurzfassung:** Die Plattform-Infrastruktur ist gut dokumentiert und deckt sich mit dem Compose-Stack. Der Selfservice ist funktional deutlich kleiner als in der Meta-Doku beschrieben: Es gibt Registrierung/Login/Passwort-Reset und eine MQTT-Account-CRUD – aber **keinen** Tenant-/Device-/Onboarding-/Config-Download-/Monitoring-/Admin-Flow. In Produktion wird die MQTT-Verwaltung überhaupt nicht genutzt (0 Tenants, 0 Accounts, 0 Devices); ACLs werden manuell gepflegt.
+
+---
+
+## 2. Detaillierte Abweichungen
+
+### 2.1 Selfservice-README (`selfservice/README.md`)
+
+| ID | Schwere | Doku-Aussage | Code / Realität | Beleg |
+|---|---|---|---|---|
+| D1 | hoch | Rate-Limits: Registrierung 3/h, Login 5/min, Reset 3/h, Resend 3/h, Passwort 5/h (Z. 120–126) | `109/hour` bzw. `109/minute`; global zusätzlich `60/minute` | `app/auth/routes.py:85,130,202,264,293`; `app/extensions.py:35` |
+| D2 | mittel | MQTT-Passwort-Änderung: `/selfservice/mqtt/<id>/passwort-aendern` (Z. 117) | Route ist `/selfservice/mqtt/<int:account_id>/passwort` | `app/mqtt/routes.py:153` |
+| D3 | mittel | Image `python:3.12-slim` (Z. 6, 38) | `python:3.12-alpine` in beiden Stages | `Dockerfile:2,22` |
+| D4 | niedrig | `DOMAIN`-Default `mintfv.example.com` (Z. 86) | Default `localhost` | `app/config.py:10` |
+| D5 | niedrig | `SMTP_FROM`-Default `${SMTP_USER_PROVIDER}` (Z. 89) | Default `noreply@localhost` (bzw. `noreply@{DOMAIN}`) | `app/config.py:17-19,24` |
+| D6 | niedrig | Benutzer-Hashing `pbkdf2:sha256` (Z. 153) | `generate_password_hash()` ohne Verfahrensangabe → Werkzeug-Default (nicht gepinnt) | `app/models.py:3,31-35` |
+| D7 | ~~mittel~~ **erledigt** | Frontend: Grün `#2e7d32`, `max-width 1100px` (Z. 133, 138) | Live-CSS nutzt `#1b5e20`, Dark Mode, Container Queries, `1400–2200px`, Touch-Targets, Fluid Typography | Stand von Production übernommen und als `16a4b9b` committet; `selfservice/README.md` entsprechend korrigiert |
+| D8 | mittel | MQTT-Account-Verwaltung als Funktion beschrieben (Z. 114–118) | Code existiert, aber ohne Tenant/Device ist sie nicht bedienbar; UI sagt „Tenant-Verwaltung … zukünftige Version“ | `app/mqtt/routes.py:63-71,86-88`; `templates/dashboard/overview.html:28` |
+
+### 2.2 MQTT / ACL / Topics
+
+| ID | Schwere | Doku-Aussage | Code / Realität | Beleg |
+|---|---|---|---|---|
+| D9 | **hoch** | Sensor-Rolle: `write umweltbox/{tenant}/{device}/#`, `read .../cmnd/{device}/#` (`03:243-249`, `service.py:182-186`) | Web-Flow übergibt **nie** `device_id`; jeder „Sensor“ landet im Else-Fallback `readwrite umweltbox/{tenant}/{username}/#`. Vom Audit als „Hohes Risiko: MQTT-ACL Fallback“ geführt. | `app/mqtt/routes.py:116-121`; `app/mqtt/service.py:204-211`; `blue-team-audit/REPORT…md` |
+| D10 | mittel | `commands/{device}` (`03:248`, `02:101`) | Code verwendet `cmnd/{device}` (Tasmota-Konvention) | `app/mqtt/service.py:206` |
+| D11 | mittel | `topic read $SYS/#` für Admin/Node-RED (`03:240,256`); Rolle `nodered` beschrieben (`03:251-257`, `models.py:106`) | Code gewährt nur `$SYS/broker/version`; `nodered` ist nur Kommentar, nicht im Formular und nicht in `add_acl_rules` | `app/mqtt/service.py:203,207,211`; `app/mqtt/forms.py:29-32` |
+| D12 | mittel | Templates zeigen `umweltbox/{tenant}/#` für alle Rollen; Dashboard-Topic ohne `umweltbox/`-Präfix | ACL gewährt je nach Rolle andere Topics; angezeigtes Topic entspricht nicht der Realzahl | `app/dashboard/routes.py:7-11`; `templates/mqtt/credentials.html:36`; `templates/mqtt/overview.html`, `create.html` |
+
+### 2.3 Meta-Doku (Zielbild vs. Ist)
+
+| ID | Schwere | Doku-Aussage | Code / Realität | Beleg |
+|---|---|---|---|---|
+| D13 | **hoch** | Onboarding-Portal `/onboarding` mit Schuldaten-Formular, Auto-Approval, Tenant-ID-Generierung, Influx-/Grafana-Credentials, Config-Downloads (Tasmota/RPi/Telegraf), Live-Monitoring | **Nichts davon implementiert.** nginx kennt kein `/onboarding` und kein `/downloads`; keine Routen, keine Views. Produktion: 0 Tenants. | `docs/…/05_Onboarding_Prozess.md:38,45-63,69-71,116-125,127-193,248-254`; `nginx/conf.d/02-ssl.conf` |
+| D14 | **hoch** | InfluxDB v2-API (`/api/v2/buckets`, `influx auth create`, Retention), Flux-Queries, `influx backup` | Stack läuft **InfluxDB 3 Core 3.8.0** (Port 8181, kein Web-UI): kein Flux, keine v2-Buckets-API; SQL/InfluxQL + `influxdb3`-CLI. `09` warnt korrekt, `02`/`05` nicht nachgezogen. | `docs/…/05:88-96,272-278,305`; `docs/…/02:73-74`; `docs/…/09:14`; `docker-compose.yaml` |
+| D15 | mittel | „Onboarding-Portal“, „Admin-Interface“, „REST API Public Data Access“ als Komponenten | Nicht vorhanden. Selfservice hat nur Auth + (theoretische) MQTT-CRUD. | `docs/…/02:28-31,44-47,164-172` |
+| D16 | niedrig | Audit-Status „Phase 1/3, Inventarisierung in Arbeit“ | 12 Interim-Dateien + konsolidierter Report liegen vor (lokal, gitignoriert) | `blue-team-audit/README.md:38-41`, `MASTERPLAN.md:276-278`, `REPORT…md` |
+
+### 2.5 Infrastruktur / Skripte / CI (ergänzende Funde)
+
+| ID | Schwere | Doku-/Skript-Aussage | Code / Realität | Beleg |
+|---|---|---|---|---|
+| D18 | hoch | „InfluxDB Admin Token wird automatisch beim ersten Start generiert“ | **Falsch.** Es gibt keinen Init, der `influxdb/tokens/admin.token` erzeugt; die Datei ist gitignoriert. Ein frischer Checkout kann `influxdb` nicht starten. | `env.example:96-99`; `docker-compose.yaml:356,361`; `.gitignore:45` |
+| D19 | mittel | `curl … /influxdb/health` als validierter Health-Check | nginx-proxt `/influxdb/` **ohne Prefix-Strip** nach `http://influxdb:8181` → `/influxdb/health` wird 404. Die Playwright-Suite umgeht das bewusst und testet direkt `:8181`. | `nginx/conf.d/02-ssl.conf:150-162`; `tests/specs/influxdb.spec.ts:5-13`; `validate.sh:48`; `influxdb/README.md:158` |
+| D20 | mittel | Grafana „Public Links (ohne Login)“, „Public Read-Only“ | `GF_AUTH_ANONYMOUS_ENABLED=false`; `grafana_auto_share.sh` existiert, um das manuell zu ändern | `docs/…/02:162,189`; `docker-compose.yaml:240`; `grafana_auto_share.sh:3-4` |
+| D21 | mittel | „Sobald nginx läuft, holt Certbot automatisch ein echtes Zertifikat“; `mintfv.sh start` erstellt Dummy-Zert | `certbot` führt nur `renew` aus, kein initiales `certonly`; Dummy-Zert nur in `init`, nicht in `start`. Realer Weg: `./mintfv.sh request-cert`. | `README.md:66`; `certbot/SSL-SETUP.md:32-39`; `docker-compose.yaml:174-189`; `mintfv.sh:88-107,109-150,233-241` |
+| D22 | mittel | `validate.sh` prüft Grafana mit `admin:admin` | Compose-Default ist `admingrafana` + Passwort aus Env | `validate.sh:38`; `docker-compose.yaml:238-239` |
+| D23 | mittel | Externer MQTT-Zugang über `mintfv.peddy.net:1883` | Host publish nur **8883**; 1883/9001 sind `expose`-only und TLS-terminiert bei nginx | `nodered/README.md:113`; `mosquitto/README.md:87`; `docker-compose.yaml:99-102,408-410`; `nginx/stream.d/mqtt.conf:12-17` |
+| D24 | mittel | `settings.js`-Kommentar: „LOADED FROM ENVIRONMENT!“ | `credentialSecret` ist literal im File enthalten; `NODE_RED_CREDENTIAL_SECRET` wird nie gelesen | `nodered/data/settings.js:24`; `docker-compose.yaml:491` |
+| D25 | mittel | Drei konkurrierende ACL-Schemata: `commands/{dev}` (Doku), `cmnd/{dev}` (Python-Service), `umweltbox/de-hh-privat-peddy/{user}/commands/…` (Shell-Skript) | Dazu Live-ACL mit teils `tenant/…`, teils `umweltbox/…`. Kein einheitliches Modell. | `manage_mqtt_users.sh:61-70`; `app/mqtt/service.py:206`; `docs/…/03:248`; Produktion `mosquitto.acl` |
+| D26 | niedrig | `mintfv.sh` verweist auf `config.yaml`, `nginx/conf/ssl.conf*`, `enable/disable-ssl` | Diese Dateien existieren nicht; SSL-Config ist immer `nginx/conf.d/02-ssl.conf`. Die Befehle sind wirkungslos. | `mintfv.sh:201-227,541`; `nginx/conf.d/` |
+| D27 | niedrig | Stale Referenzen `mintfv.local`, hartcodierte Netzwerk-Namen `mintfv_mintfv-network`, `test_mqtt_pipeline_5levels.sh` | Compose-Projekt heißt in diesem Checkout `datenhalde` → Netz `datenhalde_mintfv-network`; Datei fehlt. | `setup_nodered_mqtt_user.sh:107`; `test_mqtt_pipeline.sh:611-612`; `tests/run-tests.sh:21`; `mintfv.sh:466` |
+| D28 | niedrig | CI/E2E als „Full-Stack-Test“ | Playwright-`smoke` ist selbst-contained (`page.setContent`), testet den nginx-Container nicht; `e2e.yml` startet nur 8 Services und prüft Port 8080/:3000, die compose nicht published. | `tests/specs/smoke.spec.ts:3-7`; `.github/workflows/e2e.yml:18-26,38`; `ci.yml:91-93` |
+
+**Positiv:** Alle Images in `docker-compose.yaml` sind auf konkrete Versionen gepinnt (kein `:latest`). Die Service-Tabelle in `README.md:5-26` ist vollständig (13 Services inkl. `certbot-init`; 12 davon laufen dauerhaft). UIDs, GID 2100, `read_only`+`tmpfs`, `cap_drop: ALL`, `no-new-privileges`, Healthchecks und `depends_on` entsprechen `AGENTS.md`.
+
+### 2.6 Dokumentinterne Widersprüche (ohne Code-Bezug)
+
+- **Status-Kennzeichnung fehlt:** `01:98` erklärt die Meta-Doku ausdrücklich als „Konzeptphase"; `02`, `05`, `09` lesen sich aber wie Ist-Beschreibungen. Daher stammen viele Drifts (D13–D15) daher, dass *Ziel* und *Realität* nicht gekennzeichnet sind. Empfehlung: klare Status-Banner („ZIELBILD – nicht implementiert") in 02/05/07/09.
+- **InfluxDB-Datenbankname:** `grafana/README.md:58,99` → `mintfv`; `influxdb/README.md:56,179,188` → `mydb`; Meta-Doku → Buckets `umweltbox*`. Drei Varianten.
+- **Feldnamen:** `02:71` `fields={value, lat, lon}` vs. `02:129-131` und `04:27-28` `latitude`/`longitude`.
+- **Geo-Quelle:** `02:117` `getGeoCoordinates(parts[1],parts[2])` vs. `07:157-158` Registry-Lookup über `device_id` vs. `04:154` „einmalig bei Onboarding".
+- **Backup-Verfahren:** `06:380` `influx backup` (in `09:385` selbst als veraltet markiert) vs. `09:14` `influxdb3`-CLI vs. `influxdb/README.md:130-148` tar des Datenverzeichnisses vs. `BACKUP.md:152-169` rsync.
+- **Open Data vs. Datenschutz:** `01:22` „Alle Daten sind öffentlich" und `06:34` „keine personenbezogenen Daten" vs. `05:49` Ansprechperson (Name/E-Mail/Telefon), `05:61` Einverständnis-Checkbox und `07:514` Opt-Out für Standorte.
+- **Secrets-Richtlinie:** `AGENTS.md:40` „Secrets live only in `.env` / `.env.smtp.password`" vs. `docs/TASMOTA_SETUP.md:24,60`, `mosquitto/README.md:74-75,88` und `zz_xx.txt` (Klartext-Passwörter).
+- **CI-Status im Audit veraltet:** `blue-team-audit/interim/12_ast_linting.md:12-20` „kein Ruff/Mypy im CI" vs. `ci.yml:23-29` (beides läuft).
+- **Branch-Protection-Checknames:** `.github/BRANCH_PROTECTION.md:37` `CI / lint & type-check` vs. tatsächlicher Job-Name `Python lint & type-check` (`ci.yml:11`).
+- **Dokument-Brüche:** `mosquitto/README.md:44,119-122` Self-Links/fehlendes Kapitel; `05:258-270` defektes Markdown; `grafana/provisioning/alerting/README.md:64` referenziert nicht vorhandene Datei.
+
+### 2.7 Weitere Beobachtungen
+
+- **D17 (kritisch, Secrets):** Die **versionierte** Datei `zz_xx.txt` enthält im Klartext `Password1 Hallenbad23` (WLAN) und `MqttPassword uwbox23pw` / `MqttUser de-hh-mintfv-uwbox23`. Die unversionierte Duplikat-Datei `mintfv.peddy.net:` im Repo-Root hat denselben Inhalt (Copy/Paste-Artefakt). Das Blue-Team-Audit behauptet in `11_secrets_hygiene.md:47-52` bzw. F101 „keine Hardcoded Secrets" – das ist damit widerlegt. **Empfehlung:** Datei entfernen, Passwörter am Gerät und im Broker rotieren (Entfernen aus Git reicht nicht, sie bleiben in der Historie), danach `git-secrets`/`gitleaks` im CI ergänzen. Löschung/Rotation nur nach Bestätigung, da produktive Zugangsdaten betroffen sind. **Entscheidung 2026-11-19: keine Änderung** – Finding bleibt als akzeptiertes Risiko dokumentiert.
+- **Totcode/unbenutzt:** `_generate_password()` (`mqtt/routes.py:54-57`), `list_mqtt_users()` (`mqtt/service.py:162-166`), `passlib`-Dependency (nie importiert).
+- **Tests:** 9 Unit-Tests, ausschließlich Health/Mail/Migration. Keine Tests für Routes, Auth-Flows, MQTT-Service oder ACL-Logik. CI testet nur Ruff/Mypy + Playwright-Smoke (kein pytest).
+- **Auth-Kleinigkeit:** `next`-Redirect-Schutz prüft nur `startswith("/")`; `//host/...` würde durchgehen (`auth/routes.py:151`).
+
+---
+
+## 3. Produktive Laufzeit (mintfv.peddy.net)
+
+**Container (alle up, 12 Stück):**
+
+| Service | Image | Status |
+|---|---|---|
+| nginx | `nginx:1.29.4-alpine` | healthy, 80/443/8883 |
+| mosquitto | `eclipse-mosquitto:2.0.22` | healthy |
+| mosquitto-reload | lokal gebaut | up |
+| mosquitto-admin | `eclipse-mosquitto:2.0.22` | up |
+| selfservice | lokal gebaut | healthy (13 h) |
+| influxdb | `influxdb:3.8.0-core` | healthy, 8181 |
+| grafana | `grafana/grafana:12.3.1` | healthy |
+| nodered | `nodered/node-red:4.1.2` | healthy |
+| certbot | `certbot/certbot:v5.2.2` | healthy |
+| smtp-relay | `ghcr.io/devture/exim-relay:4.99.1-r0-2` | healthy |
+| mcp-grafana | `grafana/mcp-grafana:0.14.0` | up |
+| decap-cms | `itsmejoeeey/docker-decap-cms-standalone:3.0.9` | healthy |
+
+**Git/Deploy:** Zum Zeitpunkt der Analyse lagen Produktion und Repo auf `e1b95a3`, Produktion zusätzlich mit einer uncommitteten CSS-Änderung (236+/26−), die exakt im laufenden Container aktiv war (md5 host == container). Der Stand wurde per SCP übernommen, per md5 verifiziert und als `16a4b9b` (`style: improve selfservice accessibility and responsiveness`) committet. **Produktion läuft jetzt einen Commit hinter dem Repo** – beim nächsten Deploy wird der CSS-Stand identisch, sofern das Image neu gebaut wird.
+
+**Datenbank:** `users=2` (beide `role=user`, verifiziert, `tenant_id=NULL`), `tenants=0`, `mqtt_accounts=0`, `devices=0`, Alembic-Revision `001_initial`.
+
+**mosquitto.acl:** manuell gepflegt. Mischt zwei Schemas:
+- Alt: `tenant/{tenant-a,b,c}/…` mit `commands/{device}/#`
+- Neu: `umweltbox/de-nrw-rs-koeln/…`, `umweltbox/de-be-ag-klima/…`
+- Zusätzlich `user healthcheck`, `user master-admin` (readwrite `#`)
+
+**nginx:** Locations `/grafana/`, `/nodered/`, `/influxdb/`, `/selfservice/`, `/cms/`, `/auth`, `/callback`, `/assets/`. Keine `/onboarding`-, `/downloads`- oder Public-API-Route. `selfservice_general` = 5 r/s (deckt sich mit README).
+
+**Fazit Laufzeit:** Der Selfservice wird aktuell effektiv nur als Login-/Registrierungsfront genutzt. Die gesamte Tenant-/MQTT-Geschäftslogik ist „verbaut, aber nicht in Betrieb“.
+
+---
+
+## 4. Was bereits übereinstimmt (keine Korrektur nötig)
+
+- Service-Liste und interne Ports in `README.md` ↔ `docker-compose.yaml` ↔ `docker ps`.
+- InfluxDB 3 Core, Port 8181, kein Web-UI, Admin-Token-Datei (auch `AGENTS.md`, `09`).
+- UIDs/GID 2100, `read_only`+`tmpfs`, `cap_drop: ALL`, `no-new-privileges`.
+- Germanische Selfservice-Routen (`/registrieren`, `/anmelden`, `/passwort-vergessen`, `/verifizierung-erneut-senden`, `/passwort-aendern`).
+- MQTT-Passworthash-Format `$7$101$<salt>$<hash>`; `fcntl.flock()`-Schutz; reload.trigger + SIGHUP-Sidecar.
+- Token-Gültigkeiten 24 h / 1 h; E-Mail over internen `smtp-relay:8025`.
+-entrypoint: `db stamp head` (nur bei DB ohne alembic_version) + `db upgrade`, dann gunicorn.
+
+---
+
+## 5. Fachlichkeiten Selfservice – Zielbild vs. Ist
+
+Aus den Dokumenten (02/03/05/09) lässt sich folgendes gewünschtes Fachmodell ableiten. Stand 2026-11-19: **F1–F3 und F8 sind umgesetzt** (Entscheidung: Admin-Freigabe statt Auto-Approval).
+
+| Nr. | Fachlichkeit | Ziel (Doku) | Umsetzungsstand | Offen |
+|---|---|---|---|---|
+| F1 | Tenant anlegen, Tenant-ID nach `03` | zentraler Onboarding-Schritt | **umgesetzt**: `/selfservice/tenant/beantragen`, ID `de-{bl}-{schultyp}-{name}` inkl. Kollisionssuffix, Status `pending` | Bearbeitung der Stammdaten; Groß-/Kleinschreibung der ID |
+| F2 | Device-Registry (Tasmota/RPi/Telegraf) | Geräte-Registrierung mit Standort | **umgesetzt**: CRUD unter `/selfservice/tenant/.../geraete/...`, Verknüpfung mit MQTT-Account | Standort pro Gerät (lat/lon) noch am Tenant |
+| F3 | MQTT-Accounts rollen-/gerätegerecht | admin / sensor / nodered / privat | **umgesetzt**: Rollen admin/sensor/nodered, `device_id` aus F2, Fail-Closed bei unbekannter Rolle/fehlendem Gerät, Topic-Anzeige korrigiert | Privatpersonen-Sondermodell (`03:52-55`) noch nicht |
+| F4 | Verbindungsdaten / Tasmota-Konfig | Config-Download pro Gerätetyp | Tasmota-Panel + Copy-Button + Once-Credentials; Topic-Anzeige jetzt rollengerecht | Echter Config-Download / QR-Code |
+| F5 | Multi-Step-Onboarding-Wizard | 4 Schritte laut `09:408-429` | nur Einzelformen (F1/F2/F3) | Wizard, Auto-Approval-Option |
+| F6 | InfluxDB-/Grafana-Zugang provisioning | Tokens/Buckets/Dashboards pro Tenant | fehlt; Doku teils auf v2/Flux-Stand | **auf InfluxDB 3 Core umschreiben** (keine Buckets-API wie v2) |
+| F7 | Live-Verifikation erster Datenpunkt | Portal zeigt MQTT/Influx/Grafana-Status | fehlt | optional, nach Datenmodell geklärt |
+| F8 | Admin-Rolle & Freigabe-Workflow | Admin-Interface | **umgesetzt**: `admin_required`, Freigabe/Suspendierung, Admin-Navigation | Rollenverwaltung (User→Admin) nur via DB |
+| F9 | Doku & UX auf Stand | – | **umgesetzt**: Doku-Korrekturen, Statusbanner, CSS-Commit `16a4b9b`, 16 neue Tests | – |
+
+**Reihenfolge war:** F9 → F1+F2+F3+F8 (abgeschlossen) → offen: F4/F5 → F6/F7.
+
+---
+
+## 6. Nächste Schritte
+
+1. **Deploy:** Produktion liegt einen Commit zurück (`e1b95a3` → `16a4b9b` + Feature-Commit). Nach dem Deploy erneut abgleichen.
+2. **Akzeptiertes Risiko:** `zz_xx.txt` / `mintfv.peddy.net:` bleiben unverändert (Entscheidung 2026-11-19); Finding D17 bleibt dokumentiert.
+3. **Doku-Rest:** ACL-Details in `03` (`cmnd` vs. `commands`, `$SYS`) und InfluxDB-v2-Beispiele in `05` sind weiterhin nur teilweise korrigiert.
+4. **Nächste Fachlichkeiten (Bedarf klären):** F4 Config-Download, F5 Wizard, F6 InfluxDB-3-Zugang, F7 Live-Verifikation, Privatpersonen-Modell aus `03:52-55`.
+
+---
+
+*Erstellt: 2026-11-19. Nachfolgende Änderungen an Doku/Code bitte hier gegenlesen.*

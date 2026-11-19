@@ -1,5 +1,9 @@
 # Umweltbox - Onboarding-Prozess
 
+> **⚠️ Status: ZIELBILD / KONZEPT (Januar 2026) – nicht implementiert.**
+> Der hier beschriebene Onboarding-Wizard (`/onboarding`), die Registrierung mit Schul-/Standortdaten, die automatische Tenant- und Credential-Erzeugung, die Config-Downloads und das Live-Monitoring existieren **nicht** im Code. Das real existierende Portal ist `https://mintfv.peddy.net/selfservice/` (Auth + MQTT-Account-CRUD, siehe `selfservice/README.md`). Auch die InfluxDB-v2-/Flux-Beispiele unten sind historisch: produktiv läuft InfluxDB 3 Core (SQL/InfluxQL, Port 8181).
+> Abgleich und Fachlichkeiten: [`10_Doku_Code_Abgleich_2026-11.md`](10_Doku_Code_Abgleich_2026-11.md).
+
 ## 🚀 Ziel des Onboardings
 
 Neue Schulen/Tenants sollen **selbstständig** und **ohne manuelle Eingriffe** ins Umweltbox-Netzwerk integriert werden können. Der Prozess ist designed für:
@@ -257,24 +261,31 @@ Das Onboarding-Portal zeigt in Echtzeit:
 
 1. **MQTT-Test** (via mosquitto_sub):
    ```bash
-   mosquitto_sub -h mintfv.peddy.net -p 8883      -u de-by-gym-max-planck-admin      -P "Xy9#mK2$qL8@vN3!"      -t "umweltbox/de-by-gym-max-planck/#"      --cafile /path/to/ca.crt
-   2. **MQTT-Publish-Test** (via mosquitto_pub, TLS ber Port 8883 via mintfv.peddy.net):
- ```bash
- mosquitto_pub -h mintfv.peddy.net  -p 8883  -u tenant-a-sensor01 -P sensor01    -t "tenant/tenant-a/$HOSTNAME/cpu/temp"    -m "{"host": "$HOSTNAME", "temp": $(vcgencmd measure_temp | cut -c 6-9) }"
- ```
+   mosquitto_sub -h mintfv.peddy.net -p 8883 \
+     -u de-by-gym-max-planck-admin -P "Xy9#mK2$qL8@vN3!" \
+     -t "umweltbox/de-by-gym-max-planck/#" --cafile /path/to/ca.crt
+   ```
 
-3. **Grafana-Dashboard ffnen**:
- öffnen**:
+2. **MQTT-Publish-Test** (TLS über Port 8883):
+   ```bash
+   mosquitto_pub -h mintfv.peddy.net -p 8883 \
+     -u de-by-gym-max-planck-esp01 -P "Xy9#mK2$qL8@vN3!" \
+     -t "umweltbox/de-by-gym-max-planck/esp01/system/cpu_temp" \
+     -m '{"value": 59.3, "unit": "°C"}'
+   ```
+
+3. **Grafana-Dashboard öffnen**:
    - URL: `https://mintfv.peddy.net/grafana/d/tenant-live`
    - Filter: `tenant_id = de-by-gym-max-planck`
    - Zeitbereich: Letzte 15 Minuten
 
-3. **InfluxDB-Query** (via Flux):
-   ```flux
-   from(bucket: "umweltbox")
-     |> range(start: -15m)
-     |> filter(fn: (r) => r.tenant_id == "de-by-gym-max-planck")
-     |> limit(n: 10)
+4. **InfluxDB-Query** – *historisch: Flux wird von InfluxDB 3 Core nicht unterstützt; äquivalent in SQL*:
+   ```sql
+   SELECT time, tenant_id, device_id, sensor_type, value
+   FROM "umweltbox"
+   WHERE tenant_id = 'de-by-gym-max-planck' AND time > now() - interval '15 minutes'
+   ORDER BY time DESC
+   LIMIT 10
    ```
 
 ## 6️⃣ Troubleshooting
