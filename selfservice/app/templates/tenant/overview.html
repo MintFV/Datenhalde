@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Tenant &amp; Geräte – MintFV Selfservice{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-building"></i> Tenant &amp; Geräte</h1>
+</div>
+
+{% if not tenant %}
+<div class="alert alert-info">
+    Du hast noch keinen Tenant.
+    <a href="{{ url_for('tenant.request_tenant') }}" class="alert-link">Tenant beantragen</a>.
+</div>
+{% else %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card p-4 h-100">
+            <h5 class="card-title"><i class="bi bi-building"></i> {{ tenant.name }}</h5>
+            <p class="mb-1"><strong>Tenant-ID:</strong> <code>{{ tenant.tenant_id }}</code></p>
+            <p class="mb-1"><strong>Status:</strong>
+                {% if tenant.status == 'active' %}
+                    <span class="badge bg-success">Aktiv</span>
+                {% elif tenant.status == 'pending' %}
+                    <span class="badge bg-warning text-dark">Ausstehende Freigabe</span>
+                {% else %}
+                    <span class="badge bg-secondary">{{ tenant.status }}</span>
+                {% endif %}
+            </p>
+            {% if tenant.city %}<p class="mb-1"><strong>Ort:</strong> {{ tenant.city }}{% if tenant.bundesland %} ({{ tenant.bundesland|upper }}){% endif %}</p>{% endif %}
+            {% if tenant.contact_email %}<p class="mb-0"><strong>Kontakt:</strong> {{ tenant.contact_email }}</p>{% endif %}
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0"><i class="bi bi-cpu"></i> Geräte</h5>
+                <a href="{{ url_for('tenant.device_create', tenant_id=tenant.id) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg"></i> Gerät anlegen
+                </a>
+            </div>
+            {% if tenant.devices %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr><th>Geräte-ID</th><th>Typ</th><th>Beschreibung</th><th>Aktionen</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for device in tenant.devices %}
+                        <tr>
+                            <td><code>{{ device.device_id }}</code></td>
+                            <td>{{ device.device_type }}</td>
+                            <td>{{ device.description or '—' }}</td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('tenant.device_edit', device_id=device.id) }}">Bearbeiten</a>
+                                <a class="btn btn-sm btn-outline-danger" href="{{ url_for('tenant.device_delete', device_id=device.id) }}">Löschen</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">Noch keine Geräte angelegt.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

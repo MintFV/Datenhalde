@@ -1,14 +1,8 @@
 from flask import render_template
 from flask_login import current_user, login_required
 
+from ..mqtt.service import topic_for
 from . import bp
-
-
-def _mqtt_topic(tenant_id: str, username: str, role: str) -> str:
-    """Topic-Wert passend zur erteilten ACL (siehe mqtt.service.add_acl_rules)."""
-    if role == "admin":
-        return tenant_id
-    return f"{tenant_id}/{username}"
 
 
 @bp.route("/dashboard")
@@ -20,7 +14,12 @@ def overview():
     if account:
         username = account.username
         client = f"{username}_%06X"
-        topic = _mqtt_topic(tenant.tenant_id, username, account.role)
+        topic = topic_for(
+            tenant.tenant_id,
+            account.role,
+            username,
+            account.device.device_id if account.device else None,
+        )
     else:
         username = ""
         client = "DVES_%06X"

@@ -154,9 +154,7 @@ def mqtt_user_exists(username: str) -> bool:
     """Prüft ob ein MQTT-Benutzer existiert."""
     _ensure_files_exist()
     content = _read_file_locked(_get_passwd_path())
-    return any(
-        line.startswith(f"{username}:") for line in content.splitlines()
-    )
+    return any(line.startswith(f"{username}:") for line in content.splitlines())
 
 
 def list_mqtt_users() -> list[str]:
@@ -171,44 +169,65 @@ def list_mqtt_users() -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+def topic_for(
+    tenant_id: str,
+    role: str,
+    username: str,
+    device_id: str | None = None,
+) -> str:
+    if role in ("admin", "nodered"):
+        return f"umweltbox/{tenant_id}"
+    if role == "sensor" and device_id:
+        return f"umweltbox/{tenant_id}/{device_id}"
+    return f"umweltbox/{tenant_id}/{username}"
+
+
+def _acl_topic_lines(
+    tenant_id: str,
+    role: str,
+    device_id: str | None,
+) -> list[str]:
+    if role == "admin":
+        return [
+            f"topic readwrite umweltbox/{tenant_id}/#",
+            "topic read $SYS/broker/version",
+        ]
+    if role == "sensor":
+        if not device_id:
+            raise ValueError("Für die Sensor-Rolle ist ein Gerät erforderlich.")
+        return [
+            f"topic write umweltbox/{tenant_id}/{device_id}/#",
+            f"topic read umweltbox/{tenant_id}/cmnd/{device_id}/#",
+            "topic read $SYS/broker/version",
+        ]
+    if role == "nodered":
+        return [
+            f"topic read umweltbox/{tenant_id}/#",
+            "topic read $SYS/broker/version",
+        ]
+    raise ValueError(f"Unbekannte MQTT-Rolle: {role}")
+
+
 def add_acl_rules(
     username: str,
     tenant_id: str,
     role: str = "admin",
     device_id: str | None = None,
 ):
-    """Fügt ACL-Regeln für einen Benutzer hinzu.
+    topic_lines = _acl_topic_lines(tenant_id, role, device_id)
 
-    Rollen:
-        admin  – readwrite auf umweltbox/{tenant_id}/#
-        sensor – write auf umweltbox/{tenant_id}/{device_id}/#
-                 read  auf umweltbox/{tenant_id}/cmnd/{device_id}/#
-                 read  auf $SYS/broker/version
-    """
     _ensure_files_exist()
     acl_path = _get_acl_path()
 
     content = _read_file_locked(acl_path)
 
-    # Prüfen ob bereits existiert
     if re.search(rf"^user {re.escape(username)}$", content, re.MULTILINE):
         logger.warning("ACL-Eintrag für %s existiert bereits", username)
         return
 
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
     entry = f"\n# Selfservice: {timestamp}\nuser {username}\n"
-
-    if role == "admin":
-        entry += f"topic readwrite umweltbox/{tenant_id}/#\n"
-        entry += "topic read $SYS/broker/version\n"
-    elif role == "sensor" and device_id:
-        entry += f"topic write umweltbox/{tenant_id}/{device_id}/#\n"
-        entry += f"topic read umweltbox/{tenant_id}/cmnd/{device_id}/#\n"
-        entry += "topic read $SYS/broker/version\n"
-    else:
-        # Fallback: readwrite auf Tenant-Namespace
-        entry += f"topic readwrite umweltbox/{tenant_id}/{username}/#\n"
-        entry += "topic read $SYS/broker/version\n"
+    entry += "\n".join(topic_lines) + "\n"
 
     _write_file_locked(acl_path, content.rstrip("\n") + "\n" + entry)
     logger.info("ACL-Regeln hinzugefügt für: %s (Rolle: %s)", username, role)
@@ -259,7 +278,9 @@ def provision_mqtt_account(
     device_id: str | None = None,
 ) -> bool:
     """Erstellt MQTT-User + ACL-Regeln + signalisiert Reload."""
+    _acl_topic_lines(tenant_id, role, device_id)
     create_mqtt_user(username, password)
+    remove_acl_rules(username)
     add_acl_rules(username, tenant_id, role, device_id)
     _signal_reload()
     return True

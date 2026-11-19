@@ -11,16 +11,11 @@ class CreateMqttAccountForm(FlaskForm):
             Length(
                 min=3,
                 max=80,
-                message=(
-                    "Benutzername muss zwischen 3 und 80 Zeichen lang sein."
-                ),
+                message=("Benutzername muss zwischen 3 und 80 Zeichen lang sein."),
             ),
             Regexp(
                 r"^[a-zA-Z0-9._-]+$",
-                message=(
-                    "Nur Buchstaben, Zahlen, Punkt, Unterstrich "
-                    "und Bindestrich erlaubt."
-                ),
+                message=("Nur Buchstaben, Zahlen, Punkt, Unterstrich und Bindestrich erlaubt."),
             ),
         ],
     )
@@ -28,9 +23,15 @@ class CreateMqttAccountForm(FlaskForm):
         "Rolle",
         choices=[
             ("admin", "Admin (Lese-/Schreibzugriff auf alle Tenant-Topics)"),
-            ("sensor", "Sensor (Schreibzugriff auf eigene Topics)"),
+            ("sensor", "Sensor (Schreibzugriff auf Geräte-Topics)"),
+            ("nodered", "Node-RED (Lesezugriff auf alle Tenant-Topics)"),
         ],
         validators=[DataRequired()],
+    )
+    device_id = SelectField(
+        "Gerät (nur für Sensor)",
+        choices=[("", "— keines —")],
+        validators=[],
     )
     password = PasswordField(
         "Passwort",

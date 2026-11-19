@@ -44,6 +44,10 @@ def create_app() -> Flask:
 
     app.register_blueprint(mqtt_bp, url_prefix="/selfservice/mqtt")
 
+    from .tenant import bp as tenant_bp
+
+    app.register_blueprint(tenant_bp, url_prefix="/selfservice")
+
     # Health-Endpunkt (für Docker-Healthcheck + nginx)
     @app.route("/selfservice/health")
     def health():

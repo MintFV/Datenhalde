@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Tenant beantragen – MintFV Selfservice{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header">
+            <h1><i class="bi bi-building-add"></i> Tenant beantragen</h1>
+        </div>
+        <div class="card p-4">
+            <p class="text-muted">
+                Die Tenant-ID wird aus Name, Bundesland und Schultyp erzeugt.
+                Nach dem Antrag muss ein Administrator den Tenant freigeben.
+            </p>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.name.label(class="form-label") }}
+                    {{ form.name(class="form-control", autocomplete="organization") }}
+                    {% for error in form.name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.school_type.label(class="form-label") }}
+                        {{ form.school_type(class="form-select") }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.bundesland.label(class="form-label") }}
+                        {{ form.bundesland(class="form-select") }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.city.label(class="form-label") }}
+                        {{ form.city(class="form-control") }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.contact_email.label(class="form-label") }}
+                        {{ form.contact_email(class="form-control", autocomplete="email") }}
+                        {% for error in form.contact_email.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.lat.label(class="form-label") }}
+                        {{ form.lat(class="form-control", step="any") }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.lon.label(class="form-label") }}
+                        {{ form.lon(class="form-control", step="any") }}
+                    </div>
+                </div>
+                {{ form.submit(class="btn btn-primary") }}
+                <a class="btn btn-outline-secondary" href="{{ url_for('dashboard.overview') }}">Abbrechen</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

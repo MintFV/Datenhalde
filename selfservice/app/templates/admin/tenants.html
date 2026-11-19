@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Tenant-Freigabe – MintFV Selfservice{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-shield-check"></i> Tenant-Freigabe</h1>
+</div>
+
+<div class="card p-4">
+    {% if tenants %}
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Tenant-ID</th><th>Name</th><th>Status</th><th>Erstellt</th><th>Aktionen</th></tr>
+            </thead>
+            <tbody>
+                {% for tenant in tenants %}
+                <tr>
+                    <td><code>{{ tenant.tenant_id }}</code></td>
+                    <td>{{ tenant.name }}</td>
+                    <td>
+                        {% if tenant.status == 'active' %}
+                            <span class="badge bg-success">Aktiv</span>
+                        {% elif tenant.status == 'pending' %}
+                            <span class="badge bg-warning text-dark">Ausstehend</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ tenant.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ tenant.created_at.strftime('%Y-%m-%d') if tenant.created_at else '—' }}</td>
+                    <td>
+                        {% if tenant.status != 'active' %}
+                        <form method="POST" action="{{ url_for('tenant.admin_approve', tenant_id=tenant.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-success">Freigeben</button>
+                        </form>
+                        {% endif %}
+                        {% if tenant.status != 'suspended' %}
+                        <form method="POST" action="{{ url_for('tenant.admin_suspend', tenant_id=tenant.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-warning">Suspendieren</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">Keine Tenants vorhanden.</p>
+    {% endif %}
+</div>
+{% endblock %}

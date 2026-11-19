@@ -12,6 +12,7 @@
 <p class="text-muted">
     <i class="bi bi-building"></i> Tenant: <code>{{ tenant.tenant_id }}</code> &mdash;
     Topic-Namespace: <code>umweltbox/{{ tenant.tenant_id }}/#</code>
+    (effektives Topic je Rolle in der Spalte „Topic")
 </p>
 
 {% if accounts %}
@@ -22,6 +23,7 @@
                 <tr>
                     <th>Benutzername</th>
                     <th>Rolle</th>
+                    <th>Topic</th>
                     <th class="d-none d-md-table-cell">Erstellt</th>
                     <th>Aktionen</th>
                     </tr>
@@ -35,10 +37,13 @@
                                 <span class="badge bg-primary">Admin</span>
                                 {% elif account.role == 'sensor' %}
                                 <span class="badge bg-info">Sensor</span>
+                                {% elif account.role == 'nodered' %}
+                                <span class="badge bg-secondary">Node-RED</span>
                                 {% else %}
                                 <span class="badge bg-secondary">{{ account.role }}</span>
                                 {% endif %}
                             </td>
+                            <td><code>{{ topics[account.id] }}</code></td>
                     <td class="d-none d-md-table-cell">{{ account.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                     <td>
                         <a href="{{ url_for('mqtt.change_password', account_id=account.id) }}"

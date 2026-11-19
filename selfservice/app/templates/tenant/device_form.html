@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{% if device %}Gerät bearbeiten{% else %}Gerät anlegen{% endif %} – MintFV Selfservice{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header">
+            <h1><i class="bi bi-cpu"></i> {% if device %}Gerät bearbeiten{% else %}Gerät anlegen{% endif %}</h1>
+        </div>
+        <div class="card p-4">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.device_id.label(class="form-label") }}
+                    {{ form.device_id(class="form-control", placeholder="esp-klassenraum-3b") }}
+                    {% for error in form.device_id.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.device_type.label(class="form-label") }}
+                        {{ form.device_type(class="form-select") }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.mqtt_account_id.label(class="form-label") }}
+                        {{ form.mqtt_account_id(class="form-select") }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control") }}
+                </div>
+                {{ form.submit(class="btn btn-primary") }}
+                <a class="btn btn-outline-secondary" href="{{ url_for('tenant.overview') }}">Abbrechen</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

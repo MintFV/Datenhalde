@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Gerät löschen – MintFV Selfservice{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Soll das Gerät <code>{{ device.device_id }}</code> wirklich gelöscht werden?
+        </div>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Löschen
+            </button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('tenant.overview') }}">Abbrechen</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

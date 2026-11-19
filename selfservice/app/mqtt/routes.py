@@ -18,6 +18,7 @@ from .forms import (
     CreateMqttAccountForm,
     DeleteMqttAccountForm,
 )
+from .service import topic_for
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ R = TypeVar("R")
 class TenantProtocol(Protocol):
     id: int
     tenant_id: str
+    status: str
 
 
 class CurrentUserProtocol(Protocol):
@@ -36,9 +38,7 @@ class CurrentUserProtocol(Protocol):
 
 flask_login_module: Any = importlib.import_module("flask_login")
 _flask_login: Any = flask_login_module
-current_user: CurrentUserProtocol = cast(
-    CurrentUserProtocol, _flask_login.current_user
-)
+current_user: CurrentUserProtocol = cast(CurrentUserProtocol, _flask_login.current_user)
 
 
 def login_required(  # noqa: UP047
@@ -51,6 +51,23 @@ def _form_str(value: object | None) -> str:
     return value if isinstance(value, str) else ""
 
 
+def _active_tenant() -> TenantProtocol | None:
+    tenant = current_user.tenant
+    if not tenant:
+        flash(
+            "Du musst zuerst einen Tenant anlegen, bevor du MQTT-Accounts verwalten kannst.",
+            "warning",
+        )
+        return None
+    if tenant.status != "active":
+        flash(
+            "Dein Tenant ist noch nicht freigegeben oder wurde suspendiert.",
+            "warning",
+        )
+        return None
+    return tenant
+
+
 def _generate_password(length: int = 16) -> str:
     """Generiert ein sicheres zufälliges Passwort."""
     alphabet = string.ascii_letters + string.digits + "!@#$%&*"
@@ -60,47 +77,55 @@ def _generate_password(length: int = 16) -> str:
 @bp.route("/")
 @login_required
 def overview():
-    if not current_user.tenant:
-        flash(
-            (
-                "Du musst zuerst einen Tenant anlegen, "
-                "bevor du MQTT-Accounts verwalten kannst."
-            ),
-            "warning",
-        )
+    tenant = _active_tenant()
+    if not tenant:
         return redirect(url_for("dashboard.overview"))
 
-    accounts = MqttAccount.query.filter_by(
-        tenant_id=current_user.tenant.id
-    ).all()
+    accounts = MqttAccount.query.filter_by(tenant_id=tenant.id).all()
+    topics = {
+        account.id: topic_for(
+            tenant.tenant_id,
+            account.role,
+            account.username,
+            account.device.device_id if account.device else None,
+        )
+        for account in accounts
+    }
     return render_template(
         "mqtt/overview.html",
         accounts=accounts,
-        tenant=current_user.tenant,
+        topics=topics,
+        tenant=tenant,
     )
 
 
 @bp.route("/erstellen", methods=["GET", "POST"])
 @login_required
 def create():
-    if not current_user.tenant:
-        flash("Du musst zuerst einen Tenant anlegen.", "warning")
+    tenant = _active_tenant()
+    if not tenant:
         return redirect(url_for("dashboard.overview"))
 
-    tenant = current_user.tenant
     form = CreateMqttAccountForm()
+    form.device_id.choices = [("", "— keines —")] + [
+        (device.device_id, f"{device.device_id} ({device.device_type})")
+        for device in tenant.devices
+    ]
 
     if form.validate_on_submit():
         username = _form_str(form.username.data).strip()
         role = _form_str(form.role.data)
         password = _form_str(form.password.data)
+        device_id = _form_str(form.device_id.data) or None
+
+        if role == "sensor" and not device_id:
+            flash("Für einen Sensor muss ein Gerät ausgewählt werden.", "danger")
+            return render_template("mqtt/create.html", form=form, tenant=tenant)
 
         # Prüfen ob Username bereits existiert
         if MqttAccount.query.filter_by(username=username).first():
             flash(f'MQTT-Account "{username}" existiert bereits.', "danger")
-            return render_template(
-                "mqtt/create.html", form=form, tenant=tenant
-            )
+            return render_template("mqtt/create.html", form=form, tenant=tenant)
 
         if mqtt_service.mqtt_user_exists(username):
             flash(
@@ -108,9 +133,7 @@ def create():
                 "in der Mosquitto-Konfiguration vergeben.",
                 "danger",
             )
-            return render_template(
-                "mqtt/create.html", form=form, tenant=tenant
-            )
+            return render_template("mqtt/create.html", form=form, tenant=tenant)
 
         try:
             mqtt_service.provision_mqtt_account(
@@ -118,14 +141,18 @@ def create():
                 password=password,
                 tenant_id=tenant.tenant_id,
                 role=role,
+                device_id=device_id,
             )
 
             account_model = cast(Any, MqttAccount)
-            account = cast(MqttAccount, account_model(
-                tenant_id=tenant.id,
-                username=username,
-                role=role,
-            ))
+            account = cast(
+                MqttAccount,
+                account_model(
+                    tenant_id=tenant.id,
+                    username=username,
+                    role=role,
+                ),
+            )
             db.session.add(account)
             db.session.commit()
 
@@ -138,6 +165,7 @@ def create():
                 username=username,
                 password=password,
                 tenant=tenant,
+                topic=topic_for(tenant.tenant_id, role, username, device_id),
             )
         except (OSError, ValueError, RuntimeError):
             logger.exception(
@@ -153,10 +181,12 @@ def create():
 @bp.route("/<int:account_id>/passwort", methods=["GET", "POST"])
 @login_required
 def change_password(account_id: int):
+    tenant = _active_tenant()
+    if not tenant:
+        return redirect(url_for("dashboard.overview"))
     account = MqttAccount.query.get_or_404(account_id)
 
-    # Sicherstellen, dass der Account zum Tenant des Users gehört
-    if not current_user.tenant or account.tenant_id != current_user.tenant.id:
+    if account.tenant_id != tenant.id:
         flash("Zugriff verweigert.", "danger")
         return redirect(url_for("mqtt.overview"))
 
@@ -173,12 +203,16 @@ def change_password(account_id: int):
                 "mqtt/credentials.html",
                 username=account.username,
                 password=new_password,
-                tenant=current_user.tenant,
+                tenant=tenant,
+                topic=topic_for(
+                    tenant.tenant_id,
+                    account.role,
+                    account.username,
+                    account.device.device_id if account.device else None,
+                ),
             )
         except (OSError, ValueError, RuntimeError):
-            logger.exception(
-                "Fehler beim Passwort-Ändern: %s", account.username
-            )
+            logger.exception("Fehler beim Passwort-Ändern: %s", account.username)
             flash("Fehler beim Ändern des Passworts.", "danger")
 
     return render_template(
@@ -191,9 +225,12 @@ def change_password(account_id: int):
 @bp.route("/<int:account_id>/loeschen", methods=["GET", "POST"])
 @login_required
 def delete(account_id: int):
+    tenant = _active_tenant()
+    if not tenant:
+        return redirect(url_for("dashboard.overview"))
     account = MqttAccount.query.get_or_404(account_id)
 
-    if not current_user.tenant or account.tenant_id != current_user.tenant.id:
+    if account.tenant_id != tenant.id:
         flash("Zugriff verweigert.", "danger")
         return redirect(url_for("mqtt.overview"))
 

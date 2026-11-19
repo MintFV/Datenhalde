@@ -70,7 +70,7 @@ class Tenant(db.Model):  # type: ignore[name-defined]
     status = db.Column(
         db.String(20),
         nullable=False,
-        default="active",  # active / suspended
+        default="active",  # active / pending / suspended
     )
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
 

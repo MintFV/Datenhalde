@@ -11,8 +11,9 @@
         <div class="alert alert-info">
             <i class="bi bi-info-circle"></i>
             <strong>Tenant:</strong> <code>{{ tenant.tenant_id }}</code><br>
-            Der Account erhält automatisch Zugriff auf den Topic-Namespace
-            <code>umweltbox/{{ tenant.tenant_id }}/#</code>
+            Der Zugriff richtet sich nach der Rolle:
+            <code>umweltbox/{{ tenant.tenant_id }}/#</code> (Admin, Lesezugriff für Node-RED)
+            bzw. <code>umweltbox/{{ tenant.tenant_id }}/{gerät}/#</code> (Sensor, Schreibzugriff).
         </div>
 
         <div class="card p-4">
@@ -38,6 +39,15 @@
                     {% for error in form.role.errors %}
                     <div class="invalid-feedback">{{ error }}</div>
                     {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.device_id.label(class="form-label") }}
+                    {{ form.device_id(class="form-select" + (" is-invalid" if form.device_id.errors else "")) }}
+                    {% for error in form.device_id.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                    <div class="form-text">Für Sensoren erforderlich; Geräte werden unter „Tenant &amp; Geräte" angelegt.</div>
                 </div>
 
                 <div class="mb-3">
