@@ -4,6 +4,10 @@
 
 Self-hosted IoT platform ("MintFV") defined almost entirely by `docker-compose.yaml` plus per-service config directories (`nginx/`, `mosquitto/`, `grafana/`, `influxdb/`, `nodered/`, `certbot/`, `smtp-relay/`). The only traditional application is `selfservice/` — a Flask 3.1 portal (SQLAlchemy + gunicorn) for user registration and MQTT account management. Additional services are `mcp-grafana` (Grafana MCP server) and `decap-cms` (Git-backed CMS with GitHub OAuth). `docker-compose.yaml` remains the source of truth for service state. Documentation is mostly German, including user-facing UI routes.
 
+## Communication
+
+- Answer in German by default. User-facing documentation and OpenSpec artifacts are written in German.
+
 ## Git & CI
 
 - Active development branch is `refactorPED`. `ci.yml` runs on push/PR to it only, with two jobs: `lint` (ruff + mypy, Python 3.11) and `node-smoke` (Playwright smoke against the minimal nginx-only `docker-compose.ci.yml`, with a fallback isolated smoke test).
@@ -40,6 +44,13 @@ Note: CI runs Python 3.11 while `selfservice/pyproject.toml` targets py312 — d
 - Full compose cleanup is destructive (`docker compose down -v` + removing `certbot/`, `nginx/` state) — confirm with the user first. Pattern after confirmation: `docker compose down -v`, then remove `./certbot/conf/*`, `./certbot/logs/*`, `./nginx/logs/*`.
 - Secrets live only in `.env` / `.env.smtp.password`; never commit them or print tokens/passwords in logs, commands or commits.
 
+## Production access (mintfv)
+
+- Use the `mintfv` MCP tools (`read_exec` for inspection, `write_exec` for changes, `delete_exec` for removals) against `mintfv.peddy.net` as user `peddy`. Inspect read-only first; ask for approval before any live change.
+- If the MCP tools are unavailable or disabled, ask the user interactively to enable them. Only during long unattended runs (for example while the user is asleep) may the agent fall back autonomously to SSH (`ssh peddy@mintfv.peddy.net`) so the task can continue; name that fallback in the final summary.
+- After recreating `selfservice`/`mosquitto-reload`, nginx can keep the old upstream IP and return 502. Reload with `docker compose kill -s HUP nginx`, then verify the route.
+- After ACL or deploy changes run `cd /home/peddy/mintfv && ./tests/mqtt-acl-smoke.sh`; it must print `SMOKE_OK`.
+
 ## Docker conventions
 
 - Always `docker compose` (space), never `docker-compose`.
@@ -63,4 +74,5 @@ Note: CI runs Python 3.11 while `selfservice/pyproject.toml` targets py312 — d
 ## Architecture docs
 
 - `docs/Projekt-Meta-Doku/` — project vision, architecture, MQTT topic scheme (`umweltbox/{tenant}/{device}/…`), InfluxDB schema, storage/downsampling plan, and `09_LLM_Prompts_fuer_zukuenftige_Entwicklung.md` (LLM prompt collection with SQL/InfluxQL examples; see InfluxDB 3 Core below).
+- `docs/Projekt-Meta-Doku/10_Doku_Code_Abgleich_2026-11.md` is the authoritative Doku↔Code/Ist-Stand comparison; newer findings are appended as Nachträge. Durable behavior contracts live in `openspec/specs/`.
 - Per-service details: `nginx/README.md`, `mosquitto/README.md`, `grafana/README.md`, `influxdb/README.md`, `nodered/README.md`, `selfservice/README.md`, `certbot/SSL-SETUP.md`, `BACKUP.md`.
