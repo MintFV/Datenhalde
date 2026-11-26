@@ -386,8 +386,8 @@ services:
     logging: *default-logging
     ulimits:
       nofile:
-        soft: 512
-        hard: 1024
+        soft: 4096
+        hard: 8192
       nproc:
         soft: 128
         hard: 256
