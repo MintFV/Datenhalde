@@ -10,6 +10,7 @@ Self-hosted IoT platform ("MintFV") defined almost entirely by `docker-compose.y
 - `check-no-pyc.yml` runs on **all** pushes and PRs and fails on tracked `__pycache__/`, `*.pyc`, `.pytest_cache/`. Never commit those.
 - Branch protection is a recommendation, not enforced: `.github/BRANCH_PROTECTION.md`. Commit messages: single line, abstract summary, no body (team convention).
 - Use `git mv`, not `mv`.
+- OpenSpec artifacts and changes resulting from the OpenSpec workflow may be committed autonomously by the agent. Never run `git push`; pushing is done by the user only.
 - Dependabot runs weekly for `pip` (`/selfservice`) and `npm` (`/tests`). Secrets: `INFLUXDB_TOKEN`, `SELFSERVICE_SECRET_KEY`, `SMTP_USER_PROVIDER` and `SMTP_PASS_PROVIDER` in `.env`, plus `SMTP_PASSWORD` in `.env.smtp.password` (see `.github/README-CI.md`).
 
 ## Commands
