@@ -14,6 +14,7 @@ Self-hosted IoT platform ("MintFV") defined almost entirely by `docker-compose.y
 - If the user did not explicitly ask to remember something, ask a direct yes/no question before persisting it. Never write such a rule silently.
 - When confirmed, write the rule into the appropriate file, commit it (OpenSpec-related changes may be committed autonomously; never push), and say where it was recorded.
 - Keep rules concise and general. Transient session state does not belong in `AGENTS.md`; put it in `docs/Projekt-Meta-Doku/10_Doku_Code_Abgleich_2026-11.md` or in a handoff prompt.
+- Goal: handoff prompts stay short and carry mainly domain facts (current state, open topics, special cases). Conventions, behavior, and access rules come from the framework files and are not repeated in every handoff.
 
 ## Git & CI
 
