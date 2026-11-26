@@ -104,7 +104,7 @@ Beim ersten Start erstellt `certbot-init` ein selbstsigniertes Zertifikat. Sobal
 - [influxdb/README.md](influxdb/README.md) – InfluxDB 3 Core
 - [nodered/README.md](nodered/README.md) – Node-RED Flows
 - [selfservice/README.md](selfservice/README.md) – Selfservice-Portal
-- [BACKUP.md](BACKUP.md) – Backup-Strategie
+- [BACKUP.md](BACKUP.md) – Backup-Strategie (InfluxDB 3 Core: Dateisystem-Snapshot von `influxdb/data/`; kein `influx backup`, kein `influxdb3 backup`; logische Exporte via `influxdb3 query`/`write`)
 
 ## Lizenz
 

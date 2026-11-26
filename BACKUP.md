@@ -1,6 +1,6 @@
 # Backup Strategy for MintFV
 
-This document describes what data needs to be backed up and how to do it using rsync.
+This document describes what data needs to be backed up and how to do it using rsync. For InfluxDB 3 Core, `rsync` snapshots `influxdb/data/`; `influx backup` (v2) and `influxdb3 backup` (does not exist) are not used.
 
 ## What to Backup
 
@@ -149,7 +149,10 @@ backup_logs() {
 backup_databases() {
     log "Backing up databases..."
     
-    # InfluxDB
+    # InfluxDB 3 Core: kein `influx backup` und kein `influxdb3 backup`.
+    # Maßgeblich ist der Snapshot von ./influxdb/data/. rsync sichert die
+    # Dateien im laufenden Betrieb; für einen konsistenten Snapshot zuvor
+    # `docker compose stop influxdb` und tar (siehe influxdb/README.md).
     if [ -d "./influxdb/data" ]; then
         rsync -avz --delete \
             -e "ssh -i $SSH_KEY" \

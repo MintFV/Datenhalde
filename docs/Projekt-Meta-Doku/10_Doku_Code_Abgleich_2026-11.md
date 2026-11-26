@@ -193,4 +193,22 @@ Weiterhin offen: D25 – die Topic-Schemata `tenant/…` gegenüber `umweltbox/�
 
 ---
 
+## 8. Nachtrag 2026-11-26: F6 – InfluxDB-3-Doku
+
+Der OpenSpec-Change `influxdb3-doc-alignment` gleicht die Dokumentation an den produktiven Stand an; es findet **keine Laufzeitänderung** statt. Live-Befunde:
+
+| Punkt | Doku vorher | Ist |
+|---|---|---|
+| Query-Sprache | Flux / v2-API | SQL/InfluxQL über HTTP-API oder `influxdb3`-CLI; InfluxDB 3 Core unterstützt kein Flux |
+| DB-Name | `mydb`, `umweltbox*` | produktiv `mintfv`; `umweltbox` existiert als separate Alt-DB mit gleichnamiger Tabelle |
+| Measurement | `umweltbox` (Zielbild) | `sensors` in `mintfv`, Tags `tenant_id`/`device_id`/`category`/`sensor_type`, Field `value` |
+| Downsampling/Retention | vier Buckets, Flux-Tasks | keine Plugins, keine Trigger, keine Aggregate; keine Retention konfiguriert |
+| Tokens | Tokens/Buckets pro Tenant | `influxdb3 create token` kennt nur `--admin`; kein Tenant-Provisioning |
+| Backup | `influx backup`, tar/rsync/CLI widersprüchlich | Dateisystem-Snapshot von `influxdb/data/`; `influxdb3` hat kein `backup`-Subkommando, `query`/`write` nur für logische Exporte |
+| Grafana | `mintfv-dashboard.json` mit Flux | provisioningiertes Dashboard bleibt unverändert (Laufzeit), in der Doku als historisch vermerkt |
+
+Die Meta-Dokus `04`, `05`, `06`, `09`, `influxdb/README.md`, `grafana/README.md`, `README.md` und `BACKUP.md` wurden entsprechend markiert bzw. korrigiert; ein ausführbares SQL-Beispiel steht in `04_InfluxDB_Schema.md`. Weiterhin Zielbild und nicht umgesetzt bleiben F4 Config-Download, F5 Wizard, F6 Retention/Downsampling und Token-Provisioning, F7 Live-Verifikation sowie das Privatpersonen-Modell.
+
+---
+
 *Erstellt: 2026-11-19. Nachfolgende Änderungen an Doku/Code bitte hier gegenlesen.*

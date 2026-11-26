@@ -11,7 +11,7 @@ Diese Datei enthält **fertige Prompts für Large Language Models (LLMs)**, um d
 
 **Zielgruppe**: Entwickler*innen, DevOps-Engineers, Lehrkräfte
 
-> **⚠️ Stack-Realität (Stand 2026-11):** Diese Plattform nutzt **InfluxDB 3 Core 3.8.0** (Port 8181, kein Web-UI, Admin-Token in `influxdb/tokens/admin.token`). InfluxDB 3 unterstützt **kein Flux** – Abfragen erfolgen in **SQL** oder **InfluxQL** (HTTP-API oder `influxdb3` CLI), Downsampling über das Downsampler-Plugin/Trigger statt Flux-Tasks, Backup über die `influxdb3`-CLI. Die unten stehenden Flux-Beispiele sind historisch und vor Verwendung entsprechend zu übersetzen. Maßgeblich sind `04_InfluxDB_Schema.md`, `06_Speicherplanung_und_Downsampling.md` und `docker-compose.yaml`.
+> **⚠️ Stack-Realität (Stand 2026-11):** Diese Plattform nutzt **InfluxDB 3 Core 3.8.0** (Port 8181, kein Web-UI, Admin-Token in `influxdb/tokens/admin.token`). InfluxDB 3 unterstützt **kein Flux** – Abfragen erfolgen in **SQL** oder **InfluxQL** (HTTP-API oder `influxdb3` CLI), Downsampling über das Downsampler-Plugin/Trigger statt Flux-Tasks, Backup als Dateisystem-Snapshot von `influxdb/data/` (`influxdb3` bietet nur `query`/`write`, kein `backup`; `influx backup` ist v2). Die unten stehenden Flux-Beispiele sind historisch und vor Verwendung entsprechend zu übersetzen. Maßgeblich sind `04_InfluxDB_Schema.md`, `06_Speicherplanung_und_Downsampling.md` und `docker-compose.yaml`.
 
 ---
 
@@ -382,7 +382,7 @@ Bitte liefere:
 
 ### 5.3 Backup-Strategie für InfluxDB
 
-> **Veraltet:** `influx backup` → `influxdb3`-CLI.
+> **Veraltet:** `influx backup` → Dateisystem-Snapshot von `influxdb/data/`; `influxdb3` bietet nur `query`/`write`.
 
 **Prompt**:
 ```

@@ -283,11 +283,9 @@ Type: InfluxDB
 URL: http://influxdb:8181
 
 Query Language: SQL
-Custom HTTP Headers:
-  Authorization: Token apiv3_XXXXXXXXXX
-
-Organization: InfluxDB
-Default Bucket: mydb
+Database: mintfv
+Token: ${INFLUXDB_TOKEN} (secureJsonData, aus .env)
+Keine Custom HTTP Headers, keine Organization und keine Bucket-Angabe
 
 Min time interval: 1s
 ```

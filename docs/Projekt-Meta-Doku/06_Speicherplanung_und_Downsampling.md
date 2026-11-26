@@ -294,6 +294,8 @@ from(bucket: "umweltbox")
 
 ## 🔧 Implementierung: Bucket-Setup
 
+> **Historisch – InfluxDB 3 Core unterstützt kein Flux und keine v2-Buckets-API.** Die folgenden `influx bucket …`-Befehle und `from(bucket: …)`-Abfragen beschreiben das Zielbild. Produktiv werden Datenbanken mit der `influxdb3`-CLI verwaltet; Downsampling wäre über das Downsampler-Plugin/Trigger umzusetzen.
+
 ### 1. Buckets erstellen (via InfluxDB UI oder CLI)
 
 ```bash
@@ -374,6 +376,8 @@ influx bucket list --org umweltbox --json | jq '.[] | {name, retentionPeriod}'
 ### 3. Backups
 
 **Tägliche Aggregate** unbedingt sichern (sind irreversibel!):
+
+> **Historisch:** `influx backup` und `influx restore` sind v2-Befehle. In InfluxDB 3 Core ist der maßgebliche Weg der Dateisystem-Snapshot von `influxdb/data/` (konsistent mit gestopptem Container per `tar`, laufend per `rsync`); `influxdb3` bietet nur `query`/`write` für logische Exporte (siehe `influxdb/README.md` und `BACKUP.md`).
 
 ```bash
 # Backup (InfluxDB Line Protocol)

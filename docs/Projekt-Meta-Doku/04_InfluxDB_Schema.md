@@ -248,6 +248,8 @@ timestamp: 2025-01-03T14:30:00Z
 
 ## 🗂️ Bucket-Struktur
 
+> **Historisch – Zielbild:** Die Namen `umweltbox`, `umweltbox_15m`, `umweltbox_hourly` und `umweltbox_daily` sind v2-Bucket-Begriffe. Produktiv schreibt Node-RED in die InfluxDB-3-Datenbank `mintfv`, Measurement `sensors`. Siehe Abschnitt „Aktuelle Abfragen" und `10_Doku_Code_Abgleich_2026-11.md`.
+
 ### Bucket 1: `umweltbox` (Rohdaten)
 
 **Retention**: 30 Tage (SZENARIO "MITTEL")
@@ -413,6 +415,26 @@ from(bucket: "umweltbox_daily")
   |> filter(fn: (r) => r.sensor_type == "temperature")
   |> filter(fn: (r) => r._field == "value_mean")
   |> group(columns: ["tenant_id"])
+```
+
+---
+
+## Aktuelle Abfragen (InfluxDB 3 Core, SQL)
+
+Produktiv wird die Datenbank `mintfv` und das Measurement `sensors` verwendet (siehe `nodered/data/flows.json`). Beispiel über die CLI:
+
+```sql
+SELECT time, tenant_id, device_id, category, sensor_type, value
+FROM sensors
+WHERE time > now() - interval '1 hour'
+  AND tenant_id = 'de-hh-mintfv-uwbox23'
+ORDER BY time DESC
+LIMIT 20;
+```
+
+```bash
+influxdb3 query -d mintfv --token "$INFLUXDB_TOKEN" --format csv \
+  "SELECT value FROM sensors WHERE time > now() - interval '10 minutes' AND tenant_id = 'de-hh-mintfv-uwbox23'"
 ```
 
 ---

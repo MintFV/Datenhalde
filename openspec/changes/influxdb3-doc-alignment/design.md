@@ -37,7 +37,7 @@ Abschnitt 7 (`mqtt-acl-haertung`) bleibt als Zeitdokument; ein neuer Abschnitt h
 - [Doppelte Aussagen in der Doku] → einheitlicher Marker für historische Abschnitte; jede geänderte Datei enthält einen Verweis auf den kanonischen Ist-Stand in Abschnitt 8 von `10`.
 - [Leser führt ein als historisch markiertes Beispiel trotzdem aus] → Warnhinweis direkt am Beispiel, nicht nur im Vorwort.
 - [Doku-Korrektur wird als Verhaltensänderung missverstanden] → `skip_specs: true` und explizite Non-Goals im Proposal.
-- [Backup-Anleitung bleibt widersprüchlich] → beide Verfahren benennen und den für 3 Core maßgeblichen Weg (`influxdb3`-CLI) als Empfehlung markieren.
+- [Backup-Anleitung bleibt widersprüchlich] → **Korrektur während der Umsetzung:** InfluxDB 3 Core bietet kein `influxdb3 backup`, sondern nur `query`/`write` für logische Exporte. Maßgeblich ist der Dateisystem-Snapshot von `influxdb/data/` (konsistent mit gestopptem Container per `tar`, laufend per `rsync` wie in `BACKUP.md`); `influx backup` bleibt historisch.
 
 ## Migration Plan
 

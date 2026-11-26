@@ -53,7 +53,7 @@ echo $INFLUX_TOKEN
 
 ### Datenbank erstellen
 ```bash
-docker compose exec influxdb influxdb3 create database mydb
+docker compose exec influxdb influxdb3 create database mintfv
 ```
 
 ### Datenbanken auflisten
@@ -63,7 +63,7 @@ docker compose exec influxdb influxdb3 database list
 
 ### Datenbank löschen
 ```bash
-docker compose exec influxdb influxdb3 database delete mydb
+docker compose exec influxdb influxdb3 database delete mintfv
 ```
 
 ---
@@ -72,15 +72,18 @@ docker compose exec influxdb influxdb3 database delete mydb
 
 ### Via CLI (Line Protocol)
 ```bash
-docker compose exec influxdb influxdb3 write --database mydb \
+docker compose exec influxdb influxdb3 write --database mintfv \
   "temperature,location=room temp=23.5"
 ```
 
-### Via HTTP API (v2 Compatibility)
+### Via HTTP API (v2 Compatibility) – historisch
+
+> **Hinweis:** Die v2-Kompatibilitäts-API mit `bucket=`-Parameter ist kein 3-Core-Zielpfad. Produktiv schreibt Node-RED über `/api/v3/write_lp?db=mintfv&precision=ns` (siehe `nodered/data/flows.json`). Das Beispiel dient nur der Migration.
+
 ```bash
 export INFLUX_TOKEN=$(cat ./influxdb/tokens/admin.token | jq -r '.token')
 
-curl -X POST "https://mintfv.peddy.net/influxdb/api/v2/write?bucket=mydb&org=InfluxDB" \
+curl -X POST "https://mintfv.peddy.net/influxdb/api/v2/write?bucket=mintfv&org=InfluxDB" \
   -H "Authorization: Token $INFLUX_TOKEN" \
   -H "Content-Type: text/plain" \
   --data-raw 'temperature,location=room temp=23.5'
@@ -88,7 +91,7 @@ curl -X POST "https://mintfv.peddy.net/influxdb/api/v2/write?bucket=mydb&org=Inf
 
 ### Via HTTP API (v1 InfluxQL)
 ```bash
-curl -X POST "https://mintfv.peddy.net/influxdb/write?db=mydb" \
+curl -X POST "https://mintfv.peddy.net/influxdb/write?db=mintfv" \
   -H "Authorization: Bearer $INFLUX_TOKEN" \
   -d 'temperature,location=room temp=23.5'
 ```
@@ -99,13 +102,13 @@ curl -X POST "https://mintfv.peddy.net/influxdb/write?db=mydb" \
 
 ### SQL Query (v3)
 ```bash
-docker compose exec influxdb influxdb3 query --database mydb \
+docker compose exec influxdb influxdb3 query --database mintfv \
   "SELECT * FROM temperature ORDER BY time DESC LIMIT 10"
 ```
 
 ### InfluxQL Query (v1)
 ```bash
-curl "https://mintfv.peddy.net/influxdb/query?db=mydb&q=SELECT%20*%20FROM%20temperature%20LIMIT%2010" \
+curl "https://mintfv.peddy.net/influxdb/query?db=mintfv&q=SELECT%20*%20FROM%20temperature%20LIMIT%2010" \
   -H "Authorization: Token $INFLUX_TOKEN"
 ```
 
@@ -128,6 +131,9 @@ Siehe [../grafana/README.md](../grafana/README.md) für Data Source Setup.
 ```
 
 ### Backup erstellen
+
+> **Hinweis:** InfluxDB 3 Core bietet kein `influxdb3 backup`; `influx backup` ist ein v2-Befehl. Maßgeblich ist der Dateisystem-Snapshot von `./influxdb/data/`. Die Variante unten ist konsistent (Container gestoppt); `BACKUP.md` nutzt `rsync` gegen dieselben Daten im laufenden Betrieb.
+
 ```bash
 # Stoppe InfluxDB
 docker compose stop influxdb
@@ -176,16 +182,19 @@ URL: http://influxdb:8181
 Query Language: SQL oder InfluxQL
 Organization: InfluxDB
 Token: [Admin Token]
-Database: mydb
+Database: mintfv
 ```
 
-### Node-RED influxdb Node
+### Node-RED (heutiger Schreibpfad)
+Der Flow nutzt keinen InfluxDB-Node, sondern einen HTTP-Request-Node:
+
 ```
-URL: http://influxdb:8181
-Version: 2.x (Compatibility Mode)
-Token: [Admin Token]
-Organization: InfluxDB
-Bucket: mydb
+URL: http://influxdb:8181/api/v3/write_lp?db=mintfv&precision=ns
+Authorization: Bearer ${INFLUXDB_TOKEN}
+Content-Type: text/plain
+Measurement: sensors
+Tags: tenant_id, device_id, category, sensor_type
+Field: value
 ```
 
 ### Python (influxdb-client)
@@ -195,7 +204,7 @@ from influxdb_client_3 import InfluxDBClient3
 client = InfluxDBClient3(
     host='mintfv.peddy.net',
     token='YOUR_ADMIN_TOKEN',
-    database='mydb',
+    database='mintfv',
     org='InfluxDB'
 )
 
