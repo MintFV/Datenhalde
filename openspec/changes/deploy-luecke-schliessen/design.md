@@ -2,7 +2,7 @@
 
 ## Context
 
-Siehe `proposal.md` für die Motivation. Gemessener Stand: lokaler Branch `openspec` bei `b62e56f`, 13 Commits vor `e1b95a3`; der Server-Checkout `/home/peddy/mintfv` läuft auf `refactorPED`@`e1b95a3`. Die uncommitteten Server-Dateien `style.css` und `mintfv-dashboard.json` sind **byte-identisch** zu den lokalen Versionen (MD5 `59169bdf…` bzw. `efcecd65…`), der Datenbankstand ist `001_initial (head)`. Das untracked `tests/mqtt-acl-smoke.sh` unterscheidet sich nur in Einrückung (Tabs vs. Spaces), nicht in der Funktion. `mosquitto/config/backups/` ist ein bewusstes Live-Artefakt.
+Siehe `proposal.md` für die Motivation. Gemessener Stand: lokaler Branch `openspec` bei `5f1e314`, 17 Commits vor `e1b95a3`; der Server-Checkout `/home/peddy/mintfv` läuft auf `refactorPED`@`e1b95a3`. Die uncommitteten Server-Dateien `style.css` und `mintfv-dashboard.json` sind **byte-identisch** zu den lokalen Versionen (MD5 `59169bdf…` bzw. `efcecd65…`), der Datenbankstand ist `001_initial (head)`. Das untracked `tests/mqtt-acl-smoke.sh` unterscheidet sich nur in Einrückung (Tabs vs. Spaces), nicht in der Funktion. `mosquitto/config/backups/` ist ein bewusstes Live-Artefakt.
 
 ## Goals / Non-Goals
 
@@ -19,7 +19,7 @@ Siehe `proposal.md` für die Motivation. Gemessener Stand: lokaler Branch `opens
 ## Decisions
 
 **1. Fast-Forward statt Cherry-Pick.**
-`refactorPED` zeigt lokal noch auf `c2552db`, `openspec` ist ein direkter Nachfahre. Ein `git merge --ff-only` ist konfliktfrei und übernimmt alle 13 Commits. Alternative: nur die vier Funktions-Commits cherry-picken – verworfen, weil danach Doku und Code erneut auseinanderlaufen würden.
+`refactorPED` zeigt lokal noch auf `c2552db`, `openspec` ist ein direkter Nachfahre. Ein `git merge --ff-only` ist konfliktfrei und übernimmt alle 17 Commits. Alternative: nur die vier Funktions-Commits cherry-picken – verworfen, weil danach Doku und Code erneut auseinanderlaufen würden.
 
 **2. Push durch den Benutzer, Fetch auf dem Server.**
 Der Agent pusht nie. Der Benutzer pusht den lokalen `refactorPED`; auf `mintfv` genügt `git fetch origin` und `git merge --ff-only origin/refactorPED`. Alternative: Bundle/Patch per SSH übertragen – verworfen, weil umständlicher und fehleranfälliger.

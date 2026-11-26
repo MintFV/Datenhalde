@@ -2,7 +2,7 @@
 
 ## Why
 
-Auf `mintfv` läuft der Selfservice noch auf Commit `e1b95a3`, während der lokale Branch `openspec` 13 Commits voraus ist. Davon enthalten vier echte Funktionalität (Tenant-/Device-Verwaltung, rollengerechte MQTT-ACLs, CSS/A11y, Type-Stubs). Die Route `/selfservice/tenant/overview` liefert produktiv deshalb 404, und die ACLs werden weiterhin manuell gepflegt. Einige Live-Änderungen (CSS, repariertes Dashboard, Smoketest, Backups) wurden direkt auf dem Host gemacht und sind im Git-Stand des Servers nicht enthalten.
+Auf `mintfv` läuft der Selfservice noch auf Commit `e1b95a3`, während der lokale Branch `openspec` 17 Commits voraus ist. Davon enthalten vier echte Funktionalität (Tenant-/Device-Verwaltung, rollengerechte MQTT-ACLs, CSS/A11y, Type-Stubs). Die Route `/selfservice/tenant/overview` liefert produktiv deshalb 404, und die ACLs werden weiterhin manuell gepflegt. Einige Live-Änderungen (CSS, repariertes Dashboard, Smoketest, Backups) wurden direkt auf dem Host gemacht und sind im Git-Stand des Servers nicht enthalten.
 
 ## What Changes
 
@@ -25,6 +25,6 @@ Auf `mintfv` läuft der Selfservice noch auf Commit `e1b95a3`, während der loka
 
 ## Impact
 
-- Lokal: Branch `refactorPED` zeigt nach dem Merge auf `b62e56f`; Push erfolgt durch den Benutzer.
+- Lokal: Branch `refactorPED` zeigt nach dem Merge auf `5f1e314`; Push erfolgt durch den Benutzer.
 - Produktiv: Git-Checkout `/home/peddy/mintfv`, Container `selfservice` und `mosquitto-reload`, kurzer Neustart dieser Dienste.
 - Die Datenbank bleibt auf `001_initial`; keine Schemaänderung, kein Datenverlust erwartet.
