@@ -242,4 +242,22 @@ Verifiziert: 44 Unit-Tests in `selfservice/tests`, `ruff`/`mypy` und die Playwri
 
 ---
 
+## 11. Nachtrag 2026-11-26: InfluxDB nach Container-Neustart nicht gestartet
+
+Nach `./mintfv.sh stop` (`docker compose down`) und anschließendem Start blieb `mintfv-influxdb-1` in einer Restart-Schleife; Grafana, Node-RED, Selfservice, nginx und weitere Dienste blieben im Status `Created`.
+
+**Ursache:** `docker-compose.yaml` setzte für InfluxDB `ulimits.nofile` auf `soft 512 / hard 1024`. InfluxDB 3 Core baut beim Start den Table-Index-Cache aus allen Snapshots auf; unter `influxdb/data/mintfv-node-0/snapshots/` lagen inzwischen **578** `*.info.json`-Dateien. Der Start brach beim Initialisieren des Write Buffers mit `Too many open files (os error 24)` ab. Es war kein Daten- oder Tokenproblem – der Host erlaubt `ulimit -Hn 524288`.
+
+| Punkt | vorher | jetzt |
+|---|---|---|
+| `nofile` (InfluxDB) | soft 512 / hard 1024 | soft 4096 / hard 8192 (Commit `8c47b6f`) |
+| InfluxDB | Restart-Schleife | healthy, interner `/health` = `OK` |
+| Abhängige Dienste | `Created` | alle Up/healthy nach `docker compose up -d` |
+
+Behoben durch Neuerstellen des Containers mit den neuen Limits, anschließend `docker compose up -d` und nginx-SIGHUP. Verifiziert: Selfservice via nginx `200`, Grafana `302` (Login-Redirect), `./tests/mqtt-acl-smoke.sh` → `SMOKE_OK` mit 15 InfluxDB-Punkten/30 min. Die Snapshot-Zahl wächst weiter; das neue Limit schafft deutlichen Puffer, die Snapshot-/Retention-Entwicklung bleibt aber zu beobachten.
+
+Hinweis: `./mintfv.start` ist kein gültiger Befehl – korrekt ist `./mintfv.sh start`.
+
+---
+
 *Erstellt: 2026-11-19. Nachfolgende Änderungen an Doku/Code bitte hier gegenlesen.*
