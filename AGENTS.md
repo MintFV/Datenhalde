@@ -8,6 +8,13 @@ Self-hosted IoT platform ("MintFV") defined almost entirely by `docker-compose.y
 
 - Answer in German by default. User-facing documentation and OpenSpec artifacts are written in German.
 
+## Durable instructions
+
+- Treat stated preferences, recurring workflows, and behavioral rules as candidates for durable documentation: general agent behavior in `AGENTS.md`, OpenSpec artifact rules in `openspec/config.yaml`, domain/current-state facts in `docs/`.
+- If the user did not explicitly ask to remember something, ask a direct yes/no question before persisting it. Never write such a rule silently.
+- When confirmed, write the rule into the appropriate file, commit it (OpenSpec-related changes may be committed autonomously; never push), and say where it was recorded.
+- Keep rules concise and general. Transient session state does not belong in `AGENTS.md`; put it in `docs/Projekt-Meta-Doku/10_Doku_Code_Abgleich_2026-11.md` or in a handoff prompt.
+
 ## Git & CI
 
 - Active development branch is `refactorPED`. `ci.yml` runs on push/PR to it only, with two jobs: `lint` (ruff + mypy, Python 3.11) and `node-smoke` (Playwright smoke against the minimal nginx-only `docker-compose.ci.yml`, with a fallback isolated smoke test).
