@@ -266,7 +266,7 @@ timestamp: 2025-01-03T14:30:00Z
 
 **Inhalt**: Mittelwerte, Min, Max über 15 Minuten
 
-**Erzeugung**: Via InfluxDB Task (Flux) — *veraltet; in InfluxDB 3 Core über das Downsampler-Plugin/Trigger umsetzen*
+**Erzeugung**: Zielbild, aktuell nicht umgesetzt – siehe Abgleich-Dokument `10_Doku_Code_Abgleich_2026-11.md`
 
 **Schema**:
 ```
@@ -302,54 +302,6 @@ timestamp: (aggregierter Zeitpunkt)
 
 **Größe**: ~0.03 GB/Jahr (kumulativ)
 
-## 📋 Flux Task: Downsampling (Beispiel)
-
-> **Hinweis:** InfluxDB 3 Core unterstützt kein Flux und keine Flux-Tasks – historisches Beispiel, für die Umsetzung das Downsampler-Plugin/Trigger und SQL verwenden.
-
-### 15-Minuten-Aggregation
-
-```flux
-option task = {
-  name: "downsample_15m_umweltbox",
-  every: 15m,
-  offset: 5m
-}
-
-from(bucket: "umweltbox")
-  |> range(start: -20m, stop: -5m)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r._field == "value")
-  |> aggregateWindow(
-      every: 15m,
-      fn: mean,
-      createEmpty: false
-  )
-  |> set(key: "_field", value: "value_mean")
-  |> to(bucket: "umweltbox_15m", org: "umweltbox")
-
-// Min/Max in separaten Tasks oder in einem Multi-Output-Flow
-```
-
-### Tägliche Aggregation
-
-```flux
-option task = {
-  name: "downsample_daily_umweltbox",
-  cron: "0 1 * * *"  // Jeden Tag um 01:00 Uhr
-}
-
-from(bucket: "umweltbox_hourly")
-  |> range(start: -2d, stop: -1d)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r._field == "value_mean")
-  |> aggregateWindow(
-      every: 1d,
-      fn: mean,
-      createEmpty: false
-  )
-  |> to(bucket: "umweltbox_daily", org: "umweltbox")
-```
-
 ## 🔧 Cardinality Management
 
 **Was ist Cardinality?** Anzahl einzigartiger Tag-Kombinationen.
@@ -380,41 +332,42 @@ REAL:            ~50.000 (da nicht alle Kombinationen existieren)
 - Zeitstempel als Tags
 - UUIDs oder Session-IDs als Tags
 
-## 🔍 Query-Beispiele (Flux)
+## 🔍 Query-Beispiele (SQL)
 
-> **Hinweis:** InfluxDB 3 Core unterstützt kein Flux – diese Beispiele sind historisch; äquivalente Abfragen in SQL oder InfluxQL formulieren.
+Die folgenden Beispiele laufen gegen die produktive Datenbank `mintfv` und das Measurement `sensors` (InfluxDB 3 Core).
 
 ### Alle Temperaturen der letzten Stunde
 
-```flux
-from(bucket: "umweltbox")
-  |> range(start: -1h)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r.sensor_type == "temperature")
-  |> filter(fn: (r) => r._field == "value")
+```sql
+SELECT time, tenant_id, device_id, sensor_type, value
+FROM sensors
+WHERE time > now() - interval '1 hour'
+  AND sensor_type = 'temperature'
+ORDER BY time DESC;
 ```
 
 ### PM2.5 für eine Schule (mit Geo-Daten)
 
-```flux
-from(bucket: "umweltbox")
-  |> range(start: -24h)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r.tenant_id == "de-hh-gs-altona")
-  |> filter(fn: (r) => r.sensor_type == "pm25")
-  |> filter(fn: (r) => r._field == "value" or r._field == "latitude" or r._field == "longitude")
-  |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+```sql
+SELECT time, value, latitude, longitude
+FROM sensors
+WHERE time > now() - interval '24 hours'
+  AND tenant_id = 'de-hh-gs-altona'
+  AND sensor_type = 'pm25'
+ORDER BY time DESC;
 ```
 
 ### Vergleich mehrerer Schulen (Tagesmittelwerte)
 
-```flux
-from(bucket: "umweltbox_daily")
-  |> range(start: -30d)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r.sensor_type == "temperature")
-  |> filter(fn: (r) => r._field == "value_mean")
-  |> group(columns: ["tenant_id"])
+Da keine Aggregate-Tabelle existiert, wird der Tagesmittelwert direkt berechnet:
+
+```sql
+SELECT date_trunc('day', time) AS day, tenant_id, avg(value) AS value_mean
+FROM sensors
+WHERE time > now() - interval '30 days'
+  AND sensor_type = 'temperature'
+GROUP BY day, tenant_id
+ORDER BY day DESC;
 ```
 
 ---

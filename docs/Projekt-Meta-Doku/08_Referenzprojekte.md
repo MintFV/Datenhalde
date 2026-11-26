@@ -472,7 +472,7 @@ GET https://api.purpleair.com/v1/sensors/:sensor_index
 |-----------|----------|------------|---------|
 | **Zeitreihen** | Nativ optimiert | Erweiterung (TimescaleDB) | Nicht optimal |
 | **Downsampling** | Eingebaut (Tasks) | Manuell (Cron) | Manuell |
-| **Query-Sprache** | Flux / InfluxQL | SQL | MongoDB Query Language |
+| **Query-Sprache** | InfluxQL / SQL | SQL | MongoDB Query Language |
 | **Retention** | Automatisch | Manuell | Manuell |
 | **Aggregationen** | Sehr schnell | Schnell | Mittel |
 | **Schema** | Schema-on-write | Streng (Schema) | Schema-less |

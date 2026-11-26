@@ -58,9 +58,9 @@ Note: CI runs Python 3.11 while `selfservice/pyproject.toml` targets py312 — d
 ## InfluxDB 3 Core
 
 - Port 8181 (not the InfluxDB 1.x/2.x 8086), no built-in web UI — use Grafana or the CLI. Admin token: `influxdb/tokens/admin.token` (JSON, read the `.token` field), also used by `validate.sh`.
-- Flux is not supported in 3 Core — use SQL/InfluxQL via HTTP API or `influxdb3` CLI; downsampling uses the Downsampler plugin/triggers, not Flux tasks. Legacy Flux examples in `04_InfluxDB_Schema.md`, `06_Speicherplanung_und_Downsampling.md` and `09_LLM_Prompts_fuer_zukuenftige_Entwicklung.md` are marked as historical.
+- Flux is not supported in 3 Core — use SQL/InfluxQL via HTTP API or `influxdb3` CLI; downsampling would use the Downsampler plugin/triggers, not Flux tasks. All executable Flux examples have been converted to SQL or removed; see `docs/Projekt-Meta-Doku/04`, `06`, `07`, `09` and the archived OpenSpec changes.
 
 ## Architecture docs
 
-- `docs/Projekt-Meta-Doku/` — project vision, architecture, MQTT topic scheme (`umweltbox/{tenant}/{device}/…`), InfluxDB schema, storage/downsampling plan, and `09_LLM_Prompts_fuer_zukuenftige_Entwicklung.md` (LLM prompt collection with historical Flux examples — marked as such; see InfluxDB 3 Core below).
+- `docs/Projekt-Meta-Doku/` — project vision, architecture, MQTT topic scheme (`umweltbox/{tenant}/{device}/…`), InfluxDB schema, storage/downsampling plan, and `09_LLM_Prompts_fuer_zukuenftige_Entwicklung.md` (LLM prompt collection with SQL/InfluxQL examples; see InfluxDB 3 Core below).
 - Per-service details: `nginx/README.md`, `mosquitto/README.md`, `grafana/README.md`, `influxdb/README.md`, `nodered/README.md`, `selfservice/README.md`, `certbot/SSL-SETUP.md`, `BACKUP.md`.

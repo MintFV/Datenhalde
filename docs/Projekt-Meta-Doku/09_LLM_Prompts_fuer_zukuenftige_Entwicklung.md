@@ -11,7 +11,7 @@ Diese Datei enthält **fertige Prompts für Large Language Models (LLMs)**, um d
 
 **Zielgruppe**: Entwickler*innen, DevOps-Engineers, Lehrkräfte
 
-> **⚠️ Stack-Realität (Stand 2026-11):** Diese Plattform nutzt **InfluxDB 3 Core 3.8.0** (Port 8181, kein Web-UI, Admin-Token in `influxdb/tokens/admin.token`). InfluxDB 3 unterstützt **kein Flux** – Abfragen erfolgen in **SQL** oder **InfluxQL** (HTTP-API oder `influxdb3` CLI), Downsampling über das Downsampler-Plugin/Trigger statt Flux-Tasks, Backup als Dateisystem-Snapshot von `influxdb/data/` (`influxdb3` bietet nur `query`/`write`, kein `backup`; `influx backup` ist v2). Die unten stehenden Flux-Beispiele sind historisch und vor Verwendung entsprechend zu übersetzen. Maßgeblich sind `04_InfluxDB_Schema.md`, `06_Speicherplanung_und_Downsampling.md` und `docker-compose.yaml`.
+> **⚠️ Stack-Realität (Stand 2026-11):** Diese Plattform nutzt **InfluxDB 3 Core 3.8.0** (Port 8181, kein Web-UI, Admin-Token in `influxdb/tokens/admin.token`). InfluxDB 3 unterstützt **kein Flux** – Abfragen erfolgen in **SQL** oder **InfluxQL** (HTTP-API oder `influxdb3` CLI), Downsampling über das Downsampler-Plugin/Trigger statt Flux-Tasks, Backup als Dateisystem-Snapshot von `influxdb/data/` (`influxdb3` bietet nur `query`/`write`, kein `backup`; `influx backup` ist v2). Die Beispiele in diesem Dokument sind auf SQL/InfluxQL umgestellt. Maßgeblich sind `04_InfluxDB_Schema.md`, `06_Speicherplanung_und_Downsampling.md` und `docker-compose.yaml`.
 
 ---
 
@@ -190,63 +190,33 @@ Erstelle eine Telegraf-Konfiguration, die:
 
 Bitte liefere:
 1. telegraf.conf (Auszug)
-2. Flux-Query für Grafana-Dashboard
+2. SQL-Query für Grafana-Dashboard
 ```
 
 ---
 
 ## 3. InfluxDB & Datenmodellierung
 
-> **Hinweis:** Die Prompts 3.1–3.2 nutzen veraltete Flux-/Task-Konzepte. Für InfluxDB 3 Core SQL/InfluxQL und das Downsampler-Plugin verwenden.
-
-### 3.1 Downsampling-Task erstellen
-
-> **Veraltet:** Flux-Task → Downsampler-Plugin / SQL.
-
-**Prompt**:
-```
-Ich arbeite am Umweltbox-Projekt. Wir speichern Sensordaten in InfluxDB und wollen alte Daten automatisch aggregieren (Downsampling).
-
-Aufgabe:
-Erstelle eine InfluxDB Task, die:
-1. Rohdaten (1-Minuten-Intervall) nach 7 Tagen auf Stundenwerte aggregiert
-2. Stundenwerte nach 90 Tagen auf Tageswerte aggregiert
-3. Folgende Aggregationen berechnet: mean, min, max, stddev
-4. Daten in separate Buckets schreibt: umweltbox_hourly, umweltbox_daily
-
-Measurement: umweltbox
-Tags: tenant_id, device_id, sensor_type
-Field: value
-
-Bitte liefere:
-1. InfluxDB Task (Flux)
-2. Erklärung der Aggregations-Logik
-```
-
----
-
-### 3.2 Datenqualitäts-Check
-
-> **Veraltet:** Flux-Query → SQL/InfluxQL.
+### 3.1 Datenqualitäts-Check
 
 **Prompt**:
 ```
 Ich arbeite am Umweltbox-Projekt. Wir wollen die Datenqualität unserer Sensoren überwachen.
 
 Aufgabe:
-Erstelle eine Flux-Query, die:
+Erstelle eine SQL-Abfrage, die:
 1. Geräte findet, die seit >1 Stunde keine Daten gesendet haben
 2. Geräte findet, die unrealistische Werte senden (z.B. Temperatur >100°C)
 3. Ergebnis als Tabelle ausgibt: device_id, last_seen, issue
 
 Bitte liefere:
-1. Flux-Query
+1. SQL-Abfrage
 2. Grafana-Alert-Konfiguration (optional)
 ```
 
 ---
 
-### 3.3 Daten-Export für Wissenschaft
+### 3.2 Daten-Export für Wissenschaft
 
 **Prompt**:
 ```
@@ -270,8 +240,6 @@ Bitte liefere:
 
 ### 4.1 Dashboard für Schul-Übersicht
 
-> **Veraltet:** `from(bucket: ...)` → SQL/InfluxQL.
-
 **Prompt**:
 ```
 Ich arbeite am Umweltbox-Projekt. Wir wollen ein Grafana-Dashboard für Schulen erstellen.
@@ -286,10 +254,12 @@ Erstelle ein Dashboard mit:
 Variablen:
 - $tenant (Dropdown: Schul-Auswahl)
 
-Flux-Query-Beispiel:
-from(bucket: "umweltbox")
-  |> range(start: -24h)
-  |> filter(fn: (r) => r.tenant_id == "${tenant}")
+SQL-Query-Beispiel:
+SELECT time, device_id, sensor_type, value
+FROM sensors
+WHERE time > now() - interval '24 hours'
+  AND tenant_id = '${tenant}'
+ORDER BY time DESC;
 
 Bitte liefere:
 1. Dashboard-JSON (Auszug)
@@ -495,20 +465,18 @@ Bitte liefere:
 
 ### 7.2 InfluxDB Performance-Analyse
 
-> **Veraltet:** Flux-Query → SQL/InfluxQL.
-
 **Prompt**:
 ```
 Ich arbeite am Umweltbox-Projekt. InfluxDB-Queries sind langsam (>10 Sekunden).
 
 Aufgabe:
-Erstelle eine Flux-Query, die:
+Erstelle eine SQL-Abfrage, die:
 1. Cardinality (Anzahl unique Tags) analysiert
 2. Größte Measurements findet
 3. Empfehlungen für Optimierung gibt
 
 Bitte liefere:
-1. Flux-Query für Cardinality-Check
+1. SQL-Abfrage für Cardinality-Check (z. B. `SELECT DISTINCT ...`)
 2. Tipps für Performance-Optimierung
 ```
 
@@ -516,15 +484,13 @@ Bitte liefere:
 
 ### 7.3 Grafana-Dashboard lädt nicht
 
-> **Veraltet:** `influx`-CLI → `influxdb3`-CLI.
-
 **Prompt**:
 ```
 Ich arbeite am Umweltbox-Projekt. Ein Grafana-Dashboard lädt nicht (Timeout).
 
 Aufgabe:
 Erstelle eine Debug-Checkliste:
-1. InfluxDB-Query testen (influx CLI)
+1. InfluxDB-Query testen (`influxdb3 query`)
 2. Grafana-Logs analysieren
 3. Query-Performance optimieren
 
@@ -560,30 +526,7 @@ Bitte liefere vollständige Konfiguration.
 
 ---
 
-### Template 2: Neue Downsampling-Regel
-
-> **Veraltet:** Flux-Task → Downsampler-Plugin / SQL.
-
-```
-Ich arbeite am Umweltbox-Projekt. Wir wollen eine neue Downsampling-Regel für [SENSOR-TYP] erstellen.
-
-Anforderungen:
-- Rohdaten: [INTERVALL, z.B. "1 Minute"]
-- Aggregation 1: [ZEITRAUM, z.B. "nach 30 Tagen auf Stundenwerte"]
-- Aggregation 2: [ZEITRAUM, z.B. "nach 1 Jahr auf Tageswerte"]
-- Funktionen: [z.B. "mean, min, max"]
-
-Bitte erstelle:
-1. InfluxDB Task (Flux)
-2. Retention Policy
-3. Speicherplatz-Berechnung
-```
-
----
-
-### Template 3: Neues Grafana-Panel
-
-> **Veraltet:** Flux-Query → SQL/InfluxQL.
+### Template 2: Neues Grafana-Panel
 
 ```
 Ich arbeite am Umweltbox-Projekt. Wir wollen ein neues Grafana-Panel erstellen.
@@ -598,7 +541,7 @@ Anforderungen:
 - Sortierung: [z.B. "nach Durchschnittswert"]
 
 Bitte liefere:
-1. Flux-Query
+1. SQL-Query
 2. Panel-Konfiguration (JSON)
 ```
 

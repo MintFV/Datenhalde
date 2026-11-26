@@ -205,96 +205,9 @@ Legende:
 - Tägliche Aggregate wachsen linear (~511 MB/Jahr)
 - Nach 10 Jahren nur ~5 GB zusätzlich (sehr effizient!)
 
-## 🔄 InfluxDB Downsampling-Tasks (Flux)
-
-> **Hinweis:** InfluxDB 3 Core unterstützt kein Flux und keine Flux-Tasks – historisches Beispiel, für die Umsetzung das Downsampler-Plugin/Trigger und SQL verwenden.
-
-### Task 1: 15-Minuten-Aggregation
-
-```flux
-option task = {
-  name: "downsample_15m_umweltbox",
-  every: 15m,
-  offset: 5m  // Start 5 Minuten nach jeder vollen Stunde
-}
-
-from(bucket: "umweltbox")
-  |> range(start: -20m, stop: -5m)  // Fenster: 20-5 Min in Vergangenheit
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r._field == "value")
-  |> aggregateWindow(
-      every: 15m,
-      fn: mean,
-      createEmpty: false
-  )
-  |> set(key: "_field", value: "value_mean")
-  |> to(bucket: "umweltbox_15m", org: "umweltbox")
-
-// Parallel: Min/Max in separate Tasks (oder Union)
-```
-
-### Task 2: Stündliche Aggregation
-
-```flux
-option task = {
-  name: "downsample_hourly_umweltbox",
-  every: 1h,
-  offset: 10m
-}
-
-from(bucket: "umweltbox_15m")
-  |> range(start: -75m, stop: -15m)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r._field == "value_mean")
-  |> aggregateWindow(
-      every: 1h,
-      fn: mean,
-      createEmpty: false
-  )
-  |> to(bucket: "umweltbox_hourly", org: "umweltbox")
-```
-
-### Task 3: Tägliche Aggregation
-
-```flux
-option task = {
-  name: "downsample_daily_umweltbox",
-  cron: "0 2 * * *"  // Jeden Tag um 02:00 Uhr UTC
-}
-
-from(bucket: "umweltbox_hourly")
-  |> range(start: -2d, stop: -1d)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r._field == "value_mean")
-  |> aggregateWindow(
-      every: 1d,
-      fn: mean,
-      createEmpty: false,
-      timeSrc: "_start"  // Tagesbeginn
-  )
-  |> to(bucket: "umweltbox_daily", org: "umweltbox")
-```
-
-### Task 4: Min/Max-Werte (optional)
-
-Für erweiterte Statistiken:
-
-```flux
-// Parallel zu mean auch min/max berechnen
-from(bucket: "umweltbox")
-  |> range(start: -20m, stop: -5m)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r._field == "value")
-  |> aggregateWindow(every: 15m, fn: min)
-  |> set(key: "_field", value: "value_min")
-  |> to(bucket: "umweltbox_15m")
-
-// ... Wiederholen für max
-```
-
 ## 🔧 Implementierung: Bucket-Setup
 
-> **Historisch – InfluxDB 3 Core unterstützt kein Flux und keine v2-Buckets-API.** Die folgenden `influx bucket …`-Befehle und `from(bucket: …)`-Abfragen beschreiben das Zielbild. Produktiv werden Datenbanken mit der `influxdb3`-CLI verwaltet; Downsampling wäre über das Downsampler-Plugin/Trigger umzusetzen.
+> **Historisch – InfluxDB 3 Core unterstützt kein Flux und keine v2-Buckets-API.** Die folgenden v2-CLI-Befehle und Abfragen beschreiben das Zielbild. Produktiv werden Datenbanken mit der `influxdb3`-CLI verwaltet; Downsampling wäre über das Downsampler-Plugin/Trigger umzusetzen.
 
 ### 1. Buckets erstellen (via InfluxDB UI oder CLI)
 
@@ -312,27 +225,7 @@ influx bucket create   --name umweltbox_hourly   --org umweltbox   --retention 2
 influx bucket create   --name umweltbox_daily   --org umweltbox   --retention 0  # Keine Retention
 ```
 
-### 2. Tasks anlegen (via InfluxDB UI)
-
-1. **Navigation**: Settings → Tasks → Create Task
-2. **Flux-Code einfügen** (siehe oben) — veraltet: InfluxDB 3 Core nutzt das Downsampler-Plugin/Trigger statt Flux-Tasks
-3. **Schedule konfigurieren** (every/cron)
-4. **Speichern & Aktivieren**
-
-### 3. Monitoring einrichten
-
-**Task-Erfolg überwachen**:
-```flux
-from(bucket: "_tasks")
-  |> range(start: -1d)
-  |> filter(fn: (r) => r._measurement == "runs")
-  |> filter(fn: (r) => r.status != "success")
-```
-
-**Speicher-Statistiken**:
-```bash
-influx bucket list --org umweltbox --json | jq '.[] | {name, retentionPeriod}'
-```
+> **Hinweis:** Downsampling ist in InfluxDB 3 Core aktuell nicht umgesetzt (keine Plugins, keine Trigger). Das Plugin-/Trigger-Konzept bleibt Zielbild und ist im Abgleich-Dokument `10_Doku_Code_Abgleich_2026-11.md` beschrieben.
 
 ## 📉 Speicherkosten-Vergleich
 

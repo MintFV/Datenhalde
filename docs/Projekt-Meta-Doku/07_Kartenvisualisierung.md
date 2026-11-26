@@ -1,5 +1,7 @@
 # Umweltbox - Kartenvisualisierung
 
+> **Status: ZIELBILD mit SQL-Beispielen.** Die Karten sind nicht vollständig implementiert. InfluxDB 3 Core nutzt SQL/InfluxQL auf `mintfv`/`sensors`; Aggregat-Tabellen und Downsampling existieren nicht. Die Beispiele berechnen Aggregate direkt.
+
 ## 🗺️ Ziel der Kartenvisualisierung
 
 Die räumliche Darstellung der Messdaten ist ein **Kernfeature** des Umweltbox-Projekts. Sie ermöglicht:
@@ -275,17 +277,16 @@ if (msg.payload.geo) {
 }
 ```
 
-### Flux-Query für Live-Karte
+### SQL-Query für Live-Karte
 
-```flux
-from(bucket: "umweltbox")
-  |> range(start: -15m)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r.sensor_type == "pm25")
-  |> filter(fn: (r) => r._field == "value" or r._field == "latitude" or r._field == "longitude")
-  |> last()  // Nur letzter Wert pro Gerät
-  |> pivot(rowKey: ["device_id"], columnKey: ["_field"], valueColumn: "_value")
-  |> filter(fn: (r) => exists r.latitude and exists r.longitude)
+```sql
+SELECT DISTINCT ON (device_id) device_id, value, latitude, longitude, time
+FROM sensors
+WHERE time > now() - interval '15 minutes'
+  AND sensor_type = 'pm25'
+  AND latitude IS NOT NULL
+  AND longitude IS NOT NULL
+ORDER BY device_id, time DESC;
 ```
 
 **Ergebnis-Schema**:
@@ -333,16 +334,15 @@ raspi-schulhof    | 23.7  | 48.1351  | 11.5820   | 2025-01-03T14:28:00Z
 
 **Zweck**: Zeigt Werte über Zeit und Raum (z.B. Tagesverlauf)
 
-**Flux-Query**:
-```flux
-from(bucket: "umweltbox")
-  |> range(start: -24h)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r.tenant_id == "de-hh-gs-altona")
-  |> filter(fn: (r) => r.sensor_type == "temperature")
-  |> filter(fn: (r) => r._field == "value")
-  |> aggregateWindow(every: 1h, fn: mean)
-  |> pivot(rowKey: ["_time"], columnKey: ["device_id"], valueColumn: "_value")
+**SQL-Query**:
+```sql
+SELECT date_trunc('hour', time) AS hour, device_id, avg(value) AS value_mean
+FROM sensors
+WHERE time > now() - interval '24 hours'
+  AND tenant_id = 'de-hh-gs-altona'
+  AND sensor_type = 'temperature'
+GROUP BY hour, device_id
+ORDER BY hour;
 ```
 
 **Darstellung**: X-Achse = Zeit, Y-Achse = Geräte, Farbe = Temperatur
@@ -361,21 +361,18 @@ from(bucket: "umweltbox")
    - Intensity: value
    - Color Range: Viridis
 
-**Export-Query (Flux → CSV)**:
-```flux
-from(bucket: "umweltbox_daily")
-  |> range(start: -30d)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r.sensor_type == "pm25")
-  |> filter(fn: (r) => r._field == "value_mean")
-  |> pivot(rowKey: ["_time", "device_id"], columnKey: ["_field"], valueColumn: "_value")
-  |> map(fn: (r) => ({
-      time: r._time,
-      device: r.device_id,
-      lat: r.latitude,
-      lon: r.longitude,
-      pm25: r.value_mean
-  }))
+**Export-Query (SQL → CSV)**:
+```sql
+SELECT date_trunc('day', time) AS time,
+       device_id AS device,
+       max(latitude) AS lat,
+       max(longitude) AS lon,
+       avg(value) AS pm25
+FROM sensors
+WHERE time > now() - interval '30 days'
+  AND sensor_type = 'pm25'
+GROUP BY time, device
+ORDER BY time DESC;
 ```
 
 **CSV-Format**:
@@ -389,16 +386,16 @@ time,device,lat,lon,pm25
 
 ### Grafana Geomap mit Polylines
 
-**Flux-Query**:
-```flux
-from(bucket: "umweltbox")
-  |> range(start: -2h)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> filter(fn: (r) => r.device_id == "mobile-01")
-  |> filter(fn: (r) => r.sensor_type == "temperature")
-  |> filter(fn: (r) => r._field == "value" or r._field == "latitude" or r._field == "longitude")
-  |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
-  |> sort(columns: ["_time"])
+**SQL-Query**:
+```sql
+SELECT time, value, latitude, longitude
+FROM sensors
+WHERE time > now() - interval '2 hours'
+  AND device_id = 'mobile-01'
+  AND sensor_type = 'temperature'
+  AND latitude IS NOT NULL
+  AND longitude IS NOT NULL
+ORDER BY time ASC;
 ```
 
 **Layer-Konfiguration**:
@@ -493,13 +490,13 @@ const layer = new TripsLayer({
 - **Limit**: Zeige max. 1.000 Punkte gleichzeitig
 - **Caching**: Statische Geo-Daten im Browser cachen
 
-**Flux-Optimierung**:
-```flux
-from(bucket: "umweltbox")
-  |> range(start: -1h)
-  |> filter(fn: (r) => r._measurement == "umweltbox")
-  |> last()  // Nur letzter Wert pro Serie
-  |> limit(n: 1000)  // Max. 1000 Punkte
+**SQL-Optimierung**:
+```sql
+SELECT DISTINCT ON (device_id) device_id, value, latitude, longitude, time
+FROM sensors
+WHERE time > now() - interval '1 hour'
+ORDER BY device_id, time DESC
+LIMIT 1000;
 ```
 
 ---

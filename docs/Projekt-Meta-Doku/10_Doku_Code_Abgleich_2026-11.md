@@ -205,9 +205,23 @@ Der OpenSpec-Change `influxdb3-doc-alignment` gleicht die Dokumentation an den p
 | Downsampling/Retention | vier Buckets, Flux-Tasks | keine Plugins, keine Trigger, keine Aggregate; keine Retention konfiguriert |
 | Tokens | Tokens/Buckets pro Tenant | `influxdb3 create token` kennt nur `--admin`; kein Tenant-Provisioning |
 | Backup | `influx backup`, tar/rsync/CLI widersprüchlich | Dateisystem-Snapshot von `influxdb/data/`; `influxdb3` hat kein `backup`-Subkommando, `query`/`write` nur für logische Exporte |
-| Grafana | `mintfv-dashboard.json` mit Flux | provisioningiertes Dashboard bleibt unverändert (Laufzeit), in der Doku als historisch vermerkt |
+| Grafana | `mintfv-dashboard.json` mit Flux | Dashboard scheiterte am leeren Titel und wurde nie geladen; der Change `flux-beispiele-bereinigen` repariert die Struktur und stellt alle Queries auf SQL um |
 
 Die Meta-Dokus `04`, `05`, `06`, `09`, `influxdb/README.md`, `grafana/README.md`, `README.md` und `BACKUP.md` wurden entsprechend markiert bzw. korrigiert; ein ausführbares SQL-Beispiel steht in `04_InfluxDB_Schema.md`. Weiterhin Zielbild und nicht umgesetzt bleiben F4 Config-Download, F5 Wizard, F6 Retention/Downsampling und Token-Provisioning, F7 Live-Verifikation sowie das Privatpersonen-Modell.
+
+---
+
+## 9. Nachtrag 2026-11-26: Flux-Beispiele bereinigt
+
+Der OpenSpec-Change `flux-beispiele-bereinigen` hat alle ausführbaren Flux-Beispiele entfernt oder in SQL umgeschrieben:
+
+- **Gelöscht:** die Flux-Task-/Downsampling-Beispiele in `04` und `06` (inkl. `_tasks`-Monitoring), Prompt 3.1 und Template 2 in `09`.
+- **Auf SQL umgestellt:** die Abfragebeispiele in `04`, alle fünf Kartenbeispiele in `07` (mit neuem Statusbanner), die Prompt-Texte in `09`, der Architekturgraph in `02` und die Vergleichstabelle in `08`.
+- **Grafana:** `mintfv-dashboard.json` hatte Titel/UID unter `dashboard` verschachtelt und wurde deshalb nie provisioniert („Dashboard title cannot be empty"). Die Datei wurde auf Top-Level-Struktur korrigiert und ihre fünf Queries auf `rawSql` umgestellt. Die Tenant-Variable nutzt jetzt `$__timeFilter(time)` statt eines 90-Tage-Fensters (Parquet-Dateigrenze in 3 Core).
+
+Live verifiziert: Dashboard in der Grafana-API mit `uid=mintfv-umweltbox-uebersicht` sichtbar (HTTP 200), vier SQL-Targets und die Tenant-Variable vorhanden, keine Provisionierungsfehler; die Panel-Abfrage liefert aktuelle Werte aus `sensors`.
+
+Offen bleibt weiterhin echtes Downsampling/Retention (keine Plugins, keine Trigger) – es ist Zielbild und nicht implementiert.
 
 ---
 
