@@ -227,7 +227,7 @@ Offen bleibt weiterhin echtes Downsampling/Retention (keine Plugins, keine Trigg
 
 ## 10. Nachtrag 2026-11-26: F4 – Tasmota-Config-Download
 
-Der OpenSpec-Change `f4-tasmota-config-download` ergänzt den Config-Download für Tasmota. Er bleibt bewusst auf diesen Gerätetyp beschränkt; `rpi` und `telegraf` sind nicht enthalten.
+Der OpenSpec-Change `f4-tasmota-config-download` (archiviert unter `openspec/changes/archive/2026-11-26-f4-tasmota-config-download/`, Anforderungen dauerhaft in `openspec/specs/device-config-download/spec.md`) ergänzt den Config-Download für Tasmota. Er bleibt bewusst auf diesen Gerätetyp beschränkt; `rpi` und `telegraf` sind nicht enthalten.
 
 | Punkt | vorher | jetzt |
 |---|---|---|
