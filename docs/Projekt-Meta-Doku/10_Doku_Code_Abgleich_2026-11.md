@@ -238,7 +238,7 @@ Der OpenSpec-Change `f4-tasmota-config-download` ergänzt den Config-Download f�
 | Sensor-ACL (Code) | `read umweltbox/{tenant}/cmnd/{device}/#` | `read umweltbox/{tenant}/{device}/cmnd/#`, wie von `mqtt-access-control` bereits gefordert |
 | Geräteverknüpfung | `Device.mqtt_account_id` blieb bei der Account-Anlage leer | wird gesetzt; doppelte Verknüpfungen werden abgelehnt |
 
-Verifiziert: 44 Unit-Tests in `selfservice/tests`, `ruff`/`mypy` und die Playwright-Suite `selfservice` (7/7) gegen einen lokalen Docker-Stack, inklusive Dateiname, Dateiinhalt und QR-Quelle des Downloads. Die Produktions-DB hat weiterhin 0 Tenants/Devices/Accounts; die echte Abnahme an einem Test-Tenant und der Produktiv-Deploy stehen noch aus. Bestehende, manuell gepflegte ACLs wurden nicht verändert.
+Verifiziert: 44 Unit-Tests in `selfservice/tests`, `ruff`/`mypy` und die Playwright-Suite `selfservice` (7/7) gegen einen lokalen Docker-Stack, inklusive Dateiname, Dateiinhalt und QR-Quelle des Downloads. Der Produktiv-Deploy erfolgte am 2026-11-26 auf `f6c23b8`: Selfservice-Image neu gebaut, nginx per SIGHUP reloaded, `/selfservice/health`, `/selfservice/anmelden` und das statische QR-Asset liefern 200, `./tests/mqtt-acl-smoke.sh` → `SMOKE_OK`. Die manuell gepflegten ACL-/Passwd-Dateien sind per md5 unverändert (Modus 660), die DB hat weiterhin 0 Tenants/Devices/Accounts. Die Abnahme an einem echten Test-Tenant steht aus.
 
 ---
 
