@@ -256,7 +256,7 @@ Nach `./mintfv.sh stop` (`docker compose down`) und anschließendem Start blieb 
 
 Behoben durch Neuerstellen des Containers mit den neuen Limits, anschließend `docker compose up -d` und nginx-SIGHUP. Verifiziert: Selfservice via nginx `200`, Grafana `302` (Login-Redirect), `./tests/mqtt-acl-smoke.sh` → `SMOKE_OK` mit 15 InfluxDB-Punkten/30 min. Die Snapshot-Zahl wächst weiter; das neue Limit schafft deutlichen Puffer, die Snapshot-/Retention-Entwicklung bleibt aber zu beobachten.
 
-Hinweis: `./mintfv.start` ist kein gültiger Befehl – korrekt ist `./mintfv.sh start`.
+Der Neustart selbst war ordnungsgemäß: `./mintfv.sh stop` entspricht `docker compose down`, `./mintfv.sh start` entspricht `docker compose up -d`. Er war lediglich der Auslöser, weil danach das alte `nofile`-Limit auf die inzwischen 578 Snapshot-Dateien traf.
 
 ---
 
