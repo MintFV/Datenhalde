@@ -174,4 +174,23 @@ Aus den Dokumenten (02/03/05/09) lässt sich folgendes gewünschtes Fachmodell a
 
 ---
 
+## 7. Nachtrag 2026-11-26: `mqtt-acl-haertung`
+
+Der OpenSpec-Change `mqtt-acl-haertung` ist umgesetzt und archiviert (`openspec/changes/archive/2026-11-26-mqtt-acl-haertung/`); die Anforderungen stehen nun dauerhaft in `openspec/specs/mqtt-access-control/spec.md`. Gegenüber Abschnitt 2 und 3 ergeben sich folgende Live-Fakten:
+
+| Punkt | vorher | jetzt |
+|---|---|---|
+| `de-hh-mintfv-uwbox02` | `topic write #` und `topic read #` | gescopt wie uwbox23: `write umweltbox/de-hh-mintfv-uwbox02/#`, `read .../cmnd/#`, `read $SYS/broker/version` |
+| `mcp-admin-user` | `readwrite #`, in ACL und Passwortdatei | entfernt (kein bekannter Verwender, keine Verbindungen in 30 Tagen Logs) |
+| `nodered-writer` | `readwrite #` | `read umweltbox/#` (der Flow hat keine `mqtt out`-Knoten) |
+| `mosquitto.acl` | Modus `666` | Modus `660`, Besitz `2003:2100` (Selfservice und Host-Skript in GID 2100 schreiben weiter) |
+| Testidentität | – | `mintfv-smoketest` mit vier gescopten Regeln; Credentials nur in `.env` auf `mintfv` |
+| Smoketest | nur self-contained Playwright-Seite | `tests/mqtt-acl-smoke.sh`: statische ACL-Prüfung, MQTT-Round-Trip in `smoketest/…`, InfluxDB-Canary auf uwbox23 |
+
+Verifiziert: Abschluss-Smoke `SMOKE_OK`, uwbox23-Daten unverändert und aktuell, einzige verbleibende ungescopte Regel ist `master-admin`. Backups liegen unter `mosquitto/config/backups/*-20261126-191357` (Modus 640).
+
+Weiterhin offen: D25 – die Topic-Schemata `tenant/…` gegenüber `umweltbox/…` sowie `cmnd` gegenüber `commands` sind **nicht** vereinheitlicht. Ebenso offen bleiben F4–F7 und das Privatpersonen-Modell aus `03:52-55`. Produktion läuft unverändert auf `e1b95a3`; der lokale Branch `openspec` ist 6 Commits voraus.
+
+---
+
 *Erstellt: 2026-11-19. Nachfolgende Änderungen an Doku/Code bitte hier gegenlesen.*
