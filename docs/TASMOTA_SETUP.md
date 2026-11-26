@@ -106,6 +106,14 @@ topic read $SYS/broker/version
 
 ---
 
+## 📥 Config-Download aus dem Selfservice
+
+Für einen MQTT-Account mit verknüpftem Tasmota-Gerät erzeugt der Selfservice beim Anlegen oder Ändern des Passworts eine `tasmota_config.txt` und einen QR-Code. Beide enthalten dieselbe `Backlog0`-Zeile mit `Topic {tenant}/{device}` und `FullTopic umweltbox/%topic%/%prefix%/` und damit genau die Struktur, die oben und in der ACL beschrieben ist.
+
+Das MQTT-Passwort wird nur einmalig angezeigt und wird weder im Selfservice gespeichert noch nachträglich abrufbar. Die Datei und der QR-Code enthalten es im Klartext: nicht teilen und für den Geräte-Einsatz zum Schluss noch ein Web-Passwort setzen.
+
+---
+
 ## 📚 Weitere Informationen
 
 - **MQTT ACLs:** [mosquitto/README.md](../mosquitto/README.md)

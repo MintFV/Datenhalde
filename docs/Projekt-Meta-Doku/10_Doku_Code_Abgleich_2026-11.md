@@ -154,7 +154,7 @@ Aus den Dokumenten (02/03/05/09) lässt sich folgendes gewünschtes Fachmodell a
 | F1 | Tenant anlegen, Tenant-ID nach `03` | zentraler Onboarding-Schritt | **umgesetzt**: `/selfservice/tenant/beantragen`, ID `de-{bl}-{schultyp}-{name}` inkl. Kollisionssuffix, Status `pending` | Bearbeitung der Stammdaten; Groß-/Kleinschreibung der ID |
 | F2 | Device-Registry (Tasmota/RPi/Telegraf) | Geräte-Registrierung mit Standort | **umgesetzt**: CRUD unter `/selfservice/tenant/.../geraete/...`, Verknüpfung mit MQTT-Account | Standort pro Gerät (lat/lon) noch am Tenant |
 | F3 | MQTT-Accounts rollen-/gerätegerecht | admin / sensor / nodered / privat | **umgesetzt**: Rollen admin/sensor/nodered, `device_id` aus F2, Fail-Closed bei unbekannter Rolle/fehlendem Gerät, Topic-Anzeige korrigiert | Privatpersonen-Sondermodell (`03:52-55`) noch nicht |
-| F4 | Verbindungsdaten / Tasmota-Konfig | Config-Download pro Gerätetyp | Tasmota-Panel + Copy-Button + Once-Credentials; Topic-Anzeige jetzt rollengerecht | Echter Config-Download / QR-Code |
+| F4 | Verbindungsdaten / Tasmota-Konfig | Config-Download pro Gerätetyp | **umgesetzt (Tasmota):** `tasmota_config.txt` + QR aus dem einmaligen POST; FullTopic `umweltbox/%topic%/%prefix%/`; Sensor-ACL an Spec angepasst | RPi-/Telegraf-Configs, Live-Abnahme mit Test-Tenant |
 | F5 | Multi-Step-Onboarding-Wizard | 4 Schritte laut `09:408-429` | nur Einzelformen (F1/F2/F3) | Wizard, Auto-Approval-Option |
 | F6 | InfluxDB-/Grafana-Zugang provisioning | Tokens/Buckets/Dashboards pro Tenant | fehlt; Doku teils auf v2/Flux-Stand | **auf InfluxDB 3 Core umschreiben** (keine Buckets-API wie v2) |
 | F7 | Live-Verifikation erster Datenpunkt | Portal zeigt MQTT/Influx/Grafana-Status | fehlt | optional, nach Datenmodell geklärt |
@@ -170,7 +170,7 @@ Aus den Dokumenten (02/03/05/09) lässt sich folgendes gewünschtes Fachmodell a
 1. **Deploy:** Produktion liegt einen Commit zurück (`e1b95a3` → `16a4b9b` + Feature-Commit). Nach dem Deploy erneut abgleichen.
 2. **Akzeptiertes Risiko:** `zz_xx.txt` / `mintfv.peddy.net:` bleiben unverändert (Entscheidung 2026-11-19); Finding D17 bleibt dokumentiert.
 3. **Doku-Rest:** ACL-Details in `03` (`cmnd` vs. `commands`, `$SYS`) und InfluxDB-v2-Beispiele in `05` sind weiterhin nur teilweise korrigiert.
-4. **Nächste Fachlichkeiten (Bedarf klären):** F4 Config-Download, F5 Wizard, F6 InfluxDB-3-Zugang, F7 Live-Verifikation, Privatpersonen-Modell aus `03:52-55`.
+4. **Nächste Fachlichkeiten (Bedarf klären):** F4 Tasmota-Config-Download umgesetzt; offen bleiben F5 Wizard, F6 InfluxDB-3-Zugang, F7 Live-Verifikation, Privatpersonen-Modell aus `03:52-55`.
 
 ---
 
@@ -189,7 +189,7 @@ Der OpenSpec-Change `mqtt-acl-haertung` ist umgesetzt und archiviert (`openspec/
 
 Verifiziert: Abschluss-Smoke `SMOKE_OK`, uwbox23-Daten unverändert und aktuell, einzige verbleibende ungescopte Regel ist `master-admin`. Backups liegen unter `mosquitto/config/backups/*-20261126-191357` (Modus 640).
 
-Weiterhin offen: D25 – die Topic-Schemata `tenant/…` gegenüber `umweltbox/…` sowie `cmnd` gegenüber `commands` sind **nicht** vereinheitlicht. Ebenso offen bleiben F4–F7 und das Privatpersonen-Modell aus `03:52-55`. Produktion läuft unverändert auf `e1b95a3`; der lokale Branch `openspec` ist 6 Commits voraus.
+Weiterhin offen: D25 – die Topic-Schemata `tenant/…` gegenüber `umweltbox/…` sowie `cmnd` gegenüber `commands` sind **nicht** vereinheitlicht. Ebenso offen bleiben F5–F7 und das Privatpersonen-Modell aus `03:52-55`. Produktion läuft unverändert auf `e1b95a3`; der lokale Branch `openspec` ist 6 Commits voraus.
 
 ---
 
@@ -207,7 +207,7 @@ Der OpenSpec-Change `influxdb3-doc-alignment` gleicht die Dokumentation an den p
 | Backup | `influx backup`, tar/rsync/CLI widersprüchlich | Dateisystem-Snapshot von `influxdb/data/`; `influxdb3` hat kein `backup`-Subkommando, `query`/`write` nur für logische Exporte |
 | Grafana | `mintfv-dashboard.json` mit Flux | Dashboard scheiterte am leeren Titel und wurde nie geladen; der Change `flux-beispiele-bereinigen` repariert die Struktur und stellt alle Queries auf SQL um |
 
-Die Meta-Dokus `04`, `05`, `06`, `09`, `influxdb/README.md`, `grafana/README.md`, `README.md` und `BACKUP.md` wurden entsprechend markiert bzw. korrigiert; ein ausführbares SQL-Beispiel steht in `04_InfluxDB_Schema.md`. Weiterhin Zielbild und nicht umgesetzt bleiben F4 Config-Download, F5 Wizard, F6 Retention/Downsampling und Token-Provisioning, F7 Live-Verifikation sowie das Privatpersonen-Modell.
+Die Meta-Dokus `04`, `05`, `06`, `09`, `influxdb/README.md`, `grafana/README.md`, `README.md` und `BACKUP.md` wurden entsprechend markiert bzw. korrigiert; ein ausführbares SQL-Beispiel steht in `04_InfluxDB_Schema.md`. Weiterhin Zielbild und nicht umgesetzt bleiben F5 Wizard, F6 Retention/Downsampling und Token-Provisioning, F7 Live-Verifikation sowie das Privatpersonen-Modell; F4 ist für Tasmota umgesetzt.
 
 ---
 
@@ -222,6 +222,23 @@ Der OpenSpec-Change `flux-beispiele-bereinigen` hat alle ausführbaren Flux-Beis
 Live verifiziert: Dashboard in der Grafana-API mit `uid=mintfv-umweltbox-uebersicht` sichtbar (HTTP 200), vier SQL-Targets und die Tenant-Variable vorhanden, keine Provisionierungsfehler; die Panel-Abfrage liefert aktuelle Werte aus `sensors`.
 
 Offen bleibt weiterhin echtes Downsampling/Retention (keine Plugins, keine Trigger) – es ist Zielbild und nicht implementiert.
+
+---
+
+## 10. Nachtrag 2026-11-26: F4 – Tasmota-Config-Download
+
+Der OpenSpec-Change `f4-tasmota-config-download` ergänzt den Config-Download für Tasmota. Er bleibt bewusst auf diesen Gerätetyp beschränkt; `rpi` und `telegraf` sind nicht enthalten.
+
+| Punkt | vorher | jetzt |
+|---|---|---|
+| Config-Datei | nicht vorhanden | `tasmota_config.txt` mit einer `Backlog0`-Zeile, erzeugt im selben authentifizierten POST wie die Once-Credentials |
+| Passwort | nur in der Once-Seite | zusätzlich in Datei/QR, aber nicht gespeichert, nicht geloggt und nicht per GET erneut abrufbar |
+| QR-Code | nicht vorhanden | clientseitig aus derselben Zeile erzeugt, keine neue Python-Abhängigkeit |
+| FullTopic | `05` widersprüchlich (`%prefix%/%topic%/`), Live `umweltbox/%topic%/%prefix%/` | verbindlich `umweltbox/%topic%/%prefix%/` mit `Topic {tenant}/{device}`; `05` korrigiert |
+| Sensor-ACL (Code) | `read umweltbox/{tenant}/cmnd/{device}/#` | `read umweltbox/{tenant}/{device}/cmnd/#`, wie von `mqtt-access-control` bereits gefordert |
+| Geräteverknüpfung | `Device.mqtt_account_id` blieb bei der Account-Anlage leer | wird gesetzt; doppelte Verknüpfungen werden abgelehnt |
+
+Verifiziert: 44 Unit-Tests in `selfservice/tests`, `ruff`/`mypy` (siehe Task 4.2), Playwright-Fall für Dateiname, Dateiinhalt und QR-Quelle. Die Produktions-DB hat weiterhin 0 Tenants/Devices/Accounts; die echte Abnahme an einem Test-Tenant und der Produktiv-Deploy stehen noch aus. Bestehende, manuell gepflegte ACLs wurden nicht verändert.
 
 ---
 

@@ -78,4 +78,50 @@ test.describe('Selfservice Portal', () => {
     await page.click('input[type="submit"]');
     await expect(page.locator('.alert-danger, .flash-container .alert')).toBeVisible();
   });
+
+  test('Tasmota config download and QR use the same backlog', async ({ page, baseURL }) => {
+    const backlog = 'Backlog0 MqttHost example.test; MqttPort 8883; MqttUser sensor; '
+      + 'MqttPassword geheim; MqttClient esp01; Topic umweltbox/de-hh-gs-test/esp01; '
+      + 'FullTopic umweltbox/%topic%/%prefix%/; SetOption3 1; TelePeriod 300';
+    await page.setContent(`
+      <html><body>
+        <code id="tasmota-backlog">${backlog}</code>
+        <button type="button" id="tasmota-download">Download</button>
+        <div id="tasmota-qr"></div>
+      </body></html>
+    `);
+    await page.addScriptTag({ url: `${baseURL}/selfservice/static/js/qrcode.min.js` });
+    await page.addScriptTag({ url: `${baseURL}/selfservice/static/js/tasmota-config.js` });
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('#tasmota-download'),
+    ]);
+    expect(download.suggestedFilename()).toBe('tasmota_config.txt');
+    const stream = await download.createReadStream();
+    let content = '';
+    for await (const chunk of stream) {
+      content += chunk.toString();
+    }
+    expect(content.trim()).toBe(backlog);
+
+    const qrSrc = await page.locator('#tasmota-qr img').getAttribute('src');
+    const expectedSrc = await page.evaluate((text) => {
+      const factory = (window as unknown as {
+        qrcode: (type: number, level: string) => {
+          addData(value: string): void;
+          make(): void;
+          createImgTag(cell: number, margin: number): string;
+        };
+      }).qrcode;
+      const qr = factory(0, 'M');
+      qr.addData(text);
+      qr.make();
+      const holder = document.createElement('div');
+      holder.innerHTML = qr.createImgTag(4, 8);
+      return holder.querySelector('img')?.getAttribute('src');
+    }, content.trim());
+    expect(qrSrc).toBe(expectedSrc);
+    expect(qrSrc).toContain('data:image');
+  });
 });

@@ -131,6 +131,6 @@ class Device(db.Model):  # type: ignore[name-defined]
     )
     mqtt_account = db.relationship(
         "MqttAccount",
-        backref="device",
+        backref=db.backref("device", uselist=False),
         uselist=False,
     )

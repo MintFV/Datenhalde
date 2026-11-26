@@ -197,7 +197,7 @@ def _acl_topic_lines(
             raise ValueError("Für die Sensor-Rolle ist ein Gerät erforderlich.")
         return [
             f"topic write umweltbox/{tenant_id}/{device_id}/#",
-            f"topic read umweltbox/{tenant_id}/cmnd/{device_id}/#",
+            f"topic read umweltbox/{tenant_id}/{device_id}/cmnd/#",
             "topic read $SYS/broker/version",
         ]
     if role == "nodered":

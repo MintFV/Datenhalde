@@ -21,7 +21,7 @@ def test_sensor_rules_are_device_scoped(test_app):
         add_acl_rules("tenant-sensor", "de-hh-gs-test", "sensor", "esp01")
     acl = _read_acl(test_app)
     assert "topic write umweltbox/de-hh-gs-test/esp01/#" in acl
-    assert "topic read umweltbox/de-hh-gs-test/cmnd/esp01/#" in acl
+    assert "topic read umweltbox/de-hh-gs-test/esp01/cmnd/#" in acl
     assert "readwrite" not in acl
 
 

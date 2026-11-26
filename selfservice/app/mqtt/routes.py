@@ -7,10 +7,10 @@ import string
 from collections.abc import Callable
 from typing import Any, ParamSpec, Protocol, TypeVar, cast
 
-from flask import flash, redirect, render_template, url_for
+from flask import current_app, flash, redirect, render_template, url_for
 
 from ..extensions import db
-from ..models import MqttAccount
+from ..models import Device, MqttAccount
 from . import bp
 from . import service as mqtt_service
 from .forms import (
@@ -19,6 +19,11 @@ from .forms import (
     DeleteMqttAccountForm,
 )
 from .service import topic_for
+from .tasmota import (
+    INVALID_PASSWORD_MESSAGE,
+    build_tasmota_backlog,
+    is_tasmota_password_safe,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +79,27 @@ def _generate_password(length: int = 16) -> str:
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
+def _tasmota_backlog(
+    tenant: TenantProtocol,
+    username: str,
+    role: str,
+    password: str,
+    device: Device | None,
+) -> str | None:
+    if device is None or device.device_type != "tasmota":
+        return None
+    if not is_tasmota_password_safe(password):
+        flash(INVALID_PASSWORD_MESSAGE, "warning")
+        return None
+    return build_tasmota_backlog(
+        domain=str(current_app.config["DOMAIN"]),
+        topic=topic_for(tenant.tenant_id, role, username, device.device_id),
+        username=username,
+        password=password,
+        client=device.device_id,
+    )
+
+
 @bp.route("/")
 @login_required
 def overview():
@@ -122,6 +148,22 @@ def create():
             flash("Für einen Sensor muss ein Gerät ausgewählt werden.", "danger")
             return render_template("mqtt/create.html", form=form, tenant=tenant)
 
+        device = None
+        if device_id:
+            device = Device.query.filter_by(tenant_id=tenant.id, device_id=device_id).first()
+            if device is None:
+                flash(
+                    f'Gerät "{device_id}" gehört nicht zu diesem Tenant.',
+                    "danger",
+                )
+                return render_template("mqtt/create.html", form=form, tenant=tenant)
+            if device.mqtt_account_id is not None:
+                flash(
+                    f'Gerät "{device_id}" ist bereits mit einem MQTT-Account verknüpft.',
+                    "danger",
+                )
+                return render_template("mqtt/create.html", form=form, tenant=tenant)
+
         # Prüfen ob Username bereits existiert
         if MqttAccount.query.filter_by(username=username).first():
             flash(f'MQTT-Account "{username}" existiert bereits.', "danger")
@@ -154,6 +196,8 @@ def create():
                 ),
             )
             db.session.add(account)
+            if device is not None:
+                device.mqtt_account = account
             db.session.commit()
 
             flash(
@@ -166,6 +210,7 @@ def create():
                 password=password,
                 tenant=tenant,
                 topic=topic_for(tenant.tenant_id, role, username, device_id),
+                backlog=_tasmota_backlog(tenant, username, role, password, device),
             )
         except (OSError, ValueError, RuntimeError):
             logger.exception(
@@ -209,6 +254,13 @@ def change_password(account_id: int):
                     account.role,
                     account.username,
                     account.device.device_id if account.device else None,
+                ),
+                backlog=_tasmota_backlog(
+                    tenant,
+                    account.username,
+                    account.role,
+                    new_password,
+                    account.device,
                 ),
             )
         except (OSError, ValueError, RuntimeError):

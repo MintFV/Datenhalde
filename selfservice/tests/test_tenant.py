@@ -126,9 +126,51 @@ def test_sensor_account_uses_selected_device(test_app, client, make_user, login)
         with open(test_app.config["MOSQUITTO_ACL_FILE"], encoding="utf-8") as handle:
             acl = handle.read()
         assert "topic write umweltbox/de-hh-gs-test/esp01/#" in acl
-        assert "topic read umweltbox/de-hh-gs-test/cmnd/esp01/#" in acl
+        assert "topic read umweltbox/de-hh-gs-test/esp01/cmnd/#" in acl
         assert "readwrite" not in acl
         assert b"umweltbox/de-hh-gs-test/esp01" in response.data
+
+
+def test_sensor_account_links_device_and_rejects_second_account(test_app, client, make_user, login):
+    with test_app.app_context():
+        tenant = Tenant(tenant_id="de-hh-gs-test", name="Testschule", status="active")
+        db.session.add(tenant)
+        db.session.commit()
+        tenant_id = tenant.id
+        db.session.add(Device(tenant_id=tenant_id, device_id="esp01", device_type="tasmota"))
+        db.session.commit()
+
+    login(make_user("link-owner@example.test", tenant_id=tenant_id))
+    first = client.post(
+        "/selfservice/mqtt/erstellen",
+        data={
+            "username": "test-sensor-link",
+            "role": "sensor",
+            "device_id": "esp01",
+            "password": "sicheres-passwort",
+        },
+        follow_redirects=True,
+    )
+    assert first.status_code == 200
+
+    with test_app.app_context():
+        account = MqttAccount.query.one()
+        assert Device.query.one().mqtt_account_id == account.id
+
+    second = client.post(
+        "/selfservice/mqtt/erstellen",
+        data={
+            "username": "test-sensor-second",
+            "role": "sensor",
+            "device_id": "esp01",
+            "password": "sicheres-passwort",
+        },
+        follow_redirects=True,
+    )
+    assert second.status_code == 200
+    assert "ist bereits mit einem MQTT-Account verknüpft" in second.data.decode("utf-8")
+    with test_app.app_context():
+        assert MqttAccount.query.count() == 1
 
 
 def test_sensor_account_without_device_is_rejected(test_app, client, make_user, login):

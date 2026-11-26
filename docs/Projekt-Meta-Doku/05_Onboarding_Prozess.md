@@ -1,7 +1,7 @@
 # Umweltbox - Onboarding-Prozess
 
-> **⚠️ Status: ZIELBILD / KONZEPT (Januar 2026) – nicht implementiert.**
-> Der hier beschriebene Onboarding-Wizard (`/onboarding`), die Registrierung mit Schul-/Standortdaten, die automatische Tenant- und Credential-Erzeugung, die Config-Downloads und das Live-Monitoring existieren **nicht** im Code. Das real existierende Portal ist `https://mintfv.peddy.net/selfservice/` (Auth + MQTT-Account-CRUD, siehe `selfservice/README.md`). Auch die InfluxDB-v2-/Flux-Beispiele unten sind historisch: produktiv läuft InfluxDB 3 Core (SQL/InfluxQL, Port 8181).
+> **⚠️ Status: ZIELBILD / KONZEPT (Januar 2026) – teilweise implementiert.**
+> Der hier beschriebene Onboarding-Wizard (`/onboarding`), die Registrierung mit Schul-/Standortdaten, die automatische Tenant- und Credential-Erzeugung und das Live-Monitoring existieren **nicht** im Code. Der Config-Download für Tasmota ist dagegen umgesetzt: Der Selfservice liefert nach Anlage eines Sensor-Accounts mit verknüpftem Tasmota-Gerät eine `tasmota_config.txt` und einen QR-Code, beide nur einmalig (siehe §3 und `docs/TASMOTA_SETUP.md`). Das real existierende Portal ist `https://mintfv.peddy.net/selfservice/` (Auth + MQTT-Account-CRUD, siehe `selfservice/README.md`). Auch die InfluxDB-v2-/Flux-Beispiele unten sind historisch: produktiv läuft InfluxDB 3 Core (SQL/InfluxQL, Port 8181).
 > Abgleich und Fachlichkeiten: [`10_Doku_Code_Abgleich_2026-11.md`](10_Doku_Code_Abgleich_2026-11.md).
 
 ## 🚀 Ziel des Onboardings
@@ -138,10 +138,10 @@ Das Portal generiert **fertige Konfigurationsdateien** für verschiedene Geräte
 
 `tasmota_config.txt`:
 ```
-Backlog0 MqttHost mintfv.peddy.net;   MqttPort 8883;   MqttUser de-by-gym-max-planck-esp01;   MqttPassword Xy9#mK2$qL8@vN3!;   MqttClient esp01;   Topic umweltbox/de-by-gym-max-planck/esp01;   FullTopic %prefix%/%topic%/;   SetOption3 1;   TelePeriod 300
+Backlog0 MqttHost mintfv.peddy.net;   MqttPort 8883;   MqttUser de-by-gym-max-planck-esp01;   MqttPassword Xy9#mK2$qL8@vN3!;   MqttClient esp01;   Topic de-by-gym-max-planck/esp01;   FullTopic umweltbox/%topic%/%prefix%/;   SetOption3 1;   TelePeriod 300
 ```
 
-**Verwendung**: Über Tasmota-Konsole einfügen
+**Verwendung**: Über Tasmota-Konsole einfügen. Der Selfservice erzeugt diese Zeile beim Anlegen oder Ändern des MQTT-Passworts als `tasmota_config.txt` und zeigt sie zusammen mit einem QR-Code nur einmalig an. `Topic` enthält `{tenant}/{device}`, `FullTopic` entspricht der Live-Konvention aus `docs/TASMOTA_SETUP.md`.
 
 #### Raspberry Pi (Python)
 
@@ -208,8 +208,8 @@ sensors:
    # I2C konfigurieren
    I2CDriver13 1
    
-   # Telemetrie-Topic setzen
-   TeleTopic umweltbox/de-by-gym-max-planck/esp01/%prefix%/%topic%/
+   # Topic und FullTopic stammen aus dem Config-Download
+   FullTopic umweltbox/%topic%/%prefix%/
    ```
 
 5. **Testen**:

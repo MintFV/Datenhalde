@@ -138,6 +138,16 @@ def device_edit(device_id: int):
         account = db.session.get(MqttAccount, int(selected)) if selected else None
         if account is not None and account.tenant_id != tenant.id:
             abort(403)
+        if account is not None:
+            linked = Device.query.filter_by(mqtt_account_id=account.id).first()
+            if linked is not None and linked.id != device.id:
+                flash(
+                    "Dieser MQTT-Account ist bereits mit einem anderen Gerät verknüpft.",
+                    "warning",
+                )
+                return render_template(
+                    "tenant/device_form.html", form=form, tenant=tenant, device=device
+                )
         device.device_id = form.device_id.data.strip()
         device.device_type = form.device_type.data
         device.description = (form.description.data or "").strip() or None
