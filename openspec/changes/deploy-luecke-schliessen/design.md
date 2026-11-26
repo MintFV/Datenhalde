@@ -31,10 +31,11 @@ Der Agent pusht nie. Der Benutzer pusht den lokalen `refactorPED`; auf `mintfv` 
 `docker compose build selfservice mosquitto-reload` gefolgt von `docker compose up -d selfservice mosquitto-reload` (Reihenfolge aus `selfservice/README.md:173-174`). Das `entrypoint.sh` führt `flask db upgrade` aus; da bereits `001_initial (head)` aktiv ist, ist keine Migration nötig.
 
 **5. Verifikation vor Freigabe, Rollback vorbereitet.**
-Geprüft werden Git-Stand, Tenant-Route (nicht mehr 404), Smoketest, ACL-Modus/Regeln, Backups und InfluxDB-Punkte. Bei Abweichung: Server auf `e1b95a3` zurücksetzen, Image neu bauen, erneut verifizieren. Ein `git reset --hard` ist destruktiv und benötigt eine separate, explizite Freigabe.
+Geprüft werden Git-Stand, Tenant-Route `/selfservice/tenant/uebersicht` (nicht mehr 404), Smoketest, ACL-Modus/Regeln, Backups und InfluxDB-Punkte. Bei Abweichung: Server auf `e1b95a3` zurücksetzen, Image neu bauen, erneut verifizieren. Ein `git reset --hard` ist destruktiv und benötigt eine separate, explizite Freigabe.
 
 ## Risks / Trade-offs
 
+- [nginx cached die alte Container-IP und liefert 502] → nach dem Recreate `docker compose kill -s HUP nginx`, danach Route prüfen.
 - [Kurze Unterbrechung des Selfservice beim Neustart] → nur `selfservice`/`mosquitto-reload` neu starten, nach dem Start Healthcheck und Route prüfen.
 - [Push vergessen] → der Server bleibt auf altem Stand; Verifikation „Commit-Stand stimmt überein" schlägt fehl und stoppt den Deploy vor dem Rebuild.
 - [Untracked Smoke-Skript blockiert den Merge] → vorher `diff -w` prüfen, dann Kopie entfernen; die versionierte Datei ist funktional gleich.

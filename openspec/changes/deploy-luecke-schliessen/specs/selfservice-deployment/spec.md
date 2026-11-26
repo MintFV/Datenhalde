@@ -8,11 +8,11 @@ Diese Capability beschreibt, wie der produktive Selfservice auf den Stand des Re
 
 ### Requirement: Produktiver Code entspricht dem Repository-Stand
 
-Nach dem Deploy SHALL der auf `mintfv` ausgelieferte Selfservice die Funktionen des deployed Commits enthalten. Insbesondere SHALL `/selfservice/tenant/overview` nicht mehr mit 404 antworten.
+Nach dem Deploy SHALL der auf `mintfv` ausgelieferte Selfservice die Funktionen des deployed Commits enthalten. Insbesondere SHALL `/selfservice/tenant/uebersicht` nicht mehr mit 404 antworten.
 
 #### Scenario: Tenant-Route ist vorhanden
 
-- **WHEN** nach dem Deploy `/selfservice/tenant/overview` abgefragt wird
+- **WHEN** nach dem Deploy `/selfservice/tenant/uebersicht` abgefragt wird
 - **THEN** antwortet der Server nicht mit 404, sondern mit der Login-Weiterleitung oder der Tenant-Übersicht
 
 #### Scenario: Commit-Stand stimmt überein

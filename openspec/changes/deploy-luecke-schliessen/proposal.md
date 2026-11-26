@@ -2,7 +2,7 @@
 
 ## Why
 
-Auf `mintfv` läuft der Selfservice noch auf Commit `e1b95a3`, während der lokale Branch `openspec` 17 Commits voraus ist. Davon enthalten vier echte Funktionalität (Tenant-/Device-Verwaltung, rollengerechte MQTT-ACLs, CSS/A11y, Type-Stubs). Die Route `/selfservice/tenant/overview` liefert produktiv deshalb 404, und die ACLs werden weiterhin manuell gepflegt. Einige Live-Änderungen (CSS, repariertes Dashboard, Smoketest, Backups) wurden direkt auf dem Host gemacht und sind im Git-Stand des Servers nicht enthalten.
+Auf `mintfv` läuft der Selfservice noch auf Commit `e1b95a3`, während der lokale Branch `openspec` 17 Commits voraus ist. Davon enthalten vier echte Funktionalität (Tenant-/Device-Verwaltung, rollengerechte MQTT-ACLs, CSS/A11y, Type-Stubs). Die Route `/selfservice/tenant/uebersicht` liefert produktiv deshalb 404, und die ACLs werden weiterhin manuell gepflegt. Einige Live-Änderungen (CSS, repariertes Dashboard, Smoketest, Backups) wurden direkt auf dem Host gemacht und sind im Git-Stand des Servers nicht enthalten.
 
 ## What Changes
 
