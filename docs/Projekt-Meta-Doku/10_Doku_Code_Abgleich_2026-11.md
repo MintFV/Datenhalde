@@ -238,7 +238,7 @@ Der OpenSpec-Change `f4-tasmota-config-download` erg채nzt den Config-Download f�
 | Sensor-ACL (Code) | `read umweltbox/{tenant}/cmnd/{device}/#` | `read umweltbox/{tenant}/{device}/cmnd/#`, wie von `mqtt-access-control` bereits gefordert |
 | Ger채teverkn체pfung | `Device.mqtt_account_id` blieb bei der Account-Anlage leer | wird gesetzt; doppelte Verkn체pfungen werden abgelehnt |
 
-Verifiziert: 44 Unit-Tests in `selfservice/tests`, `ruff`/`mypy` (siehe Task 4.2), Playwright-Fall f체r Dateiname, Dateiinhalt und QR-Quelle. Die Produktions-DB hat weiterhin 0 Tenants/Devices/Accounts; die echte Abnahme an einem Test-Tenant und der Produktiv-Deploy stehen noch aus. Bestehende, manuell gepflegte ACLs wurden nicht ver채ndert.
+Verifiziert: 44 Unit-Tests in `selfservice/tests`, `ruff`/`mypy` und die Playwright-Suite `selfservice` (7/7) gegen einen lokalen Docker-Stack, inklusive Dateiname, Dateiinhalt und QR-Quelle des Downloads. Die Produktions-DB hat weiterhin 0 Tenants/Devices/Accounts; die echte Abnahme an einem Test-Tenant und der Produktiv-Deploy stehen noch aus. Bestehende, manuell gepflegte ACLs wurden nicht ver채ndert.
 
 ---
 

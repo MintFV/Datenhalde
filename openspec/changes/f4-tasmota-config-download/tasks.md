@@ -19,7 +19,7 @@
 ## 4. Dokumentation und Abnahme
 
 - [x] 4.1 `docs/Projekt-Meta-Doku/05_Onboarding_Prozess.md` §3 auf `FullTopic umweltbox/%topic%/%prefix%/` mit `Topic umweltbox/{tenant}/{device}` korrigieren, `docs/TASMOTA_SETUP.md` um den Download-Hinweis ergänzen und den F4-Status in `docs/Projekt-Meta-Doku/10_Doku_Code_Abgleich_2026-11.md` aktualisieren; verifiziert durch `git diff --check` und Abgleich der genannten Topic-Zeilen.
-- [x] 4.2 Lokale Gesamtprüfung: `ruff check selfservice`, `mypy --config-file selfservice/pyproject.toml selfservice`, `cd selfservice && pytest -q` sowie der Playwright-Fall „Tasmota config download and QR use the same backlog“; alle grün.
+- [x] 4.2 Gesamtprüfung: `ruff check selfservice`, `mypy --config-file selfservice/pyproject.toml selfservice`, `cd selfservice && pytest -q` sowie `PW_BASE_URL=http://selfservice:5000 ./tests/run-tests.sh selfservice` (7/7) gegen den lokalen Docker-Stack; alle grün.
 - [ ] 4.3 Nach dem Produktiv-Deploy: `./tests/mqtt-acl-smoke.sh` muss `SMOKE_OK` melden. Steht aus, solange kein Deploy erfolgt ist.
 
 ## Workflow follow-up
