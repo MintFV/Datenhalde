@@ -24,6 +24,7 @@ Self-hosted IoT platform ("MintFV") defined almost entirely by `docker-compose.y
 - Use `git mv`, not `mv`.
 - OpenSpec artifacts and changes resulting from the OpenSpec workflow may be committed autonomously by the agent. Never run `git push`; pushing is done by the user only.
 - Dependabot runs weekly for `pip` (`/selfservice`) and `npm` (`/tests`). Secrets: `INFLUXDB_TOKEN`, `SELFSERVICE_SECRET_KEY`, `SMTP_USER_PROVIDER` and `SMTP_PASS_PROVIDER` in `.env`, plus `SMTP_PASSWORD` in `.env.smtp.password` (see `.github/README-CI.md`).
+- GitHub Actions must never access `mintfv` via SSH or other direct production access; only public system interfaces (nginx, backups behind it) are allowed. Ask the user before building such an interface.
 
 ## Commands
 
@@ -58,7 +59,7 @@ Note: CI runs Python 3.11 while `selfservice/pyproject.toml` targets py312 — d
 - Use the `mintfv` MCP tools (`read_exec` for inspection, `write_exec` for changes, `delete_exec` for removals) against `mintfv.peddy.net` as user `peddy`. Inspect read-only first; ask for approval before any live change.
 - If the MCP tools are unavailable or disabled, ask the user interactively to enable them. Only during long unattended runs (for example while the user is asleep) may the agent fall back autonomously to SSH (`ssh peddy@mintfv.peddy.net`) so the task can continue; name that fallback in the final summary.
 - After recreating `selfservice`/`mosquitto-reload`, nginx can keep the old upstream IP and return 502. Reload with `docker compose kill -s HUP nginx`, then verify the route.
-- After ACL or deploy changes run `cd /home/peddy/mintfv && ./tests/mqtt-acl-smoke.sh`; it must print `SMOKE_OK`.
+- After ACL or deploy changes run `cd /home/peddy/mintfv && ./tests/mqtt-acl-smoke.sh`; it must print `SMOKE_OK`. Run it once as well after any changes introduced by an AI agent.
 
 ## Docker conventions
 
