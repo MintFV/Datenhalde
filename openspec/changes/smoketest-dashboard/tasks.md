@@ -22,7 +22,7 @@
 ## 4. Integration und Abnahme
 
 - [x] 4.1 Gesamtprüfung lokal: erfolgreicher und erzwungen fehlgeschlagener Lauf, vier Punkte in InfluxDB, Dashboard per API, Workflow-YAML gültig; Verifikation: alle Prüfungen aus 1–3 bestehen.
-- [ ] 4.2 Produktiv-abnahme nach Deploy durch den Betreiber: geänderte Dateien auf `mintfv` ausrollen, `./tests/mqtt-acl-smoke.sh` meldet `SMOKE_OK`, SQL-Abfrage liefert aktuelle Punkte aus `smoketest_results`, Grafana-API liefert UID `mintfv-smoketest`; Verifikation: alle drei Nachweise vorhanden, bestehendes Dashboard und `sensors` unverändert.
+- [x] 4.2 Produktiv-abnahme nach Deploy durch den Betreiber: geänderte Dateien auf `mintfv` ausrollen, `./tests/mqtt-acl-smoke.sh` meldet `SMOKE_OK`, SQL-Abfrage liefert aktuelle Punkte aus `smoketest_results`, Grafana-API liefert UID `mintfv-smoketest`; Verifikation: alle drei Nachweise vorhanden, bestehendes Dashboard und `sensors` unverändert.
 
 ## Workflow follow-up
 
