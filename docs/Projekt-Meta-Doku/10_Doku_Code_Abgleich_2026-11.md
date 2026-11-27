@@ -260,4 +260,18 @@ Der Neustart selbst war ordnungsgemäß: `./mintfv.sh stop` entspricht `docker c
 
 ---
 
+## 12. Nachtrag 2026-11-27: Smoketest-Ergebnisse per MQTT
+
+`tests/mqtt-acl-smoke.sh` und `.github/workflows/mqtt-smoke.yml` veröffentlichen Ergebnisse nicht mehr ausschließlich lokal, sondern per MQTT unter `smoketest/mintfv-smoketest/results/prod` (manueller Lauf auf `mintfv`) bzw. `.../results/ci` (GitHub-Action auf dem isolierten Runner). Die gescopte Identität `mintfv-smoketest` darf nur unter `smoketest/mintfv-smoketest/#` schreiben.
+
+- Die GitHub-Action nutzt dafür genau zwei Secrets, `MQTT_SMOKE_USER` und `MQTT_SMOKE_PASS`, mit dieser Identität. Das ist eine bewusste, eng begrenzte Ausnahme von der bisherigen Regel „keine neuen GitHub-Secrets"; sie ist in `AGENTS.md` dokumentiert. Ein Admin-Token oder SSH-Zugriff aus GitHub Actions gibt es weiterhin nicht.
+- `nodered-writer` besitzt zusätzlich `read smoketest/mintfv-smoketest/results/#` und weiterhin keine MQTT-Schreibrechte. Die Produktions-Änderung lief über den Selfservice-Pfad mit Backup (`mosquitto/config/backups/mosquitto.acl.bak-20261127-203326`) und anschließendem Reload.
+- Node-RED validiert die Nachrichten und schreibt in `mintfv`/`smoketest_results`. Jeder Punkt trägt `source=prod` oder `source=ci`; CI-Punkte zusätzlich `run_id`, `sha` und `ref`. Fehlschläge werden als `ok=0` für Prüfung und `overall` veröffentlicht.
+- Das provisionierte Dashboard `mintfv-smoketest` (UID `mintfv-smoketest`) filtert über die Variable `source` (Default `prod`) und zeigt Runner-Läufe in einem eigenen CI-Panel. Die Grafana-API liefert 200 für die UID.
+- Verifiziert: echter Push-Lauf `46066561520` erzeugte vier Punkte mit `source=ci`, `run_id`, `sha`, `ref`; der manuelle Lauf erzeugte vier Punkte mit `source=prod`; `./tests/mqtt-acl-smoke.sh` meldete `SMOKE_OK`. `sensors`, MQTT-ACLs bis auf die genannte read-Regel, nginx und InfluxDB-Token blieben unverändert.
+
+Weiterführend: `11_Smoketest_Datenfluss.md` (Mermaid-Diagramm), `../../openspec/changes/archive/2026-11-27-ci-smoketest-results-ingest/` und `../../openspec/changes/archive/2026-11-27-smoketest-datenfluss-diagramm/`.
+
+---
+
 *Erstellt: 2026-11-19. Nachfolgende Änderungen an Doku/Code bitte hier gegenlesen.*

@@ -22,6 +22,7 @@ Self-hosted IoT platform ("MintFV") defined almost entirely by `docker-compose.y
 - `check-no-pyc.yml` runs on **all** pushes and PRs and fails on tracked `__pycache__/`, `*.pyc`, `.pytest_cache/`. Never commit those.
 - Branch protection is a recommendation, not enforced: `.github/BRANCH_PROTECTION.md`. Commit messages: single line, abstract summary, no body (team convention).
 - GitHub operations always use the account `peddyhh`; if another account is active, switch before acting.
+- For the Smoketest ingest, exactly two GitHub Secrets are allowed: `MQTT_SMOKE_USER` and `MQTT_SMOKE_PASS`, holding the scoped identity `mintfv-smoketest` (write only under `smoketest/mintfv-smoketest/#`). Any other GitHub Secret requires explicit approval.
 - Use `git mv`, not `mv`.
 - Commit changes autonomously for the user, including OpenSpec artifacts and workflow results. Never run `git push`; pushing is done by the user only.
 - Dependabot runs weekly for `pip` (`/selfservice`) and `npm` (`/tests`). Secrets: `INFLUXDB_TOKEN`, `SELFSERVICE_SECRET_KEY`, `SMTP_USER_PROVIDER` and `SMTP_PASS_PROVIDER` in `.env`, plus `SMTP_PASSWORD` in `.env.smtp.password` (see `.github/README-CI.md`).
