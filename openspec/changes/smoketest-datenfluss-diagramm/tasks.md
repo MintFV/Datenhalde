@@ -9,7 +9,7 @@
 
 ## 2. Abnahme
 
-- [x] 2.1 Mermaid-Syntax prüfen — Verifikation: Strukturcheck bestanden (5 Subgraphs, 15 Knoten, 18 Kanten, keine undefinierten Referenzen, Klammern ausgeglichen); `mmdc` lokal nicht verfügbar, GitHub-Rendering noch visuell bestätigen
+- [x] 2.1 Mermaid-Syntax prüfen — Verifikation: `mmdc`-Render fehlerfrei und visuell geprüft (top-down); Strukturcheck bestanden (5 Subgraphs, 15 Knoten, 18 Kanten, keine undefinierten Referenzen)
 - [x] 2.2 Fachabgleich gegen den Quellcode und das archivierte Change-Design durchführen — Verifikation: keine abweichenden Topic-, Measurement- oder UID-Namen; die Rollen `mintfv-smoketest` und `nodered-writer` sind korrekt zugeordnet
 - [x] 2.3 Sicherstellen, dass das Dokument keine Zugangsdaten enthält — Verifikation: Suche nach Token- und Passwortwerten bleibt ohne Treffer
 

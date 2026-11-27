@@ -20,7 +20,7 @@ Siehe `proposal.md` für die Motivation. Der Change `ci-smoketest-results-ingest
 
 ## Decisions
 
-**1. Ein Flowchart mit Subgraphs statt mehrerer Einzelbilder.** Ein `flowchart LR` mit Bereichen für „Auslöser", „Verarbeitung auf mintfv" und „Sichtbarkeit" zeigt Gemeinsamkeiten und Unterschiede der beiden Pfade direkt. Ein Sequence-Diagramm würde den Nachrichtenverlauf besser, aber die Rollen und das Topic-Schema schlechter zeigen; es ist daher nicht Teil dieses Changes.
+**1. Ein Flowchart mit Subgraphs statt mehrerer Einzelbilder.** Ein `flowchart TB` (top-down) mit Bereichen für „Auslöser", „Verarbeitung auf mintfv" und „Sichtbarkeit" zeigt Gemeinsamkeiten und Unterschiede der beiden Pfade direkt. Die vertikale Richtung ist gewählt, weil bei der Anzahl Knoten ein Links-nach-Rechts-Layout auf üblichen Bildschirmen unübersichtlich wird. Ein Sequence-Diagramm würde den Nachrichtenverlauf besser, aber die Rollen und das Topic-Schema schlechter zeigen; es ist daher nicht Teil dieses Changes.
 
 **2. Mermaid direkt in Markdown.** GitHub und GitLab rendern ```mermaid-Blöcke nativ; es braucht kein Bild, kein Render-Artefakt und kein zusätzliches Tool im Repo. Alternative ein fertiges SVG/PNG verworfen: nicht ohne weiteres im Text diffbar und bei Änderungen aufwendiger zu pflegen.
 

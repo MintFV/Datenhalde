@@ -3,7 +3,7 @@
 Dieses Diagramm zeigt, wie Smoketest-Ergebnisse von der GitHub-Action bzw. einem manuellen Lauf über MQTT und Node-RED in InfluxDB gelangen und im Grafana-Dashboard sichtbar werden. Es ergänzt die textliche Dokumentation in `10_Doku_Code_Abgleich_2026-11.md` und den archivierten OpenSpec-Change `ci-smoketest-results-ingest`.
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph A["Auslöser"]
         PUSH["Push auf refactorPED"]
         GH["GitHub-Action<br/>mqtt-smoke.yml<br/>isolierter Runner"]
