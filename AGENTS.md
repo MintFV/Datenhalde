@@ -23,7 +23,7 @@ Self-hosted IoT platform ("MintFV") defined almost entirely by `docker-compose.y
 - Branch protection is a recommendation, not enforced: `.github/BRANCH_PROTECTION.md`. Commit messages: single line, abstract summary, no body (team convention).
 - GitHub operations always use the account `peddyhh`; if another account is active, switch before acting.
 - Use `git mv`, not `mv`.
-- OpenSpec artifacts and changes resulting from the OpenSpec workflow may be committed autonomously by the agent. Never run `git push`; pushing is done by the user only.
+- Commit changes autonomously for the user, including OpenSpec artifacts and workflow results. Never run `git push`; pushing is done by the user only.
 - Dependabot runs weekly for `pip` (`/selfservice`) and `npm` (`/tests`). Secrets: `INFLUXDB_TOKEN`, `SELFSERVICE_SECRET_KEY`, `SMTP_USER_PROVIDER` and `SMTP_PASS_PROVIDER` in `.env`, plus `SMTP_PASSWORD` in `.env.smtp.password` (see `.github/README-CI.md`).
 - GitHub Actions must never access `mintfv` via SSH or other direct production access; only public system interfaces (nginx, backups behind it) are allowed. Ask the user before building such an interface.
 
