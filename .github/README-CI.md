@@ -2,7 +2,7 @@
 
 This repository includes a minimal CI and Dependabot setup.
 
-- `CI` (`.github/workflows/ci.yml`): runs Python lint/type checks and a Playwright smoke test on PRs to `refactorPED` using GitHub-hosted runners (`ubuntu-latest`).
+- `CI` (`.github/workflows/ci.yml`): runs Python lint/type checks, selfservice unit tests and a Playwright smoke test on pushes and PRs to `refactorPED` using GitHub-hosted runners (`ubuntu-latest`). The unit tests run in their own job with Python 3.11, matching the lint job; run them locally with `cd selfservice && python -m pytest`.
 - `Dependabot` (`.github/dependabot.yml`): watches `pip` in `/selfservice` and `npm` in `/tests` weekly.
 
 Required repository secrets for full integration (add via GitHub Settings → Secrets):

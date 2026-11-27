@@ -43,6 +43,23 @@ jobs:
           print("lodash versions:", versions)
           PY
 
+  unit-tests:
+    name: Selfservice unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r selfservice/requirements-dev.txt
+      - name: Run unit tests
+        working-directory: selfservice
+        run: python -m pytest
+
   node-smoke:
     name: Playwright smoke tests
     runs-on: ubuntu-latest
