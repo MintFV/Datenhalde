@@ -3,7 +3,7 @@
 ## 1. Secrets und Freigaben
 
 - [x] 1.1 Die zwei GitHub-Secrets `MQTT_SMOKE_USER` und `MQTT_SMOKE_PASS` mit der gescopten Identität `mintfv-smoketest` anlegen — Verifikation: ein Test-Publish über `mintfv.peddy.net:8883` gelingt unter `smoketest/mintfv-smoketest/#` und wird unter `umweltbox/#` verweigert
-- [ ] 1.2 Sicherstellen, dass keine Admin-Token- oder SSH-Zugangsdaten in den Secrets oder im Workflow liegen — Verifikation: Secret-Werte und Workflow-Text enthalten nur die Smoke-Identität, keinen Token und keinen SSH-Login
+- [x] 1.2 Sicherstellen, dass keine Admin-Token- oder SSH-Zugangsdaten in den Secrets oder im Workflow liegen — Verifikation: Secret-Werte und Workflow-Text enthalten nur die Smoke-Identität, keinen Token und keinen SSH-Login
 
 ## 2. MQTT-ACL
 
@@ -38,7 +38,7 @@
 ## 7. Produktionsabnahme und Rollback
 
 - [ ] 7.1 Echten Push gegen Produktion ausführen und die angekommenen Punkte prüfen — Verifikation: InfluxDB enthält `source=ci`-Punkte mit `run_id`, `sha`, `ref`; das Dashboard zeigt sie nur im CI-Panel
-- [ ] 7.2 Abschluss-Smoketest auf `mintfv` ausführen — Verifikation: `./tests/mqtt-acl-smoke.sh` gibt `SMOKE_OK` aus; ACL- und Passwortdateien sowie `sensors` sind unverändert
+- [x] 7.2 Abschluss-Smoketest auf `mintfv` ausführen — Verifikation: `./tests/mqtt-acl-smoke.sh` gibt `SMOKE_OK` aus; ACL- und Passwortdateien sowie `sensors` sind unverändert
 - [ ] 7.3 Rollback-Schritte prüfen (Flow, Skript, Workflow, Dashboard zurücksetzen, ACL-Regel entfernen, Secrets löschen) — Verifikation: nach dem Rollback werden keine neuen Ergebnispunkte mehr geschrieben und die gelöschten Secrets sind im Workflow unwirksam
 
 ## Workflow follow-up
