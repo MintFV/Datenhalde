@@ -124,10 +124,14 @@ providers:
 
 ```
 grafana/dashboards/
-└── umweltbox-cpu-v5.json  # Example dashboard (auto-imported)
+├── mintfv-dashboard.json      # "mintfv - Umweltbox Übersicht" (UID mintfv-umweltbox-uebersicht)
+├── mintfv-smoketest.json      # "mintfv - Smoketest Status" (UID mintfv-smoketest)
+└── umweltbox-cpu-v5.json      # Example dashboard (auto-imported)
 ```
 
 ✅ **Dashboards werden automatisch importiert** aus `grafana/dashboards/`!
+
+**Smoketest-Dashboard:** `grafana/dashboards/mintfv-smoketest.json` zeigt den Status des letzten Smoketest-Laufs, den Verlauf der drei Prüfungen (ACL, MQTT-Round-Trip, InfluxDB-Canary) und die letzten Läufe mit Canary-Punktzahl. Die Daten stammen aus dem Measurement `smoketest_results` in `mintfv`. Neue Punkte entstehen nur, wenn `tests/mqtt-acl-smoke.sh` tatsächlich läuft; das Dashboard hat keinen eigenen Scheduler und zeigt daher die zuletzt manuell ausgeführten Läufe. Änderungen bitte in der JSON-Datei vornehmen – der File-Provider überschreibt UI-Änderungen im 10-Sekunden-Takt.
 
 ### Alerting (Email)
 

@@ -13,3 +13,5 @@ Required repository secrets for full integration (add via GitHub Settings → Se
 - `SMTP_PASSWORD` — SMTP password in the separate `.env.smtp.password` file, written as `SMTP_PASSWORD='…'` (see `README.md`).
 
 E2E workflow (`.github/workflows/e2e.yml`) is manual (`workflow_dispatch`) and will run `docker compose up -d --build` and the Playwright runner. It is intended for manual runs or scheduled runs and may require longer time and resources.
+
+`MQTT ACL smoke` (`.github/workflows/mqtt-smoke.yml`) runs on **every push, on any branch**. It starts an isolated stack of mosquitto and InfluxDB on the runner using `.github/mqtt-smoke-compose.yml`, throwaway ACL/password files and a generated admin token, seeds one synthetic `sensors` point for `de-hh-mintfv-uwbox23`, and runs `tests/mqtt-acl-smoke.sh`. It therefore only checks that the smoke-test tooling still works after a push. There is no SSH or other access to `mintfv` from GitHub Actions, no production write and no additional repository secrets. Results are not written to the production Grafana dashboard.

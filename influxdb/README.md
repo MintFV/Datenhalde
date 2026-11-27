@@ -76,6 +76,15 @@ docker compose exec influxdb influxdb3 write --database mintfv \
   "temperature,location=room temp=23.5"
 ```
 
+### Smoketest-Ergebnisse
+
+`tests/mqtt-acl-smoke.sh` schreibt seine Ergebnisse in dieselbe Datenbank `mintfv`, Measurement `smoketest_results`. Ein Lauf erzeugt je einen Punkt für `check=acl`, `check=mqtt`, `check=canary` und `check=overall`. Felder sind `ok` (0/1) und beim Canary zusätzlich `canary_count` (Punkte aus uwbox23 in 30 Minuten). Fehlschläge werden mit `ok=0` gespeichert; Token und MQTT-Passwort erscheinen weder in Feldern noch im Log.
+
+```bash
+docker compose exec influxdb influxdb3 query -d mintfv \
+  'SELECT time, "check", ok, canary_count FROM smoketest_results ORDER BY time DESC LIMIT 20'
+```
+
 ### Via HTTP API (v2 Compatibility) – historisch
 
 > **Hinweis:** Die v2-Kompatibilitäts-API mit `bucket=`-Parameter ist kein 3-Core-Zielpfad. Produktiv schreibt Node-RED über `/api/v3/write_lp?db=mintfv&precision=ns` (siehe `nodered/data/flows.json`). Das Beispiel dient nur der Migration.

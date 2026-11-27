@@ -1,0 +1,12 @@
+services:
+  mosquitto:
+    volumes:
+      - ./ci/mosquitto:/mosquitto/config:ro
+      - ./ci/mosquitto/data:/mosquitto/data:rw
+      - ./ci/mosquitto/log:/mosquitto/log:rw
+
+  influxdb:
+    volumes:
+      - ./ci/influxdb/data:/var/lib/influxdb3/data:rw
+      - ./ci/influxdb/plugins:/var/lib/influxdb3/plugins:rw
+      - ./ci/influxdb/tokens:/var/lib/influxdb3/tokens:ro

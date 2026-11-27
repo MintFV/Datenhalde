@@ -1,0 +1,80 @@
+name: MQTT ACL smoke (isolated)
+
+on: push
+
+env:
+  COMPOSE_FILE: docker-compose.yaml:.github/mqtt-smoke-compose.yml
+  COMPOSE_PROJECT_NAME: mintfv-ci
+
+jobs:
+  mqtt-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Create throwaway config
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp env.example .env
+          printf 'MQTT_SMOKE_USER=mintfv-smoketest\nMQTT_SMOKE_PASS=ci-smoke-pass\n' >> .env
+          printf "SMTP_PASSWORD=''\n" > .env.smtp.password
+          mkdir -p ci/mosquitto/data ci/mosquitto/log ci/influxdb/data ci/influxdb/plugins ci/influxdb/tokens
+          cp mosquitto/config/mosquitto.conf ci/mosquitto/mosquitto.conf
+          cat > ci/mosquitto/mosquitto.acl <<'ACL'
+          user mintfv-smoketest
+          topic write smoketest/mintfv-smoketest/#
+          topic read smoketest/mintfv-smoketest/#
+          topic read umweltbox/de-hh-mintfv-uwbox23/#
+          topic read $SYS/broker/version
+
+          user de-hh-mintfv-uwbox23
+          topic write umweltbox/de-hh-mintfv-uwbox23/#
+          topic read umweltbox/de-hh-mintfv-uwbox23/cmnd/#
+          topic read $SYS/broker/version
+          ACL
+          TOKEN="apiv3_$(openssl rand -hex 24)"
+          printf '{"token": "%s", "name": "_admin", "description": "CI smoke"}\n' "$TOKEN" > ci/influxdb/tokens/admin.token
+          sudo chown -R 2003:2100 ci/mosquitto
+          sudo chown -R 2005:2100 ci/influxdb
+          sudo chmod 600 ci/influxdb/tokens/admin.token
+          docker run --rm -v "$PWD/ci/mosquitto:/config" eclipse-mosquitto:2.0.22 \
+            mosquitto_passwd -b -c /config/mosquitto.passwd mintfv-smoketest ci-smoke-pass
+          sudo chown 2003:2100 ci/mosquitto/mosquitto.passwd
+
+      - name: Start isolated stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose up -d --wait --wait-timeout 300 mosquitto influxdb
+
+      - name: Seed canary point
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T influxdb sh -s <<'INNER'
+          T=$(sed -n 's/.*"token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' /var/lib/influxdb3/tokens/admin.token | head -1)
+          TS=$(date +%s)000000000
+          influxdb3 write -d mintfv --token "$T" \
+            "sensors,tenant_id=de-hh-mintfv-uwbox23,device_id=de-hh-mintfv-uwbox23,category=environment,sensor_type=temperature value=20.5 $TS"
+          INNER
+
+      - name: Run MQTT ACL smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x tests/mqtt-acl-smoke.sh
+          ./tests/mqtt-acl-smoke.sh
+
+      - name: Show logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          docker compose logs --no-color --tail=200 mosquitto influxdb || true
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          docker compose down || true

@@ -1,0 +1,129 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Letzter Lauf (zuletzt manuell ausgeführt)",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 6},
+      "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {"color": "red", "index": 0, "text": "Fehlgeschlagen"},
+                "1": {"color": "green", "index": 1, "text": "OK"}
+              }
+            }
+          ],
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'overall'\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 1;"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "ACL-Prüfung",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 6},
+      "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+      "fieldConfig": {"defaults": {"min": 0, "max": 1, "custom": {}}, "overrides": []},
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'acl'\n  AND $__timeFilter(time)\nORDER BY time ASC;"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "MQTT-Round-Trip",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 6},
+      "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+      "fieldConfig": {"defaults": {"min": 0, "max": 1, "custom": {}}, "overrides": []},
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'mqtt'\n  AND $__timeFilter(time)\nORDER BY time ASC;"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "InfluxDB-Canary",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 6},
+      "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+      "fieldConfig": {"defaults": {"min": 0, "max": 1, "custom": {}}, "overrides": []},
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'canary'\n  AND $__timeFilter(time)\nORDER BY time ASC;"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Letzte Läufe",
+      "gridPos": {"x": 0, "y": 6, "w": 24, "h": 8},
+      "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+      "fieldConfig": {"defaults": {"custom": {}}, "overrides": []},
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT time, \"check\", ok, canary_count\nFROM smoketest_results\nWHERE $__timeFilter(time)\nORDER BY time DESC\nLIMIT 50;"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "tags": ["mintfv", "smoketest"],
+  "templating": {"list": []},
+  "time": {"from": "now-24h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "mintfv - Smoketest Status",
+  "uid": "mintfv-smoketest",
+  "version": 1
+}
