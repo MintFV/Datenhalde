@@ -78,11 +78,14 @@ docker compose exec influxdb influxdb3 write --database mintfv \
 
 ### Smoketest-Ergebnisse
 
-`tests/mqtt-acl-smoke.sh` schreibt seine Ergebnisse in dieselbe Datenbank `mintfv`, Measurement `smoketest_results`. Ein Lauf erzeugt je einen Punkt für `check=acl`, `check=mqtt`, `check=canary` und `check=overall`. Felder sind `ok` (0/1) und beim Canary zusätzlich `canary_count` (Punkte aus uwbox23 in 30 Minuten). Fehlschläge werden mit `ok=0` gespeichert; Token und MQTT-Passwort erscheinen weder in Feldern noch im Log.
+`tests/mqtt-acl-smoke.sh` und die GitHub-Action veröffentlichen Ergebnisse per MQTT unter `smoketest/mintfv-smoketest/results/prod` bzw. `.../results/ci`. Node-RED schreibt daraus Punkte in dieselbe Datenbank `mintfv`, Measurement `smoketest_results`. Ein Lauf erzeugt je einen Punkt für `check=acl`, `check=mqtt`, `check=canary` und `check=overall`. Felder sind `ok` (0/1) und beim Canary zusätzlich `canary_count` (Punkte aus uwbox23 in 30 Minuten). Jeder Punkt trägt `source=prod` oder `source=ci`; CI-Punkte zusätzlich `run_id`, `sha` und `ref`. Fehlschläge werden mit `ok=0` gespeichert; Token und MQTT-Passwort erscheinen weder in Feldern noch im Log.
 
 ```bash
 docker compose exec influxdb influxdb3 query -d mintfv \
-  'SELECT time, "check", ok, canary_count FROM smoketest_results ORDER BY time DESC LIMIT 20'
+  'SELECT time, "check", source, ok, canary_count FROM smoketest_results ORDER BY time DESC LIMIT 20'
+
+docker compose exec influxdb influxdb3 query -d mintfv \
+  'SELECT time, "check", run_id, sha, ref, ok FROM smoketest_results WHERE source = '\''ci'\'' ORDER BY time DESC LIMIT 20'
 ```
 
 ### Via HTTP API (v2 Compatibility) – historisch

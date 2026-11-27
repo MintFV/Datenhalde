@@ -131,7 +131,7 @@ grafana/dashboards/
 
 ✅ **Dashboards werden automatisch importiert** aus `grafana/dashboards/`!
 
-**Smoketest-Dashboard:** `grafana/dashboards/mintfv-smoketest.json` zeigt den Status des letzten Smoketest-Laufs, den Verlauf der drei Prüfungen (ACL, MQTT-Round-Trip, InfluxDB-Canary) und die letzten Läufe mit Canary-Punktzahl. Die Daten stammen aus dem Measurement `smoketest_results` in `mintfv`. Neue Punkte entstehen nur, wenn `tests/mqtt-acl-smoke.sh` tatsächlich läuft; das Dashboard hat keinen eigenen Scheduler und zeigt daher die zuletzt manuell ausgeführten Läufe. Änderungen bitte in der JSON-Datei vornehmen – der File-Provider überschreibt UI-Änderungen im 10-Sekunden-Takt.
+**Smoketest-Dashboard:** `grafana/dashboards/mintfv-smoketest.json` zeigt den Status des letzten Smoketest-Laufs, den Verlauf der drei Prüfungen (ACL, MQTT-Round-Trip, InfluxDB-Canary) und die letzten Läufe mit Canary-Punktzahl. Die Daten stammen aus dem Measurement `smoketest_results` in `mintfv`. Über die Variable `source` (`prod`|`ci`, Default `prod`) werden manuelle und CI-Läufe getrennt; ein eigenes Panel zeigt CI-Läufe mit `run_id`, `sha` und `ref`. Neue Punkte entstehen nur, wenn `tests/mqtt-acl-smoke.sh` bzw. die GitHub-Action läuft; das Dashboard hat keinen Scheduler. Die Ergebnisse werden per MQTT unter `smoketest/mintfv-smoketest/results/{prod|ci}` angeliefert und von Node-RED nach InfluxDB geschrieben. Änderungen bitte in der JSON-Datei vornehmen – der File-Provider überschreibt UI-Änderungen im 10-Sekunden-Takt.
 
 ### Alerting (Email)
 

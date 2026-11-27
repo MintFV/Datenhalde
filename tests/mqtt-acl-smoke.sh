@@ -4,33 +4,54 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
-write_result() {
-	local check="$1" ok="$2" count="${3:-}" line ts
-	ts="$(date +%s)000000000"
-	line="smoketest_results,check=${check} ok=${ok}i"
+RESULT_TARGET="${SMOKETEST_RESULT_TARGET:-prod}"
+RESULT_TOPIC="smoketest/mintfv-smoketest/results/$RESULT_TARGET"
+
+env_value() {
+	grep -E "^$1=" .env | tail -n 1 | cut -d= -f2-
+}
+
+json_escape() {
+	printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
+publish_result() {
+	local check="$1" ok="$2" count="${3:-}"
+	local user pass fields payload
+	user="${SMOKETEST_RESULT_USER:-$(env_value MQTT_SMOKE_USER)}"
+	pass="${SMOKETEST_RESULT_PASS:-$(env_value MQTT_SMOKE_PASS)}"
+	fields=""
 	if [ -n "$count" ]; then
-		line="$line,canary_count=${count}i"
+		fields="$fields,\"canary_count\":$count"
 	fi
-	if ! docker compose exec -T influxdb sh -s -- "$line $ts" >/dev/null 2>&1 <<'INNER'
-T=$(sed -n 's/.*"token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' /var/lib/influxdb3/tokens/admin.token | head -1)
-influxdb3 write -d mintfv --token "$T" "$1"
-INNER
-	then
-		echo "WARN: Ergebnispunkt $check konnte nicht geschrieben werden" >&2
+	if [ "$RESULT_TARGET" = "ci" ]; then
+		fields="$fields,\"run_id\":\"$(json_escape "${GITHUB_RUN_ID:-}")\""
+		fields="$fields,\"sha\":\"$(json_escape "${GITHUB_SHA:-}")\""
+		fields="$fields,\"ref\":\"$(json_escape "${GITHUB_REF:-}")\""
+	fi
+	payload="{\"check\":\"$check\",\"ok\":$ok$fields}"
+	if [ "$RESULT_TARGET" = "ci" ]; then
+		if ! docker run --rm -e U="$user" -e P="$pass" eclipse-mosquitto:2.0.22 \
+			sh -c 'mosquitto_pub -h mintfv.peddy.net -p 8883 --cafile /etc/ssl/certs/ca-certificates.crt -u "$U" -P "$P" -t "$1" -m "$2"' \
+			sh "$RESULT_TOPIC" "$payload" >/dev/null 2>&1; then
+			echo "WARN: Ergebnispunkt $check konnte nicht veröffentlicht werden" >&2
+		fi
+	else
+		if ! docker compose exec -T -e U="$user" -e P="$pass" mosquitto \
+			sh -c 'mosquitto_pub -h 127.0.0.1 -p 1883 -u "$U" -P "$P" -t "$1" -m "$2"' \
+			sh "$RESULT_TOPIC" "$payload" >/dev/null 2>&1; then
+			echo "WARN: Ergebnispunkt $check konnte nicht veröffentlicht werden" >&2
+		fi
 	fi
 }
 
 fail() {
 	local check="$1"
 	shift
-	write_result "$check" 0
-	write_result overall 0
+	publish_result "$check" 0
+	publish_result overall 0
 	echo "FAIL: $*" >&2
 	exit 1
-}
-
-env_value() {
-	grep -E "^$1=" .env | tail -n 1 | cut -d= -f2-
 }
 
 SMOKE_USER=$(env_value MQTT_SMOKE_USER)
@@ -68,7 +89,7 @@ EXPECTED_REF=$(printf '%s\n' \
 
 [ "$(extract_rules mintfv-smoketest)" = "$EXPECTED_SMOKE" ] || fail acl "Testidentität hat nicht die erwarteten vier Regeln"
 [ "$(extract_rules de-hh-mintfv-uwbox23)" = "$EXPECTED_REF" ] || fail acl "Referenzgerät uwbox23 ist verändert"
-write_result acl 1
+publish_result acl 1
 echo "PASS: statische ACL-Prüfung"
 
 PAYLOAD="ping-$(date +%s)"
@@ -82,7 +103,7 @@ docker compose exec -T -e U="$SMOKE_USER" -e P="$SMOKE_PASS" mosquitto \
 	sh "$PAYLOAD" || fail mqtt "MQTT-Publish fehlgeschlagen"
 wait "$SUB_PID" || fail mqtt "MQTT-Round-Trip fehlgeschlagen"
 grep -q "$PAYLOAD" "$TMP/sub_out" || fail mqtt "Testnachricht nicht zugestellt"
-write_result mqtt 1
+publish_result mqtt 1
 echo "PASS: MQTT-Round-Trip"
 
 COUNT=$(
@@ -95,8 +116,8 @@ case "$COUNT" in
 '' | *[!0-9]*) fail canary "InfluxDB-Abfrage lieferte keinen Zähler" ;;
 esac
 [ "$COUNT" -gt 0 ] || fail canary "Keine aktuellen uwbox23-Daten in InfluxDB"
-write_result canary 1 "$COUNT"
+publish_result canary 1 "$COUNT"
 echo "PASS: InfluxDB-Canary ($COUNT Punkte / 30 min)"
 
-write_result overall 1
+publish_result overall 1
 echo "SMOKE_OK"

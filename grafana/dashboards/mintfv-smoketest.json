@@ -18,7 +18,7 @@
   "panels": [
     {
       "type": "stat",
-      "title": "Letzter Lauf (zuletzt manuell ausgeführt)",
+      "title": "Letzter Lauf ($source)",
       "gridPos": {"x": 0, "y": 0, "w": 6, "h": 6},
       "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
       "fieldConfig": {
@@ -43,7 +43,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'overall'\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 1;"
+          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'overall'\n  AND \"source\" = '$source'\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 1;"
         }
       ]
     },
@@ -60,7 +60,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'acl'\n  AND $__timeFilter(time)\nORDER BY time ASC;"
+          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'acl'\n  AND \"source\" = '$source'\n  AND $__timeFilter(time)\nORDER BY time ASC;"
         }
       ]
     },
@@ -77,7 +77,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'mqtt'\n  AND $__timeFilter(time)\nORDER BY time ASC;"
+          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'mqtt'\n  AND \"source\" = '$source'\n  AND $__timeFilter(time)\nORDER BY time ASC;"
         }
       ]
     },
@@ -94,7 +94,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'canary'\n  AND $__timeFilter(time)\nORDER BY time ASC;"
+          "rawSql": "SELECT time, ok\nFROM smoketest_results\nWHERE \"check\" = 'canary'\n  AND \"source\" = '$source'\n  AND $__timeFilter(time)\nORDER BY time ASC;"
         }
       ]
     },
@@ -111,7 +111,24 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT time, \"check\", ok, canary_count\nFROM smoketest_results\nWHERE $__timeFilter(time)\nORDER BY time DESC\nLIMIT 50;"
+          "rawSql": "SELECT time, \"check\", ok, canary_count\nFROM smoketest_results\nWHERE \"source\" = '$source'\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 50;"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "CI-Läufe (isolierter Runner)",
+      "gridPos": {"x": 0, "y": 14, "w": 24, "h": 8},
+      "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+      "fieldConfig": {"defaults": {"custom": {}}, "overrides": []},
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {"type": "influxdb", "uid": "PF1260F9C1BE25B8C"},
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT time, \"check\", run_id, sha, ref, ok\nFROM smoketest_results\nWHERE \"source\" = 'ci'\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 50;"
         }
       ]
     }
@@ -119,7 +136,23 @@
   "refresh": "30s",
   "schemaVersion": 42,
   "tags": ["mintfv", "smoketest"],
-  "templating": {"list": []},
+  "templating": {
+    "list": [
+      {
+        "name": "source",
+        "label": "Herkunft",
+        "type": "custom",
+        "query": "prod,ci",
+        "current": {"selected": true, "text": "prod", "value": "prod"},
+        "options": [
+          {"selected": true, "text": "prod", "value": "prod"},
+          {"selected": false, "text": "ci", "value": "ci"}
+        ],
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
   "time": {"from": "now-24h", "to": "now"},
   "timepicker": {},
   "timezone": "browser",

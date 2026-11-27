@@ -136,5 +136,45 @@
         "x": 660,
         "y": 180,
         "wires": []
+    },
+    {
+        "id": "smoketest_result_sub",
+        "type": "mqtt in",
+        "z": "8d81abb85d745a43",
+        "name": "Smoketest Results",
+        "topic": "smoketest/mintfv-smoketest/results/#",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 110,
+        "y": 320,
+        "wires": [
+            [
+                "smoketest_result_parse"
+            ]
+        ]
+    },
+    {
+        "id": "smoketest_result_parse",
+        "type": "function",
+        "z": "8d81abb85d745a43",
+        "name": "Smoketest Results → Line Protocol",
+        "func": "const parts = msg.topic.split('/');\nconst source = parts[3];\nif (source !== 'prod' && source !== 'ci') return null;\nlet data = msg.payload;\nif (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { return null; } }\nconst allowed = ['acl', 'mqtt', 'canary', 'overall'];\nif (!data || !allowed.includes(data.check)) return null;\nif (data.ok !== 0 && data.ok !== 1) return null;\nif (source === 'ci' && (!data.run_id || !data.sha || !data.ref)) return null;\nif (data.canary_count !== undefined && (!Number.isInteger(data.canary_count) || data.canary_count < 0)) return null;\nconst esc = (v) => String(v).replace(/([ ,=])/g, '\\\\$1');\nlet tags = 'check=' + data.check + ',source=' + source;\nif (source === 'ci') tags += ',run_id=' + esc(data.run_id) + ',sha=' + esc(data.sha) + ',ref=' + esc(data.ref);\nlet fields = 'ok=' + data.ok + 'i';\nif (data.check === 'canary' && data.canary_count !== undefined) fields += ',canary_count=' + data.canary_count + 'i';\nmsg.payload = 'smoketest_results,' + tags + ' ' + fields + ' ' + (Date.now() * 1000000);\nmsg.url = 'http://influxdb:8181/api/v3/write_lp?db=mintfv&precision=ns';\nconst token = env.get('INFLUXDB_TOKEN');\nif (!token) { node.error('INFLUXDB_TOKEN not set!'); return null; }\nmsg.headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'text/plain' };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 320,
+        "wires": [
+            [
+                "586cbe6890132369"
+            ]
+        ]
     }
 ]

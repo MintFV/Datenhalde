@@ -2,9 +2,15 @@ name: MQTT ACL smoke (isolated)
 
 on: push
 
+permissions:
+  contents: read
+
 env:
   COMPOSE_FILE: docker-compose.yaml:.github/mqtt-smoke-compose.yml
   COMPOSE_PROJECT_NAME: mintfv-ci
+  SMOKETEST_RESULT_TARGET: ci
+  SMOKETEST_RESULT_USER: ${{ secrets.MQTT_SMOKE_USER }}
+  SMOKETEST_RESULT_PASS: ${{ secrets.MQTT_SMOKE_PASS }}
 
 jobs:
   mqtt-smoke:

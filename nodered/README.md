@@ -15,10 +15,13 @@ Flow-basierte Programmierung für IoT Automation & Datenverarbeitung.
 ### Datenfluss
 ```
 MQTT → Node-RED → InfluxDB
-  ├─ Subscribe: tenant/+/+/+
+  ├─ Subscribe: umweltbox/# (Sensoren)
+  ├─ Subscribe: smoketest/mintfv-smoketest/results/# (Smoketest-Ergebnisse)
   ├─ Processing: Flows
   └─ Write: Line Protocol
 ```
+
+Smoketest-Ergebnisse werden als JSON auf `.../results/prod` (manuell) bzw. `.../results/ci` (GitHub-Action) veröffentlicht. Der Flow leitet `source` aus dem Topic-Suffix ab, übernimmt bei CI-Läufen `run_id`, `sha` und `ref` und schreibt in das Measurement `smoketest_results` der Datenbank `mintfv`. Ungültige Nachrichten werden verworfen; `sensors` bleibt unberührt.
 
 ### Konfiguration
 ```
