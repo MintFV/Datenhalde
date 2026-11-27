@@ -37,7 +37,7 @@
 
 ## 7. Produktionsabnahme und Rollback
 
-- [ ] 7.1 Echten Push gegen Produktion ausführen und die angekommenen Punkte prüfen — Verifikation: InfluxDB enthält `source=ci`-Punkte mit `run_id`, `sha`, `ref`; das Dashboard zeigt sie nur im CI-Panel
+- [x] 7.1 Echten Push gegen Produktion ausführen und die angekommenen Punkte prüfen — Verifikation: InfluxDB enthält `source=ci`-Punkte mit `run_id`, `sha`, `ref`; das Dashboard zeigt sie nur im CI-Panel
 - [x] 7.2 Abschluss-Smoketest auf `mintfv` ausführen — Verifikation: `./tests/mqtt-acl-smoke.sh` gibt `SMOKE_OK` aus; ACL- und Passwortdateien sowie `sensors` sind unverändert
 - [ ] 7.3 Rollback-Schritte prüfen (Flow, Skript, Workflow, Dashboard zurücksetzen, ACL-Regel entfernen, Secrets löschen) — Verifikation: nach dem Rollback werden keine neuen Ergebnispunkte mehr geschrieben und die gelöschten Secrets sind im Workflow unwirksam
 
